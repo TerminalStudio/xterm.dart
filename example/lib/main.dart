@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:xterm/flutter.dart';
 import 'package:xterm/xterm.dart';
 
 void main() {
