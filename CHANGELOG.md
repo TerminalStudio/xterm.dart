@@ -1,3 +1,7 @@
+## [0.0.4] - 2020-8-1
+
+* Revert version constrain
+
 ## [0.0.3] - 2020-8-1
 
 * Update version constrain
