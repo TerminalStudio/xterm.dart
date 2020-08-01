@@ -40,6 +40,48 @@
 
 ### Getting Started
 
+1. Add this to your package's pubspec.yaml file:
+
+```yml
+dependencies:
+  ...
+  xterm: ^0.0.1
+```
+
+2. Create the terminal:
+
+```dart
+import 'package:xterm/xterm.dart';
+...
+terminal = Terminal();
+```
+
+To listen for input, add an onInput handler:
+
+```dart
+terminal = Terminal(onInput: onInput);
+
+void onInput(String input) {
+ print('input: $input');
+}
+```
+
+3. Create the view, then attach the terminal to the view:
+
+```dart
+import 'package:xterm/flutter.dart';
+...
+child: TerminalView(terminal: terminal),
+```
+
+4. Write something to the terminal:
+
+```dart
+terminal.write('Hello, world!');
+```
+
+Done!
+
 ### License
 
 This project is licensed under an MIT license.
