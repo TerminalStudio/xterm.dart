@@ -1,4 +1,4 @@
-**xterm.dart**
+## xterm.dart
 
 <p>
     <img alt="GitHub repo size" src="https://img.shields.io/github/repo-size/TerminalStudio/xterm.dart">
@@ -7,9 +7,9 @@
 </p>
 
 
-Xterm.dart is a fast and fully-featured terminal emulator for Flutter, with support for mobile and desktop platforms.
+Xterm.dart is a fast and fully-featured terminal emulator for Flutter applications, with support for mobile and desktop platforms.
 
-## Screenshots
+### Screenshots
 
 <table>
   <tr>
@@ -30,7 +30,7 @@ Xterm.dart is a fast and fully-featured terminal emulator for Flutter, with supp
   </tr>
 </table>
 
-## Features
+### Features
 
 - 📦 **Works out of the box** No special configuration required.
 - 🚀 **Fast** Renders at 60fps.
@@ -38,8 +38,8 @@ Xterm.dart is a fast and fully-featured terminal emulator for Flutter, with supp
 - ✂️ **Customizable** 
 - ✔ **Frontend independent**: The terminal core can work without flutter frontend.
 
-## Getting Started
+### Getting Started
 
-## License
+### License
 
 This project is licensed under an MIT license.
