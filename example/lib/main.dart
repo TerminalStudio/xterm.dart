@@ -51,7 +51,9 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: TerminalView(terminal: terminal),
+      body: SafeArea(
+        child: TerminalView(terminal: terminal),
+      ),
     );
   }
 }
