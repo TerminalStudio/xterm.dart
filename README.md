@@ -40,7 +40,7 @@
 
 ### Getting Started
 
-1. Add this to your package's pubspec.yaml file:
+**1.** Add this to your package's pubspec.yaml file:
 
 ```yml
 dependencies:
@@ -48,7 +48,7 @@ dependencies:
   xterm: ^0.0.1
 ```
 
-2. Create the terminal:
+**2.** Create the terminal:
 
 ```dart
 import 'package:xterm/xterm.dart';
@@ -66,7 +66,7 @@ void onInput(String input) {
 }
 ```
 
-3. Create the view, then attach the terminal to the view:
+**3.** Create the view, then attach the terminal to the view:
 
 ```dart
 import 'package:xterm/flutter.dart';
@@ -74,13 +74,13 @@ import 'package:xterm/flutter.dart';
 child: TerminalView(terminal: terminal),
 ```
 
-4. Write something to the terminal:
+**4.** Write something to the terminal:
 
 ```dart
 terminal.write('Hello, world!');
 ```
 
-Done!
+**Done!**
 
 ### License
 
