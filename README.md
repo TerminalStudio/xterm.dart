@@ -7,7 +7,7 @@
 </p>
 
 
-Xterm.dart is a fast and fully-featured terminal emulator for Flutter applications, with support for mobile and desktop platforms.
+**xterm.dart** is a fast and fully-featured terminal emulator for Flutter applications, with support for mobile and desktop platforms.
 
 ### Screenshots
 
