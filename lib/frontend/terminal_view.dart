@@ -51,7 +51,8 @@ class TerminalView extends StatefulWidget {
     this.fontFamily = _kDefaultFontFamily,
     this.fontWidthScaleFactor = 1.0,
     this.fontHeightScaleFactor = 1.1,
-  }) : super(key: key ?? ValueKey(terminal));
+  })  : assert(terminal != null),
+        super(key: key ?? ValueKey(terminal));
 
   final Terminal terminal;
   final ResizeHandler onResize;
