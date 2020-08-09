@@ -33,8 +33,19 @@ class InputListenerState extends State<InputListener> {
 
   @override
   void initState() {
+    focused = widget.focusNode.hasFocus;
     widget.focusNode.addListener(onFocus);
     super.initState();
+  }
+
+  @override
+  void didUpdateWidget(InputListener oldWidget) {
+    oldWidget.focusNode.removeListener(onFocus);
+    widget.focusNode.addListener(onFocus);
+
+    onFocus();
+
+    super.didUpdateWidget(oldWidget);
   }
 
   @override
@@ -58,7 +69,9 @@ class InputListenerState extends State<InputListener> {
       widget.onFocus(focused);
     }
 
-    openTextInput();
+    if (focused) {
+      openTextInput();
+    }
   }
 
   void openTextInput() {
@@ -100,14 +113,16 @@ class TerminalTextInputClient extends TextInputClient {
   }
 
   void updateEditingValue(TextEditingValue value) {
-    // print('updateEditingValue $value');
+    print('updateEditingValue $value');
 
-    if (_savedValue == null) {
-      onInput(value.text);
-    } else if (_savedValue.text.length < value.text.length) {
-      final diff = value.text.substring(_savedValue.text.length);
-      onInput(diff);
-    }
+    onInput(value.text);
+
+    // if (_savedValue == null || _savedValue.text == '') {
+    //   onInput(value.text);
+    // } else if (_savedValue.text.length < value.text.length) {
+    //   final diff = value.text.substring(_savedValue.text.length);
+    //   onInput(diff);
+    // }
 
     _savedValue = value;
     // print('updateEditingValue $value');

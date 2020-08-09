@@ -1,3 +1,7 @@
+## [0.1.0] - 2020-8-9
+
+* Bug fixes
+
 ## [0.0.4] - 2020-8-1
 
 * Revert version constrain

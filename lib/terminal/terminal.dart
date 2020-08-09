@@ -248,14 +248,14 @@ class Terminal with Observable {
   }
 
   void resize(int width, int heigth) {
+    buffer.resetVerticalMargins();
+
     final cursorY = buffer.convertViewLineToRawLine(buffer.cursorY);
 
     _viewWidth = max(width, 1);
     _viewHeight = max(heigth, 1);
 
     buffer.setCursorY(buffer.convertRawLineToViewLine(cursorY));
-
-    buffer.resetVerticalMargins();
 
     if (buffer == _altBuffer) {
       buffer.clearScrollback();

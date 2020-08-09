@@ -417,7 +417,7 @@ class Buffer {
       final newLine = BufferLine();
       lines.insert(index, newLine);
 
-      if (lines.length > terminal.maxLines) {
+      if (terminal.maxLines != null && lines.length > terminal.maxLines) {
         lines.removeRange(0, lines.length - terminal.maxLines);
       }
     } else {

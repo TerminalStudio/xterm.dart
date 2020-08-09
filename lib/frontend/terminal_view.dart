@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:meta/meta.dart';
 import 'package:xterm/buffer/cell.dart';
@@ -51,11 +52,14 @@ class TerminalView extends StatefulWidget {
     this.fontFamily = _kDefaultFontFamily,
     this.fontWidthScaleFactor = 1.0,
     this.fontHeightScaleFactor = 1.1,
+    FocusNode focusNode,
   })  : assert(terminal != null),
+        focusNode = focusNode ?? FocusNode(),
         super(key: key ?? ValueKey(terminal));
 
   final Terminal terminal;
   final ResizeHandler onResize;
+  final FocusNode focusNode;
 
   final double fontSize;
   final double fontWidthScaleFactor;
@@ -97,8 +101,10 @@ class TerminalView extends StatefulWidget {
 
 class _TerminalViewState extends State<TerminalView> {
   final oscillator = Oscillator.ms(600);
-  final focusNode = FocusNode();
-  var focused = false;
+
+  bool get focused {
+    return widget.focusNode.hasFocus;
+  }
 
   int _lastTerminalWidth;
   int _lastTerminalHeight;
@@ -160,7 +166,7 @@ class _TerminalViewState extends State<TerminalView> {
       behavior: HitTestBehavior.deferToChild,
       dragStartBehavior: DragStartBehavior.down,
       onTapDown: (detail) {
-        focusNode.requestFocus();
+        widget.focusNode.requestFocus();
         final pos = detail.localPosition;
         final offset = getMouseOffset(pos.dx, pos.dy);
         widget.terminal.mouseMode.onTap(widget.terminal, offset);
@@ -184,7 +190,7 @@ class _TerminalViewState extends State<TerminalView> {
       onKeyStroke: onKeyStroke,
       onInput: onInput,
       onFocus: onFocus,
-      focusNode: focusNode,
+      focusNode: widget.focusNode,
       autofocus: true,
       child: MouseRegion(
         cursor: SystemMouseCursors.text,
@@ -224,13 +230,13 @@ class _TerminalViewState extends State<TerminalView> {
         widget.onResize(termWidth, termHeight);
       }
 
-      // SchedulerBinding.instance.addPostFrameCallback((_) {
-      //   widget.terminal.resize(termWidth, termHeight);
-      // });
-
-      Future.delayed(Duration.zero).then((_) {
+      SchedulerBinding.instance.addPostFrameCallback((_) {
         widget.terminal.resize(termWidth, termHeight);
       });
+
+      // Future.delayed(Duration.zero).then((_) {
+      //   widget.terminal.resize(termWidth, termHeight);
+      // });
     }
   }
 
@@ -258,9 +264,9 @@ class _TerminalViewState extends State<TerminalView> {
   }
 
   void onFocus(bool focused) {
-    this.focused = focused;
-    widget.terminal.debug.onMsg('focused $focused');
-    widget.terminal.refresh();
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      widget.terminal.refresh();
+    });
   }
 
   void onScroll(Offset offset) {
