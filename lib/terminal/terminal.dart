@@ -78,6 +78,7 @@ class Terminal with Observable {
   bool get originMode => _originMode;
   bool get lineFeed => _lineFeed;
   bool get newLineMode => !_lineFeed;
+  bool get bracketedPasteMode => _bracketedPasteMode;
 
   bool _showCursor = true;
   bool _applicationCursorKeys = false;
@@ -395,6 +396,14 @@ class Terminal with Observable {
     }
 
     return builder.toString();
+  }
+
+  void paste(String data) {
+    if (bracketedPasteMode) {
+      data = '\x1b[200~$data\x1b[201~';
+    }
+
+    onInput(data);
   }
 
   int get _tabIndexFromCursor {
