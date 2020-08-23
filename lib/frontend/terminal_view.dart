@@ -14,7 +14,7 @@ import 'package:xterm/frontend/input_listener.dart';
 import 'package:xterm/frontend/input_map.dart';
 import 'package:xterm/frontend/mouse_listener.dart';
 import 'package:xterm/frontend/oscillator.dart';
-import 'package:xterm/frontend/text_layout_cache.dart';
+import 'package:xterm/frontend/cache.dart';
 import 'package:xterm/mouse/position.dart';
 import 'package:xterm/terminal/terminal.dart';
 
@@ -280,8 +280,6 @@ class _TerminalViewState extends State<TerminalView> {
   }
 }
 
-final textLayoutCache = TextLayoutCache(TextDirection.ltr, 1024);
-
 class TerminalPainter extends CustomPainter {
   TerminalPainter({
     this.terminal,
@@ -309,6 +307,7 @@ class TerminalPainter extends CustomPainter {
     }
 
     paintText(canvas);
+    // print(textLayoutCacheV2.length);
     // or paintTextFast(canvas);
 
     paintSelection(canvas);
@@ -480,10 +479,12 @@ class TerminalPainter extends CustomPainter {
 
     final span = TextSpan(
       text: String.fromCharCode(cell.codePoint),
+      // text: codePointCache.getOrConstruct(cell.codePoint),
       style: style,
     );
 
-    final tp = textLayoutCache.getOrPerformLayout(span);
+    // final tp = textLayoutCache.getOrPerformLayout(span);
+    final tp = textLayoutCacheV2.getOrPerformLayout(span, cell.codePoint);
 
     tp.paint(canvas, Offset(offsetX, offsetY));
   }

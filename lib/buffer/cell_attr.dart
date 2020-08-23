@@ -60,31 +60,71 @@ class CellAttr {
     this.invisible = invisible;
   }
 
-  // CellAttr copyWith({
-  //   CellColor fgColour,
-  //   CellColor bgColour,
-  //   bool bold,
-  //   bool faint,
-  //   bool italic,
-  //   bool underline,
-  //   bool blink,
-  //   bool inverse,
-  //   bool invisible,
-  // }) {
-  //   return CellAttr(
-  //     fgColour: fgColour ?? this.fgColour,
-  //     bgColour: bgColour ?? this.bgColour,
-  //     bold: bold ?? this.bold,
-  //     faint: faint ?? this.faint,
-  //     italic: italic ?? this.italic,
-  //     underline: underline ?? this.underline,
-  //     blink: blink ?? this.blink,
-  //     inverse: inverse ?? this.inverse,
-  //     invisible: invisible ?? this.invisible,
-  //   );
-  // }
+  CellAttr copyWith({
+    CellColor fgColor,
+    CellColor bgColor,
+    bool bold,
+    bool faint,
+    bool italic,
+    bool underline,
+    bool blink,
+    bool inverse,
+    bool invisible,
+  }) {
+    return CellAttr(
+      fgColor: fgColor ?? this.fgColor,
+      bgColor: bgColor ?? this.bgColor,
+      bold: bold ?? this.bold,
+      faint: faint ?? this.faint,
+      italic: italic ?? this.italic,
+      underline: underline ?? this.underline,
+      blink: blink ?? this.blink,
+      inverse: inverse ?? this.inverse,
+      invisible: invisible ?? this.invisible,
+    );
+  }
 }
 
-// class CellAttrTemplate {
+class CellAttrTemplate {
+  CellAttrTemplate();
+  
+  CellAttr _attr;
 
-// }
+  set fgColor(CellColor value) {
+    _attr = _attr.copyWith(fgColor: value);
+  }
+
+  set bgColor(CellColor value) {
+    _attr = _attr.copyWith(bgColor: value);
+  }
+
+  set bold(bool value) {
+    _attr = _attr.copyWith(bold: value);
+  }
+
+  set faint(bool value) {
+    _attr = _attr.copyWith(faint: value);
+  }
+
+  set italic(bool value) {
+    _attr = _attr.copyWith(italic: value);
+  }
+
+  set underline(bool value) {
+    _attr = _attr.copyWith(underline: value);
+  }
+
+  set blink(bool value) {
+    _attr = _attr.copyWith(blink: value);
+  }
+
+  set inverse(bool value) {
+    _attr = _attr.copyWith(inverse: value);
+  }
+
+  set invisible(bool value) {
+    _attr = _attr.copyWith(invisible: value);
+  }
+
+  CellAttr get value {}
+}
