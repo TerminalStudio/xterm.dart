@@ -143,4 +143,9 @@ class TerminalTextInputClient extends TextInputClient {
   void connectionClosed() {
     // print('connectionClosed');
   }
+
+  @override
+  void performPrivateCommand(String action, Map<String, dynamic> data) {
+    // print('performPrivateCommand $action');
+  }
 }
