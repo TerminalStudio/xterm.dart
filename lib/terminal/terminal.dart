@@ -13,6 +13,7 @@ import 'package:xterm/input/keytab/keytab_escape.dart';
 import 'package:xterm/input/keytab/keytab_record.dart';
 import 'package:xterm/mouse/mouse_mode.dart';
 import 'package:xterm/terminal/ansi.dart';
+import 'package:xterm/terminal/platform.dart';
 import 'package:xterm/terminal/sbc.dart';
 import 'package:xterm/terminal/tabs.dart';
 import 'package:xterm/utli/debug_handler.dart';
@@ -29,6 +30,7 @@ class Terminal with Observable {
     this.onBell,
     this.onTitleChange,
     this.onIconChange,
+    this.platform = PlatformBehavior.unix,
     int maxLines,
   }) {
     _maxLines = maxLines;
@@ -113,6 +115,7 @@ class Terminal with Observable {
   final BellHandler onBell;
   final TitleChangeHandler onTitleChange;
   final IconChangeHandler onIconChange;
+  final PlatformBehavior platform;
 
   void close() {
     _input.close();
