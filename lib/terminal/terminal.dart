@@ -104,7 +104,7 @@ class Terminal with Observable {
   MouseMode get mouseMode => _mouseMode;
 
   final colorScheme = defaultColorScheme;
-  var cellAttr = CellAttr(fgColor: defaultColorScheme.foreground);
+  final cellAttr = CellAttrTemplate();
 
   final keytab = Keytab.defaultKeytab();
   final selection = Selection();

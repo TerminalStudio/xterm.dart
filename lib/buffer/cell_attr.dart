@@ -1,9 +1,10 @@
 import 'package:meta/meta.dart';
 import 'package:xterm/buffer/cell_color.dart';
+import 'package:xterm/utli/hash_values.dart';
 
 class CellAttr {
   CellAttr({
-    @required this.fgColor,
+    this.fgColor,
     this.bgColor,
     this.bold = false,
     this.faint = false,
@@ -12,53 +13,69 @@ class CellAttr {
     this.blink = false,
     this.inverse = false,
     this.invisible = false,
-  });
+  }) : hashCode = hashValues(
+          fgColor,
+          bgColor,
+          bold,
+          faint,
+          italic,
+          underline,
+          blink,
+          inverse,
+          invisible,
+        );
 
-  CellColor fgColor;
-  CellColor bgColor;
-  bool bold;
-  bool faint;
-  bool italic;
-  bool underline;
-  bool blink;
-  bool inverse;
-  bool invisible;
+  final CellColor fgColor;
+  final CellColor bgColor;
+  final bool bold;
+  final bool faint;
+  final bool italic;
+  final bool underline;
+  final bool blink;
+  final bool inverse;
+  final bool invisible;
 
-  CellAttr copy() {
-    return CellAttr(
-      fgColor: this.fgColor,
-      bgColor: this.bgColor,
-      bold: this.bold,
-      faint: this.faint,
-      italic: this.italic,
-      underline: this.underline,
-      blink: this.blink,
-      inverse: this.inverse,
-      invisible: this.invisible,
-    );
-  }
+  @override
+  final int hashCode;
 
-  void reset({
-    @required fgColor,
-    bgColor,
-    bold = false,
-    faint = false,
-    italic = false,
-    underline = false,
-    blink = false,
-    inverse = false,
-    invisible = false,
-  }) {
-    this.fgColor = fgColor;
-    this.bgColor = bgColor;
-    this.bold = bold;
-    this.faint = faint;
-    this.italic = italic;
-    this.underline = underline;
-    this.blink = blink;
-    this.inverse = inverse;
-    this.invisible = invisible;
-  }
+  @override
+  bool operator ==(Object other) => other.hashCode == hashCode;
+
+  // CellAttr copy() {
+  //   return CellAttr(
+  //     fgColor: this.fgColor,
+  //     bgColor: this.bgColor,
+  //     bold: this.bold,
+  //     faint: this.faint,
+  //     italic: this.italic,
+  //     underline: this.underline,
+  //     blink: this.blink,
+  //     inverse: this.inverse,
+  //     invisible: this.invisible,
+  //   );
+  // }
+
+  // void reset({
+  //   @required fgColor,
+  //   bgColor,
+  //   bold = false,
+  //   faint = false,
+  //   italic = false,
+  //   underline = false,
+  //   blink = false,
+  //   inverse = false,
+  //   invisible = false,
+  // }) {
+  //   this.fgColor = fgColor;
+  //   this.bgColor = bgColor;
+  //   this.bold = bold;
+  //   this.faint = faint;
+  //   this.italic = italic;
+  //   this.underline = underline;
+  //   this.blink = blink;
+  //   this.inverse = inverse;
+  //   this.invisible = invisible;
+  // }
 
   CellAttr copyWith({
     CellColor fgColor,
@@ -86,8 +103,10 @@ class CellAttr {
 }
 
 class CellAttrTemplate {
-  CellAttrTemplate();
-  
+  CellAttrTemplate() {
+    reset();
+  }
+
   CellAttr _attr;
 
   set fgColor(CellColor value) {
@@ -126,5 +145,13 @@ class CellAttrTemplate {
     _attr = _attr.copyWith(invisible: value);
   }
 
-  CellAttr get value {}
+  CellAttr get value => _attr;
+
+  void reset() {
+    _attr = CellAttr();
+  }
+
+  void use(CellAttr attr) {
+    _attr = attr;
+  }
 }

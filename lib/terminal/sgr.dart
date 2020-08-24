@@ -20,7 +20,7 @@ void sgrHandler(CSI csi, Terminal terminal) {
       case '':
       case '0':
       case '00':
-        terminal.cellAttr.reset(fgColor: terminal.colorScheme.foreground);
+        terminal.cellAttr.reset();
         break;
       case '1':
       case '01':

@@ -17,6 +17,7 @@ import 'package:xterm/frontend/oscillator.dart';
 import 'package:xterm/frontend/cache.dart';
 import 'package:xterm/mouse/position.dart';
 import 'package:xterm/terminal/terminal.dart';
+import 'package:xterm/utli/hash_values.dart';
 
 typedef ResizeHandler = void Function(int width, int height);
 
@@ -459,7 +460,7 @@ class TerminalPainter extends CustomPainter {
 
     final cellColor = cell.attr.inverse
         ? cell.attr.bgColor ?? terminal.colorScheme.background
-        : cell.attr.fgColor;
+        : cell.attr.fgColor ?? terminal.colorScheme.foreground;
 
     var color = Color(cellColor.value);
 
@@ -484,7 +485,7 @@ class TerminalPainter extends CustomPainter {
     );
 
     // final tp = textLayoutCache.getOrPerformLayout(span);
-    final tp = textLayoutCacheV2.getOrPerformLayout(span, cell.codePoint);
+    final tp = textLayoutCacheV2.getOrPerformLayout(span, hashValues(cell.codePoint, cell.attr));
 
     tp.paint(canvas, Offset(offsetX, offsetY));
   }
