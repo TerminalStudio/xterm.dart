@@ -67,7 +67,7 @@ class TerminalView extends StatefulWidget {
   final double fontHeightScaleFactor;
   final List<String> fontFamily;
 
-  CharSize getCharSize() {
+  CellSize getCharSize() {
     final testString = 'xxxxxxxxxx' * 1000;
     final text = Text(
       testString,
@@ -86,11 +86,11 @@ class TerminalView extends StatefulWidget {
 
     // final ls
 
-    return CharSize(
-      width: width,
-      height: height,
-      effectWidth: effectWidth,
-      effectHeight: effectHeight,
+    return CellSize(
+      charWidth: width,
+      charHeight: height,
+      cellWidth: effectWidth,
+      cellHeight: effectHeight,
       letterSpacing: effectWidth - width,
       lineSpacing: effectHeight - height,
     );
@@ -109,7 +109,7 @@ class _TerminalViewState extends State<TerminalView> {
 
   int _lastTerminalWidth;
   int _lastTerminalHeight;
-  CharSize _charSize;
+  CellSize _charSize;
   ViewportOffset _offset;
 
   var _minScrollExtent = 0.0;
@@ -208,7 +208,7 @@ class _TerminalViewState extends State<TerminalView> {
               _minScrollExtent = 0.0;
               _maxScrollExtent = math.max(
                   0.0,
-                  _charSize.effectHeight * widget.terminal.buffer.height -
+                  _charSize.cellHeight * widget.terminal.buffer.height -
                       constraints.maxHeight);
 
               offset.applyContentDimensions(_minScrollExtent, _maxScrollExtent);
@@ -225,8 +225,8 @@ class _TerminalViewState extends State<TerminalView> {
   }
 
   Position getMouseOffset(double px, double py) {
-    final col = (px / _charSize.effectWidth).floor();
-    final row = (py / _charSize.effectHeight).floor();
+    final col = (px / _charSize.cellWidth).floor();
+    final row = (py / _charSize.cellHeight).floor();
 
     final x = col;
     final y = widget.terminal.buffer.convertViewLineToRawLine(row) -
@@ -236,8 +236,8 @@ class _TerminalViewState extends State<TerminalView> {
   }
 
   void onResize(double width, double height) {
-    final termWidth = (width / _charSize.effectWidth).floor();
-    final termHeight = (height / _charSize.effectHeight).floor();
+    final termWidth = (width / _charSize.cellWidth).floor();
+    final termHeight = (height / _charSize.cellHeight).floor();
 
     if (_lastTerminalWidth != termWidth || _lastTerminalHeight != termHeight) {
       _lastTerminalWidth = termWidth;
@@ -289,7 +289,7 @@ class _TerminalViewState extends State<TerminalView> {
   }
 
   void onScroll() {
-    final charOffset = (_offset.pixels / _charSize.effectHeight).ceil();
+    final charOffset = (_offset.pixels / _charSize.cellHeight).ceil();
     final offset = widget.terminal.invisibleHeight - charOffset;
     widget.terminal.buffer.setScrollOffset(offset);
   }
@@ -308,7 +308,7 @@ class TerminalPainter extends CustomPainter {
   final TerminalView view;
   final Oscillator oscillator;
   final bool focused;
-  final CharSize charSize;
+  final CellSize charSize;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -333,7 +333,7 @@ class TerminalPainter extends CustomPainter {
 
     for (var i = 0; i < lines.length; i++) {
       final line = lines[i];
-      final offsetY = i * charSize.effectHeight;
+      final offsetY = i * charSize.cellHeight;
       final cellCount = math.min(terminal.viewWidth, line.length);
 
       for (var i = 0; i < cellCount; i++) {
@@ -343,9 +343,9 @@ class TerminalPainter extends CustomPainter {
           continue;
         }
 
-        final offsetX = i * charSize.effectWidth;
-        final effectWidth = charSize.effectWidth * cell.width + 1;
-        final effectHeight = charSize.effectHeight + 1;
+        final offsetX = i * charSize.cellWidth;
+        final effectWidth = charSize.cellWidth * cell.width + 1;
+        final effectHeight = charSize.cellHeight + 1;
 
         final bgColor =
             cell.attr.inverse ? cell.attr.fgColor : cell.attr.bgColor;
@@ -365,7 +365,7 @@ class TerminalPainter extends CustomPainter {
 
   void paintSelection(Canvas canvas) {
     for (var y = 0; y < terminal.viewHeight; y++) {
-      final offsetY = y * charSize.effectHeight;
+      final offsetY = y * charSize.cellHeight;
       final absoluteY = terminal.buffer.convertViewLineToRawLine(y) -
           terminal.buffer.scrollOffset;
 
@@ -382,9 +382,9 @@ class TerminalPainter extends CustomPainter {
           continue;
         }
 
-        final offsetX = x * charSize.effectWidth;
-        final effectWidth = cellCount * charSize.effectWidth;
-        final effectHeight = charSize.effectHeight;
+        final offsetX = x * charSize.cellWidth;
+        final effectWidth = cellCount * charSize.cellWidth;
+        final effectHeight = charSize.cellHeight;
 
         final paint = Paint()..color = Colors.white.withOpacity(0.3);
         canvas.drawRect(
@@ -402,7 +402,7 @@ class TerminalPainter extends CustomPainter {
 
     for (var i = 0; i < lines.length; i++) {
       final line = lines[i];
-      final offsetY = i * charSize.effectHeight;
+      final offsetY = i * charSize.cellHeight;
       final cellCount = math.min(terminal.viewWidth, line.length);
 
       for (var i = 0; i < cellCount; i++) {
@@ -412,7 +412,7 @@ class TerminalPainter extends CustomPainter {
           continue;
         }
 
-        final offsetX = i * charSize.effectWidth;
+        final offsetX = i * charSize.cellWidth;
         paintCell(canvas, cell, offsetX, offsetY);
       }
     }
@@ -423,7 +423,7 @@ class TerminalPainter extends CustomPainter {
 
     for (var i = 0; i < lines.length; i++) {
       final line = lines[i];
-      final offsetY = i * charSize.effectHeight;
+      final offsetY = i * charSize.cellHeight;
       final cellCount = math.min(terminal.viewWidth, line.length);
 
       final builder = StringBuffer();
@@ -513,16 +513,16 @@ class TerminalPainter extends CustomPainter {
 
     final char = terminal.buffer.getCellUnderCursor();
     final width =
-        char != null ? charSize.effectWidth * char.width : charSize.effectWidth;
+        char != null ? charSize.cellWidth * char.width : charSize.cellWidth;
 
-    final offsetX = charSize.effectWidth * terminal.cursorX;
-    final offsetY = charSize.effectHeight * screenCursorY;
+    final offsetX = charSize.cellWidth * terminal.cursorX;
+    final offsetY = charSize.cellHeight * screenCursorY;
     final paint = Paint()
       ..color = Color(terminal.colorScheme.cursor.value)
       ..strokeWidth = focused ? 0.0 : 1.0
       ..style = focused ? PaintingStyle.fill : PaintingStyle.stroke;
     canvas.drawRect(
-        Rect.fromLTWH(offsetX, offsetY, width, charSize.effectHeight), paint);
+        Rect.fromLTWH(offsetX, offsetY, width, charSize.cellHeight), paint);
   }
 
   @override
