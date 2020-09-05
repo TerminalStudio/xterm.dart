@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:math' show max;
+import 'dart:math' show max, min;
 
 import 'package:async/async.dart';
 import 'package:xterm/buffer/buffer.dart';
@@ -69,6 +69,9 @@ class Terminal with Observable {
 
   int get viewWidth => _viewWidth;
   int get viewHeight => _viewHeight;
+
+  int get visibleHeight => min(_viewHeight, buffer.height);
+  int get invisibleHeight => buffer.height - visibleHeight;
 
   bool _originMode = false;
   bool _replaceMode = false;

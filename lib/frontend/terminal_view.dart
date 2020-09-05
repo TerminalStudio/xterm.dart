@@ -110,6 +110,10 @@ class _TerminalViewState extends State<TerminalView> {
   int _lastTerminalWidth;
   int _lastTerminalHeight;
   CharSize _charSize;
+  ViewportOffset _offset;
+
+  var _minScrollExtent = 0.0;
+  var _maxScrollExtent = 0.0;
 
   void onTerminalChange() {
     if (mounted) {
@@ -195,13 +199,27 @@ class _TerminalViewState extends State<TerminalView> {
       autofocus: true,
       child: MouseRegion(
         cursor: SystemMouseCursors.text,
-        child: MouseListener(
-          onScroll: onScroll,
-          child: LayoutBuilder(builder: (context, constraints) {
-            onResize(constraints.maxWidth, constraints.maxHeight);
-            return result;
-          }),
-        ),
+        child: LayoutBuilder(builder: (context, constraints) {
+          onResize(constraints.maxWidth, constraints.maxHeight);
+          return Scrollable(
+            viewportBuilder: (context, offset) {
+              offset.applyViewportDimension(constraints.maxHeight);
+
+              _minScrollExtent = 0.0;
+              _maxScrollExtent = math.max(
+                  0.0,
+                  _charSize.effectHeight * widget.terminal.buffer.height -
+                      constraints.maxHeight);
+
+              offset.applyContentDimensions(_minScrollExtent, _maxScrollExtent);
+
+              _offset = offset;
+              _offset.addListener(onScroll);
+
+              return result;
+            },
+          );
+        }),
       ),
     );
   }
@@ -261,7 +279,7 @@ class _TerminalViewState extends State<TerminalView> {
       );
     }
 
-    widget.terminal.buffer.setScrollOffset(0);
+    _offset.moveTo(_maxScrollExtent);
   }
 
   void onFocus(bool focused) {
@@ -270,14 +288,10 @@ class _TerminalViewState extends State<TerminalView> {
     });
   }
 
-  void onScroll(Offset offset) {
-    final delta = math.max(1, offset.dy.abs() ~/ 10);
-
-    if (offset.dy > 0) {
-      widget.terminal.buffer.screenScrollDown(delta);
-    } else if (offset.dy < 0) {
-      widget.terminal.buffer.screenScrollUp(delta);
-    }
+  void onScroll() {
+    final charOffset = (_offset.pixels / _charSize.effectHeight).ceil();
+    final offset = widget.terminal.invisibleHeight - charOffset;
+    widget.terminal.buffer.setScrollOffset(offset);
   }
 }
 
@@ -485,7 +499,8 @@ class TerminalPainter extends CustomPainter {
     );
 
     // final tp = textLayoutCache.getOrPerformLayout(span);
-    final tp = textLayoutCacheV2.getOrPerformLayout(span, hashValues(cell.codePoint, cell.attr));
+    final tp = textLayoutCacheV2.getOrPerformLayout(
+        span, hashValues(cell.codePoint, cell.attr));
 
     tp.paint(canvas, Offset(offsetX, offsetY));
   }
