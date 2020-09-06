@@ -4,7 +4,12 @@ import 'package:meta/meta.dart';
 
 typedef KeyStrokeHandler = void Function(RawKeyEvent);
 typedef InputHandler = void Function(String);
+typedef ActionHandler = void Function(TextInputAction);
 typedef FocusHandler = void Function(bool);
+
+abstract class InputListenerController {
+  void requestKeyboard();
+}
 
 class InputListener extends StatefulWidget {
   InputListener({
@@ -25,25 +30,30 @@ class InputListener extends StatefulWidget {
 
   @override
   InputListenerState createState() => InputListenerState();
+
+  static InputListenerController of(BuildContext context) {
+    return context.findAncestorStateOfType<InputListenerState>();
+  }
 }
 
-class InputListenerState extends State<InputListener> {
+class InputListenerState extends State<InputListener>
+    implements InputListenerController {
   var focused = false;
   TextInputConnection conn;
 
   @override
   void initState() {
     focused = widget.focusNode.hasFocus;
-    widget.focusNode.addListener(onFocus);
+    widget.focusNode.addListener(onFocusChange);
     super.initState();
   }
 
   @override
   void didUpdateWidget(InputListener oldWidget) {
-    oldWidget.focusNode.removeListener(onFocus);
-    widget.focusNode.addListener(onFocus);
+    oldWidget.focusNode.removeListener(onFocusChange);
+    widget.focusNode.addListener(onFocusChange);
 
-    onFocus();
+    onFocusChange();
 
     super.didUpdateWidget(oldWidget);
   }
@@ -58,7 +68,15 @@ class InputListenerState extends State<InputListener> {
     );
   }
 
-  void onFocus() {
+  void requestKeyboard() {
+    if (widget.focusNode.hasFocus) {
+      openInputConnection();
+    } else {
+      widget.focusNode.requestFocus();
+    }
+  }
+
+  void onFocusChange() {
     if (focused == widget.focusNode.hasFocus) {
       return;
     }
@@ -69,38 +87,58 @@ class InputListenerState extends State<InputListener> {
       widget.onFocus(focused);
     }
 
-    if (focused) {
-      openTextInput();
+    openOrCloseInputConnectionIfNeeded();
+  }
+
+  void openOrCloseInputConnectionIfNeeded() {
+    if (widget.focusNode.hasFocus && widget.focusNode.consumeKeyboardToken()) {
+      openInputConnection();
+    } else if (!widget.focusNode.hasFocus) {
+      closeInputConnectionIfNeeded();
     }
   }
 
-  void openTextInput() {
-    final config = TextInputConfiguration();
-    conn = TextInput.attach(
-      TerminalTextInputClient(onInput),
-      config,
-    );
+  void openInputConnection() {
+    if (conn != null && conn.attached) {
+      conn.show();
+    } else {
+      final config = TextInputConfiguration();
+      final client = TerminalTextInputClient(onInput, onAction);
+      conn = TextInput.attach(client, config);
 
-    final dx = 0.0;
-    final dy = 0.0;
-    conn.setEditableSizeAndTransform(
-      Size(10, 10),
-      Matrix4.translationValues(dx, dy, 0.0),
-    );
+      final dx = 0.0;
+      final dy = 0.0;
+      conn.setEditableSizeAndTransform(
+        Size(10, 10),
+        Matrix4.translationValues(dx, dy, 0.0),
+      );
 
-    conn.show();
+      conn.show();
+    }
+  }
+
+  void closeInputConnectionIfNeeded() {
+    if (conn != null && conn.attached) {
+      conn.close();
+      conn = null;
+    }
   }
 
   void onInput(String text) {
     widget.onInput(text);
     conn?.setEditingState(TextEditingValue.empty);
   }
+
+  void onAction(TextInputAction action) {
+    //
+  }
 }
 
 class TerminalTextInputClient extends TextInputClient {
-  TerminalTextInputClient(this.onInput);
+  TerminalTextInputClient(this.onInput, this.onAction);
 
   final InputHandler onInput;
+  final ActionHandler onAction;
 
   TextEditingValue _savedValue;
 

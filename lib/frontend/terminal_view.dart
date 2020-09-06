@@ -12,7 +12,6 @@ import 'package:xterm/frontend/char_size.dart';
 import 'package:xterm/frontend/helpers.dart';
 import 'package:xterm/frontend/input_listener.dart';
 import 'package:xterm/frontend/input_map.dart';
-import 'package:xterm/frontend/mouse_listener.dart';
 import 'package:xterm/frontend/oscillator.dart';
 import 'package:xterm/frontend/cache.dart';
 import 'package:xterm/mouse/position.dart';
@@ -54,21 +53,25 @@ class TerminalView extends StatefulWidget {
     this.fontWidthScaleFactor = 1.0,
     this.fontHeightScaleFactor = 1.1,
     FocusNode focusNode,
+    ScrollController scrollController,
   })  : assert(terminal != null),
         focusNode = focusNode ?? FocusNode(),
+        scrollController = scrollController ?? ScrollController(),
         super(key: key ?? ValueKey(terminal));
 
   final Terminal terminal;
   final ResizeHandler onResize;
   final FocusNode focusNode;
+  final ScrollController scrollController;
 
   final double fontSize;
   final double fontWidthScaleFactor;
   final double fontHeightScaleFactor;
   final List<String> fontFamily;
 
-  CellSize getCharSize() {
+  CellSize measureCellSize() {
     final testString = 'xxxxxxxxxx' * 1000;
+
     final text = Text(
       testString,
       style: TextStyle(
@@ -76,23 +79,22 @@ class TerminalView extends StatefulWidget {
         fontSize: fontSize,
       ),
     );
+
     final size = textSize(text);
 
-    final width = (size.width / testString.length);
-    final height = size.height;
+    final charWidth = (size.width / testString.length);
+    final charHeight = size.height;
 
-    final effectWidth = width * fontWidthScaleFactor;
-    final effectHeight = size.height * fontHeightScaleFactor;
-
-    // final ls
+    final cellWidth = charWidth * fontWidthScaleFactor;
+    final cellHeight = size.height * fontHeightScaleFactor;
 
     return CellSize(
-      charWidth: width,
-      charHeight: height,
-      cellWidth: effectWidth,
-      cellHeight: effectHeight,
-      letterSpacing: effectWidth - width,
-      lineSpacing: effectHeight - height,
+      charWidth: charWidth,
+      charHeight: charHeight,
+      cellWidth: cellWidth,
+      cellHeight: cellHeight,
+      letterSpacing: cellWidth - charWidth,
+      lineSpacing: cellHeight - charHeight,
     );
   }
 
@@ -109,7 +111,7 @@ class _TerminalViewState extends State<TerminalView> {
 
   int _lastTerminalWidth;
   int _lastTerminalHeight;
-  CellSize _charSize;
+  CellSize _cellSize;
   ViewportOffset _offset;
 
   var _minScrollExtent = 0.0;
@@ -129,7 +131,7 @@ class _TerminalViewState extends State<TerminalView> {
   void initState() {
     // oscillator.start();
     // oscillator.addListener(onTick);
-    _charSize = widget.getCharSize();
+    _cellSize = widget.measureCellSize();
     widget.terminal.addListener(onTerminalChange);
     super.initState();
   }
@@ -152,45 +154,6 @@ class _TerminalViewState extends State<TerminalView> {
 
   @override
   Widget build(BuildContext context) {
-    Widget result = Container(
-      constraints: BoxConstraints.expand(),
-      color: Color(widget.terminal.colorScheme.background.value),
-      child: CustomPaint(
-        painter: TerminalPainter(
-          terminal: widget.terminal,
-          view: widget,
-          oscillator: oscillator,
-          focused: focused,
-          charSize: _charSize,
-        ),
-      ),
-    );
-
-    result = GestureDetector(
-      child: result,
-      behavior: HitTestBehavior.deferToChild,
-      dragStartBehavior: DragStartBehavior.down,
-      onTapDown: (detail) {
-        widget.focusNode.requestFocus();
-        final pos = detail.localPosition;
-        final offset = getMouseOffset(pos.dx, pos.dy);
-        widget.terminal.mouseMode.onTap(widget.terminal, offset);
-        widget.terminal.refresh();
-      },
-      onPanStart: (detail) {
-        final pos = detail.localPosition;
-        final offset = getMouseOffset(pos.dx, pos.dy);
-        widget.terminal.mouseMode.onPanStart(widget.terminal, offset);
-        widget.terminal.refresh();
-      },
-      onPanUpdate: (detail) {
-        final pos = detail.localPosition;
-        final offset = getMouseOffset(pos.dx, pos.dy);
-        widget.terminal.mouseMode.onPanUpdate(widget.terminal, offset);
-        widget.terminal.refresh();
-      },
-    );
-
     return InputListener(
       onKeyStroke: onKeyStroke,
       onInput: onInput,
@@ -208,7 +171,7 @@ class _TerminalViewState extends State<TerminalView> {
               _minScrollExtent = 0.0;
               _maxScrollExtent = math.max(
                   0.0,
-                  _charSize.cellHeight * widget.terminal.buffer.height -
+                  _cellSize.cellHeight * widget.terminal.buffer.height -
                       constraints.maxHeight);
 
               offset.applyContentDimensions(_minScrollExtent, _maxScrollExtent);
@@ -216,7 +179,7 @@ class _TerminalViewState extends State<TerminalView> {
               _offset = offset;
               _offset.addListener(onScroll);
 
-              return result;
+              return buildTerminal(context);
             },
           );
         }),
@@ -224,9 +187,48 @@ class _TerminalViewState extends State<TerminalView> {
     );
   }
 
+  Widget buildTerminal(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.deferToChild,
+      dragStartBehavior: DragStartBehavior.down,
+      onTapDown: (detail) {
+        InputListener.of(context).requestKeyboard();
+        final pos = detail.localPosition;
+        final offset = getMouseOffset(pos.dx, pos.dy);
+        widget.terminal.mouseMode.onTap(widget.terminal, offset);
+        widget.terminal.refresh();
+      },
+      onPanStart: (detail) {
+        final pos = detail.localPosition;
+        final offset = getMouseOffset(pos.dx, pos.dy);
+        widget.terminal.mouseMode.onPanStart(widget.terminal, offset);
+        widget.terminal.refresh();
+      },
+      onPanUpdate: (detail) {
+        final pos = detail.localPosition;
+        final offset = getMouseOffset(pos.dx, pos.dy);
+        widget.terminal.mouseMode.onPanUpdate(widget.terminal, offset);
+        widget.terminal.refresh();
+      },
+      child: Container(
+        constraints: BoxConstraints.expand(),
+        color: Color(widget.terminal.colorScheme.background.value),
+        child: CustomPaint(
+          painter: TerminalPainter(
+            terminal: widget.terminal,
+            view: widget,
+            oscillator: oscillator,
+            focused: focused,
+            charSize: _cellSize,
+          ),
+        ),
+      ),
+    );
+  }
+
   Position getMouseOffset(double px, double py) {
-    final col = (px / _charSize.cellWidth).floor();
-    final row = (py / _charSize.cellHeight).floor();
+    final col = (px / _cellSize.cellWidth).floor();
+    final row = (py / _cellSize.cellHeight).floor();
 
     final x = col;
     final y = widget.terminal.buffer.convertViewLineToRawLine(row) -
@@ -236,8 +238,8 @@ class _TerminalViewState extends State<TerminalView> {
   }
 
   void onResize(double width, double height) {
-    final termWidth = (width / _charSize.cellWidth).floor();
-    final termHeight = (height / _charSize.cellHeight).floor();
+    final termWidth = (width / _cellSize.cellWidth).floor();
+    final termHeight = (height / _cellSize.cellHeight).floor();
 
     if (_lastTerminalWidth != termWidth || _lastTerminalHeight != termHeight) {
       _lastTerminalWidth = termWidth;
@@ -289,7 +291,7 @@ class _TerminalViewState extends State<TerminalView> {
   }
 
   void onScroll() {
-    final charOffset = (_offset.pixels / _charSize.cellHeight).ceil();
+    final charOffset = (_offset.pixels / _cellSize.cellHeight).ceil();
     final offset = widget.terminal.invisibleHeight - charOffset;
     widget.terminal.buffer.setScrollOffset(offset);
   }
