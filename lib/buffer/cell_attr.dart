@@ -1,5 +1,4 @@
-import 'package:meta/meta.dart';
-import 'package:xterm/buffer/cell_color.dart';
+import 'package:xterm/theme/terminal_color.dart';
 import 'package:xterm/utli/hash_values.dart';
 
 class CellAttr {
@@ -25,8 +24,8 @@ class CellAttr {
           invisible,
         );
 
-  final CellColor fgColor;
-  final CellColor bgColor;
+  final TerminalColor fgColor;
+  final TerminalColor bgColor;
   final bool bold;
   final bool faint;
   final bool italic;
@@ -78,8 +77,8 @@ class CellAttr {
   // }
 
   CellAttr copyWith({
-    CellColor fgColor,
-    CellColor bgColor,
+    TerminalColor fgColor,
+    TerminalColor bgColor,
     bool bold,
     bool faint,
     bool italic,
@@ -109,11 +108,11 @@ class CellAttrTemplate {
 
   CellAttr _attr;
 
-  set fgColor(CellColor value) {
+  set fgColor(TerminalColor value) {
     _attr = _attr.copyWith(fgColor: value);
   }
 
-  set bgColor(CellColor value) {
+  set bgColor(TerminalColor value) {
     _attr = _attr.copyWith(bgColor: value);
   }
 

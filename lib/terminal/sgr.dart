@@ -1,6 +1,16 @@
-import 'package:xterm/buffer/cell_color.dart';
+import 'package:xterm/theme/terminal_color.dart';
 import 'package:xterm/terminal/csi.dart';
 import 'package:xterm/terminal/terminal.dart';
+import 'package:xterm/theme/terminal_color_ref.dart';
+
+// reference to color
+class Cr implements TerminalColor {
+  Cr(this.getter);
+
+  final TerminalColor Function() getter;
+
+  int get value => getter().value;
+}
 
 /// SGR selects one or more character attributes at the same time.
 /// Multiple params (up to 32) are applied from in order from left to right.
@@ -75,106 +85,106 @@ void sgrHandler(CSI csi, Terminal terminal) {
         // not strikethrough
         break;
       case '39':
-        terminal.cellAttr.fgColor = terminal.colorScheme.foreground;
+        terminal.cellAttr.fgColor = Cr(() => terminal.theme.foreground);
         break;
       case '30':
-        terminal.cellAttr.fgColor = terminal.colorScheme.black;
+        terminal.cellAttr.fgColor = Cr(() => terminal.theme.black);
         break;
       case '31':
-        terminal.cellAttr.fgColor = terminal.colorScheme.red;
+        terminal.cellAttr.fgColor = Cr(() => terminal.theme.red);
         break;
       case '32':
-        terminal.cellAttr.fgColor = terminal.colorScheme.green;
+        terminal.cellAttr.fgColor = Cr(() => terminal.theme.green);
         break;
       case '33':
-        terminal.cellAttr.fgColor = terminal.colorScheme.yellow;
+        terminal.cellAttr.fgColor = Cr(() => terminal.theme.yellow);
         break;
       case '34':
-        terminal.cellAttr.fgColor = terminal.colorScheme.blue;
+        terminal.cellAttr.fgColor = Cr(() => terminal.theme.blue);
         break;
       case '35':
-        terminal.cellAttr.fgColor = terminal.colorScheme.magenta;
+        terminal.cellAttr.fgColor = Cr(() => terminal.theme.magenta);
         break;
       case '36':
-        terminal.cellAttr.fgColor = terminal.colorScheme.cyan;
+        terminal.cellAttr.fgColor = Cr(() => terminal.theme.cyan);
         break;
       case '37':
-        terminal.cellAttr.fgColor = terminal.colorScheme.white;
+        terminal.cellAttr.fgColor = Cr(() => terminal.theme.white);
         break;
       case '90':
-        terminal.cellAttr.fgColor = terminal.colorScheme.brightBlack;
+        terminal.cellAttr.fgColor = Cr(() => terminal.theme.brightBlack);
         break;
       case '91':
-        terminal.cellAttr.fgColor = terminal.colorScheme.brightRed;
+        terminal.cellAttr.fgColor = Cr(() => terminal.theme.brightRed);
         break;
       case '92':
-        terminal.cellAttr.fgColor = terminal.colorScheme.brightGreen;
+        terminal.cellAttr.fgColor = Cr(() => terminal.theme.brightGreen);
         break;
       case '93':
-        terminal.cellAttr.fgColor = terminal.colorScheme.brightYellow;
+        terminal.cellAttr.fgColor = Cr(() => terminal.theme.brightYellow);
         break;
       case '94':
-        terminal.cellAttr.fgColor = terminal.colorScheme.brightBlue;
+        terminal.cellAttr.fgColor = Cr(() => terminal.theme.brightBlue);
         break;
       case '95':
-        terminal.cellAttr.fgColor = terminal.colorScheme.brightMagenta;
+        terminal.cellAttr.fgColor = Cr(() => terminal.theme.brightMagenta);
         break;
       case '96':
-        terminal.cellAttr.fgColor = terminal.colorScheme.brightCyan;
+        terminal.cellAttr.fgColor = Cr(() => terminal.theme.brightCyan);
         break;
       case '97':
-        terminal.cellAttr.fgColor = terminal.colorScheme.white;
+        terminal.cellAttr.fgColor = Cr(() => terminal.theme.white);
         break;
       case '49':
-        terminal.cellAttr.bgColor = terminal.colorScheme.background;
+        terminal.cellAttr.bgColor = Cr(() => terminal.theme.background);
         break;
       case '40':
-        terminal.cellAttr.bgColor = terminal.colorScheme.black;
+        terminal.cellAttr.bgColor = Cr(() => terminal.theme.black);
         break;
       case '41':
-        terminal.cellAttr.bgColor = terminal.colorScheme.red;
+        terminal.cellAttr.bgColor = Cr(() => terminal.theme.red);
         break;
       case '42':
-        terminal.cellAttr.bgColor = terminal.colorScheme.green;
+        terminal.cellAttr.bgColor = Cr(() => terminal.theme.green);
         break;
       case '43':
-        terminal.cellAttr.bgColor = terminal.colorScheme.yellow;
+        terminal.cellAttr.bgColor = Cr(() => terminal.theme.yellow);
         break;
       case '44':
-        terminal.cellAttr.bgColor = terminal.colorScheme.blue;
+        terminal.cellAttr.bgColor = Cr(() => terminal.theme.blue);
         break;
       case '45':
-        terminal.cellAttr.bgColor = terminal.colorScheme.magenta;
+        terminal.cellAttr.bgColor = Cr(() => terminal.theme.magenta);
         break;
       case '46':
-        terminal.cellAttr.bgColor = terminal.colorScheme.cyan;
+        terminal.cellAttr.bgColor = Cr(() => terminal.theme.cyan);
         break;
       case '47':
-        terminal.cellAttr.bgColor = terminal.colorScheme.white;
+        terminal.cellAttr.bgColor = Cr(() => terminal.theme.white);
         break;
       case '100':
-        terminal.cellAttr.bgColor = terminal.colorScheme.brightBlack;
+        terminal.cellAttr.bgColor = Cr(() => terminal.theme.brightBlack);
         break;
       case '101':
-        terminal.cellAttr.bgColor = terminal.colorScheme.brightRed;
+        terminal.cellAttr.bgColor = Cr(() => terminal.theme.brightRed);
         break;
       case '102':
-        terminal.cellAttr.bgColor = terminal.colorScheme.brightGreen;
+        terminal.cellAttr.bgColor = Cr(() => terminal.theme.brightGreen);
         break;
       case '103':
-        terminal.cellAttr.bgColor = terminal.colorScheme.brightYellow;
+        terminal.cellAttr.bgColor = Cr(() => terminal.theme.brightYellow);
         break;
       case '104':
-        terminal.cellAttr.bgColor = terminal.colorScheme.brightBlue;
+        terminal.cellAttr.bgColor = Cr(() => terminal.theme.brightBlue);
         break;
       case '105':
-        terminal.cellAttr.bgColor = terminal.colorScheme.brightMagenta;
+        terminal.cellAttr.bgColor = Cr(() => terminal.theme.brightMagenta);
         break;
       case '106':
-        terminal.cellAttr.bgColor = terminal.colorScheme.brightCyan;
+        terminal.cellAttr.bgColor = Cr(() => terminal.theme.brightCyan);
         break;
       case '107':
-        terminal.cellAttr.bgColor = terminal.colorScheme.white;
+        terminal.cellAttr.bgColor = Cr(() => terminal.theme.white);
         break;
       case '38': // set foreground
         final color = parseAnsiColour(params.sublist(i), terminal);
@@ -190,7 +200,7 @@ void sgrHandler(CSI csi, Terminal terminal) {
   }
 }
 
-CellColor parseAnsiColour(List<String> params, Terminal terminal) {
+TerminalColor parseAnsiColour(List<String> params, Terminal terminal) {
   if (params.length > 2) {
     switch (params[1]) {
       case "5":
@@ -198,14 +208,14 @@ CellColor parseAnsiColour(List<String> params, Terminal terminal) {
         final colNum = int.tryParse(params[2]);
 
         if (colNum == null || colNum >= 256 || colNum < 0) {
-          return CellColor.empty();
+          return TerminalColor.empty();
         }
 
         return parse8BitSgrColour(colNum, terminal);
 
       case "2":
         if (params.length < 4) {
-          return CellColor.empty();
+          return TerminalColor.empty();
         }
 
         // 24 bit colour
@@ -215,10 +225,10 @@ CellColor parseAnsiColour(List<String> params, Terminal terminal) {
           final b = int.tryParse(params[4]);
 
           if (r == null || g == null || b == null) {
-            return CellColor.empty();
+            return TerminalColor.empty();
           }
 
-          return CellColor.fromARGB(0xff, r, g, b);
+          return TerminalColor.fromARGB(0xff, r, g, b);
         }
 
         if (params.length > 5) {
@@ -228,15 +238,15 @@ CellColor parseAnsiColour(List<String> params, Terminal terminal) {
           final b = int.tryParse(params[5]);
 
           if (r == null || g == null || b == null) {
-            return CellColor.empty();
+            return TerminalColor.empty();
           }
 
-          return CellColor.fromARGB(0xff, r, g, b);
+          return TerminalColor.fromARGB(0xff, r, g, b);
         }
     }
   }
 
-  return CellColor.empty();
+  return TerminalColor.empty();
 }
 
 const grayscaleColors = {
@@ -266,42 +276,42 @@ const grayscaleColors = {
   255: 0xffeeeeee,
 };
 
-CellColor parse8BitSgrColour(int colNum, Terminal terminal) {
+TerminalColor parse8BitSgrColour(int colNum, Terminal terminal) {
   // https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit
 
   switch (colNum) {
     case 0:
-      return terminal.colorScheme.black;
+      return terminal.theme.black;
     case 1:
-      return terminal.colorScheme.red;
+      return terminal.theme.red;
     case 2:
-      return terminal.colorScheme.green;
+      return terminal.theme.green;
     case 3:
-      return terminal.colorScheme.yellow;
+      return terminal.theme.yellow;
     case 4:
-      return terminal.colorScheme.blue;
+      return terminal.theme.blue;
     case 5:
-      return terminal.colorScheme.magenta;
+      return terminal.theme.magenta;
     case 6:
-      return terminal.colorScheme.cyan;
+      return terminal.theme.cyan;
     case 7:
-      return terminal.colorScheme.white;
+      return terminal.theme.white;
     case 8:
-      return terminal.colorScheme.brightBlack;
+      return terminal.theme.brightBlack;
     case 9:
-      return terminal.colorScheme.brightRed;
+      return terminal.theme.brightRed;
     case 10:
-      return terminal.colorScheme.brightGreen;
+      return terminal.theme.brightGreen;
     case 11:
-      return terminal.colorScheme.brightYellow;
+      return terminal.theme.brightYellow;
     case 12:
-      return terminal.colorScheme.brightBlue;
+      return terminal.theme.brightBlue;
     case 13:
-      return terminal.colorScheme.brightMagenta;
+      return terminal.theme.brightMagenta;
     case 14:
-      return terminal.colorScheme.brightCyan;
+      return terminal.theme.brightCyan;
     case 15:
-      return terminal.colorScheme.white;
+      return terminal.theme.white;
   }
 
   if (colNum < 232) {
@@ -335,8 +345,8 @@ CellColor parse8BitSgrColour(int colNum, Terminal terminal) {
       }
     }
 
-    return CellColor.fromARGB(0xff, r, g, b);
+    return TerminalColor.fromARGB(0xff, r, g, b);
   }
 
-  return CellColor(grayscaleColors[colNum.clamp(232, 255)]);
+  return TerminalColor(grayscaleColors[colNum.clamp(232, 255)]);
 }

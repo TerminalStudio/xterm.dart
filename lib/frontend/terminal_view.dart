@@ -17,42 +17,17 @@ import 'package:xterm/frontend/oscillator.dart';
 import 'package:xterm/frontend/cache.dart';
 import 'package:xterm/mouse/position.dart';
 import 'package:xterm/terminal/terminal.dart';
+import 'package:xterm/theme/terminal_style.dart';
 import 'package:xterm/utli/hash_values.dart';
 
 typedef ResizeHandler = void Function(int width, int height);
-
-const _kDefaultFontFamily = [
-  'Droid Sans Mono',
-  'Noto Sans Mono',
-  'Roboto Mono',
-  'Consolas',
-  'Noto Sans Mono CJK SC',
-  'Noto Sans Mono CJK TC',
-  'Noto Sans Mono CJK KR',
-  'Noto Sans Mono CJK JP',
-  'Noto Sans Mono CJK HK',
-  'monospace',
-  'Noto Color Emoji',
-  'Noto Sans Symbols',
-  'Roboto',
-  'Ubuntu',
-  'Cantarell',
-  'DejaVu Sans',
-  'Liberation Sans',
-  'Arial',
-  'Droid Sans Fallback',
-  'sans-serif',
-];
 
 class TerminalView extends StatefulWidget {
   TerminalView({
     Key key,
     @required this.terminal,
     this.onResize,
-    this.fontSize = 16,
-    this.fontFamily = _kDefaultFontFamily,
-    this.fontWidthScaleFactor = 1.0,
-    this.fontHeightScaleFactor = 1.1,
+    this.style = const TerminalStyle(),
     FocusNode focusNode,
     ScrollController scrollController,
     InputBehavior inputBehavior,
@@ -67,10 +42,7 @@ class TerminalView extends StatefulWidget {
   final FocusNode focusNode;
   final ScrollController scrollController;
 
-  final double fontSize;
-  final double fontWidthScaleFactor;
-  final double fontHeightScaleFactor;
-  final List<String> fontFamily;
+  final TerminalStyle style;
 
   final InputBehavior inputBehavior;
 
@@ -80,8 +52,8 @@ class TerminalView extends StatefulWidget {
     final text = Text(
       testString,
       style: TextStyle(
-        fontFamilyFallback: _kDefaultFontFamily,
-        fontSize: fontSize,
+        fontFamilyFallback: style.fontFamily,
+        fontSize: style.fontSize,
       ),
     );
 
@@ -90,8 +62,8 @@ class TerminalView extends StatefulWidget {
     final charWidth = (size.width / testString.length);
     final charHeight = size.height;
 
-    final cellWidth = charWidth * fontWidthScaleFactor;
-    final cellHeight = size.height * fontHeightScaleFactor;
+    final cellWidth = charWidth * style.fontWidthScaleFactor;
+    final cellHeight = size.height * style.fontHeightScaleFactor;
 
     return CellSize(
       charWidth: charWidth,
@@ -238,7 +210,7 @@ class _TerminalViewState extends State<TerminalView> {
       },
       child: Container(
         constraints: BoxConstraints.expand(),
-        color: Color(widget.terminal.colorScheme.background.value),
+        color: Color(widget.terminal.theme.background.value),
         child: CustomPaint(
           painter: TerminalPainter(
             terminal: widget.terminal,
@@ -466,12 +438,12 @@ class TerminalPainter extends CustomPainter {
         // color: color,
         // fontWeight: cell.attr.bold ? FontWeight.bold : FontWeight.normal,
         // fontStyle: cell.attr.italic ? FontStyle.italic : FontStyle.normal,
-        fontSize: view.fontSize,
+        fontSize: view.style.fontSize,
         letterSpacing: charSize.letterSpacing,
         fontFeatures: [FontFeature.tabularFigures()],
         // decoration:
         //     cell.attr.underline ? TextDecoration.underline : TextDecoration.none,
-        fontFamilyFallback: _kDefaultFontFamily,
+        fontFamilyFallback: view.style.fontFamily,
       );
 
       final span = TextSpan(
@@ -491,8 +463,8 @@ class TerminalPainter extends CustomPainter {
     }
 
     final cellColor = cell.attr.inverse
-        ? cell.attr.bgColor ?? terminal.colorScheme.background
-        : cell.attr.fgColor ?? terminal.colorScheme.foreground;
+        ? cell.attr.bgColor ?? terminal.theme.background
+        : cell.attr.fgColor ?? terminal.theme.foreground;
 
     var color = Color(cellColor.value);
 
@@ -501,14 +473,14 @@ class TerminalPainter extends CustomPainter {
     }
 
     final style = TextStyle(
-      color: color,
-      fontWeight: cell.attr.bold ? FontWeight.bold : FontWeight.normal,
-      fontStyle: cell.attr.italic ? FontStyle.italic : FontStyle.normal,
-      fontSize: view.fontSize,
-      decoration:
-          cell.attr.underline ? TextDecoration.underline : TextDecoration.none,
-      fontFamilyFallback: _kDefaultFontFamily,
-    );
+        color: color,
+        fontWeight: cell.attr.bold ? FontWeight.bold : FontWeight.normal,
+        fontStyle: cell.attr.italic ? FontStyle.italic : FontStyle.normal,
+        fontSize: view.style.fontSize,
+        decoration: cell.attr.underline
+            ? TextDecoration.underline
+            : TextDecoration.none,
+        fontFamilyFallback: view.style.fontFamily);
 
     final span = TextSpan(
       text: String.fromCharCode(cell.codePoint),
@@ -536,7 +508,7 @@ class TerminalPainter extends CustomPainter {
     final offsetX = charSize.cellWidth * terminal.cursorX;
     final offsetY = charSize.cellHeight * screenCursorY;
     final paint = Paint()
-      ..color = Color(terminal.colorScheme.cursor.value)
+      ..color = Color(terminal.theme.cursor.value)
       ..strokeWidth = focused ? 0.0 : 1.0
       ..style = focused ? PaintingStyle.fill : PaintingStyle.stroke;
     canvas.drawRect(

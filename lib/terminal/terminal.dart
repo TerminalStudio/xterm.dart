@@ -6,7 +6,6 @@ import 'package:xterm/buffer/buffer.dart';
 import 'package:xterm/buffer/buffer_line.dart';
 import 'package:xterm/buffer/cell_attr.dart';
 import 'package:xterm/mouse/selection.dart';
-import 'package:xterm/color/color_default.dart';
 import 'package:xterm/input/keys.dart';
 import 'package:xterm/input/keytab/keytab.dart';
 import 'package:xterm/input/keytab/keytab_escape.dart';
@@ -16,6 +15,8 @@ import 'package:xterm/terminal/ansi.dart';
 import 'package:xterm/terminal/platform.dart';
 import 'package:xterm/terminal/sbc.dart';
 import 'package:xterm/terminal/tabs.dart';
+import 'package:xterm/theme/terminal_theme.dart';
+import 'package:xterm/theme/terminal_themes.dart';
 import 'package:xterm/utli/debug_handler.dart';
 import 'package:xterm/utli/observable.dart';
 
@@ -31,6 +32,7 @@ class Terminal with Observable {
     this.onTitleChange,
     this.onIconChange,
     this.platform = PlatformBehavior.unix,
+    this.theme = TerminalThemes.defaultTheme,
     int maxLines,
   }) {
     _maxLines = maxLines;
@@ -106,7 +108,7 @@ class Terminal with Observable {
   MouseMode _mouseMode = MouseMode.none;
   MouseMode get mouseMode => _mouseMode;
 
-  final colorScheme = defaultColorScheme;
+  final TerminalTheme theme;
   final cellAttr = CellAttrTemplate();
 
   final keytab = Keytab.defaultKeytab();
