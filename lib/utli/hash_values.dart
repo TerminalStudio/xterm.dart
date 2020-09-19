@@ -1,5 +1,7 @@
+class _HashEnd {
+  const _HashEnd();
+}
 
-class _HashEnd { const _HashEnd(); }
 const _HashEnd _hashEnd = _HashEnd();
 
 class _Jenkins {
@@ -17,15 +19,25 @@ class _Jenkins {
   }
 }
 
-
-int hashValues(
-  Object arg01,            Object arg02,          [ Object arg03 = _hashEnd,
-  Object arg04 = _hashEnd, Object arg05 = _hashEnd, Object arg06 = _hashEnd,
-  Object arg07 = _hashEnd, Object arg08 = _hashEnd, Object arg09 = _hashEnd,
-  Object arg10 = _hashEnd, Object arg11 = _hashEnd, Object arg12 = _hashEnd,
-  Object arg13 = _hashEnd, Object arg14 = _hashEnd, Object arg15 = _hashEnd,
-  Object arg16 = _hashEnd, Object arg17 = _hashEnd, Object arg18 = _hashEnd,
-  Object arg19 = _hashEnd, Object arg20 = _hashEnd ]) {
+int hashValues(Object arg01, Object arg02,
+    [Object arg03 = _hashEnd,
+    Object arg04 = _hashEnd,
+    Object arg05 = _hashEnd,
+    Object arg06 = _hashEnd,
+    Object arg07 = _hashEnd,
+    Object arg08 = _hashEnd,
+    Object arg09 = _hashEnd,
+    Object arg10 = _hashEnd,
+    Object arg11 = _hashEnd,
+    Object arg12 = _hashEnd,
+    Object arg13 = _hashEnd,
+    Object arg14 = _hashEnd,
+    Object arg15 = _hashEnd,
+    Object arg16 = _hashEnd,
+    Object arg17 = _hashEnd,
+    Object arg18 = _hashEnd,
+    Object arg19 = _hashEnd,
+    Object arg20 = _hashEnd]) {
   int result = 0;
   result = _Jenkins.combine(result, arg01);
   result = _Jenkins.combine(result, arg02);

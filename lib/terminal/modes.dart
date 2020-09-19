@@ -84,12 +84,12 @@ void csiSetMode(String mode, bool enabled, Terminal terminal) {
       terminal.setAutoWrapMode(enabled);
       break;
     case "?9":
-    	if (enabled) {
-    		// terminal.setMouseMode(MouseMode.x10);
-    	} else {
-    		terminal.setMouseMode(MouseMode.none);
-    	}
-     break;
+      if (enabled) {
+        // terminal.setMouseMode(MouseMode.x10);
+      } else {
+        terminal.setMouseMode(MouseMode.none);
+      }
+      break;
     case "?12":
     case "?13":
       terminal.setBlinkingCursor(enabled);
