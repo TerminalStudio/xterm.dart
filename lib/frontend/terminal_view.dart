@@ -10,8 +10,9 @@ import 'package:meta/meta.dart';
 import 'package:xterm/buffer/cell.dart';
 import 'package:xterm/frontend/char_size.dart';
 import 'package:xterm/frontend/helpers.dart';
+import 'package:xterm/frontend/input_behavior.dart';
+import 'package:xterm/frontend/input_behaviors.dart';
 import 'package:xterm/frontend/input_listener.dart';
-import 'package:xterm/frontend/input_map.dart';
 import 'package:xterm/frontend/oscillator.dart';
 import 'package:xterm/frontend/cache.dart';
 import 'package:xterm/mouse/position.dart';
@@ -54,9 +55,11 @@ class TerminalView extends StatefulWidget {
     this.fontHeightScaleFactor = 1.1,
     FocusNode focusNode,
     ScrollController scrollController,
+    InputBehavior inputBehavior,
   })  : assert(terminal != null),
         focusNode = focusNode ?? FocusNode(),
         scrollController = scrollController ?? ScrollController(),
+        inputBehavior = inputBehavior ?? InputBehaviors.platform,
         super(key: key ?? ValueKey(terminal));
 
   final Terminal terminal;
@@ -68,6 +71,8 @@ class TerminalView extends StatefulWidget {
   final double fontWidthScaleFactor;
   final double fontHeightScaleFactor;
   final List<String> fontFamily;
+
+  final InputBehavior inputBehavior;
 
   CellSize measureCellSize() {
     final testString = 'xxxxxxxxxx' * 1000;
@@ -118,6 +123,15 @@ class _TerminalViewState extends State<TerminalView> {
   var _maxScrollExtent = 0.0;
 
   void onTerminalChange() {
+    // if (_offset != null) {
+    //   final currentScrollExtent =
+    //       _cellSize.cellHeight * widget.terminal.buffer.scrollOffsetFromTop;
+
+    //   if (_offset.pixels != currentScrollExtent) {
+    //     _offset.correctBy(currentScrollExtent - _offset.pixels - 1);
+    //   }
+    // }
+
     if (mounted) {
       setState(() {});
     }
@@ -155,8 +169,10 @@ class _TerminalViewState extends State<TerminalView> {
   @override
   Widget build(BuildContext context) {
     return InputListener(
+      listenKeyStroke: widget.inputBehavior.acceptKeyStroke,
       onKeyStroke: onKeyStroke,
-      onInput: onInput,
+      onTextInput: onInput,
+      onAction: onAction,
       onFocus: onFocus,
       focusNode: widget.focusNode,
       autofocus: true,
@@ -169,10 +185,16 @@ class _TerminalViewState extends State<TerminalView> {
               offset.applyViewportDimension(constraints.maxHeight);
 
               _minScrollExtent = 0.0;
+
               _maxScrollExtent = math.max(
                   0.0,
                   _cellSize.cellHeight * widget.terminal.buffer.height -
                       constraints.maxHeight);
+
+              // final currentScrollExtent = _cellSize.cellHeight *
+              //     widget.terminal.buffer.scrollOffsetFromTop;
+
+              // offset.correctBy(currentScrollExtent - offset.pixels - 1);
 
               offset.applyContentDimensions(_minScrollExtent, _maxScrollExtent);
 
@@ -192,7 +214,11 @@ class _TerminalViewState extends State<TerminalView> {
       behavior: HitTestBehavior.deferToChild,
       dragStartBehavior: DragStartBehavior.down,
       onTapDown: (detail) {
-        InputListener.of(context).requestKeyboard();
+        if (widget.terminal.selection.isEmpty) {
+          InputListener.of(context).requestKeyboard();
+        } else {
+          widget.terminal.selection.clear();
+        }
         final pos = detail.localPosition;
         final offset = getMouseOffset(pos.dx, pos.dy);
         widget.terminal.mouseMode.onTap(widget.terminal, offset);
@@ -232,7 +258,7 @@ class _TerminalViewState extends State<TerminalView> {
 
     final x = col;
     final y = widget.terminal.buffer.convertViewLineToRawLine(row) -
-        widget.terminal.buffer.scrollOffset;
+        widget.terminal.buffer.scrollOffsetFromBottom;
 
     return Position(x, y);
   }
@@ -261,26 +287,12 @@ class _TerminalViewState extends State<TerminalView> {
     }
   }
 
-  void onInput(String input) {
-    widget.terminal.onInput(input);
+  TextEditingValue onInput(TextEditingValue value) {
+    return widget.inputBehavior.onTextEdit(value, widget.terminal);
   }
 
   void onKeyStroke(RawKeyEvent event) {
-    if (event is! RawKeyDownEvent) {
-      return;
-    }
-
-    final key = inputMap(event.logicalKey);
-    widget.terminal.debug.onMsg(key);
-    if (key != null) {
-      widget.terminal.input(
-        key,
-        ctrl: event.isControlPressed,
-        alt: event.isAltPressed,
-        shift: event.isShiftPressed,
-      );
-    }
-
+    widget.inputBehavior.onKeyStroke(event, widget.terminal);
     _offset.moveTo(_maxScrollExtent);
   }
 
@@ -290,10 +302,14 @@ class _TerminalViewState extends State<TerminalView> {
     });
   }
 
+  void onAction(TextInputAction action) {
+    widget.inputBehavior.onAction(action, widget.terminal);
+  }
+
   void onScroll() {
     final charOffset = (_offset.pixels / _cellSize.cellHeight).ceil();
     final offset = widget.terminal.invisibleHeight - charOffset;
-    widget.terminal.buffer.setScrollOffset(offset);
+    widget.terminal.buffer.setScrollOffsetFromBottom(offset);
   }
 }
 
@@ -369,7 +385,7 @@ class TerminalPainter extends CustomPainter {
     for (var y = 0; y < terminal.viewHeight; y++) {
       final offsetY = y * charSize.cellHeight;
       final absoluteY = terminal.buffer.convertViewLineToRawLine(y) -
-          terminal.buffer.scrollOffset;
+          terminal.buffer.scrollOffsetFromBottom;
 
       for (var x = 0; x < terminal.viewWidth; x++) {
         var cellCount = 0;

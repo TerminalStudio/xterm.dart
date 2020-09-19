@@ -131,7 +131,7 @@ class Terminal with Observable {
 
   int get cursorX => buffer.cursorX;
   int get cursorY => buffer.cursorY;
-  int get scrollOffset => buffer.scrollOffset;
+  int get scrollOffset => buffer.scrollOffsetFromBottom;
 
   void write(String text) async {
     for (var char in text.runes) {
@@ -269,13 +269,15 @@ class Terminal with Observable {
     }
   }
 
-  void input(
+  void keyInput(
     TerminalKey key, {
-    bool ctrl,
-    bool alt,
-    bool shift,
+    bool ctrl = false,
+    bool alt = false,
+    bool shift = false,
     // bool meta,
   }) {
+    debug.onMsg(key);
+
     if (onInput == null) {
       return;
     }

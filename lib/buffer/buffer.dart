@@ -128,7 +128,7 @@ class Buffer {
     final result = <BufferLine>[];
 
     for (var i = height - terminal.viewHeight; i < height; i++) {
-      final y = i - scrollOffset;
+      final y = i - scrollOffsetFromBottom;
       if (y >= 0 && y < height) {
         result.add(lines[y]);
       }
@@ -310,23 +310,32 @@ class Buffer {
     setPosition(cursorX, cursorY);
   }
 
-  int get scrollOffset {
+  int get scrollOffsetFromBottom {
     return _scrollLinesFromBottom;
   }
 
-  void setScrollOffset(int offset) {
+  int get scrollOffsetFromTop {
+    return terminal.invisibleHeight - scrollOffsetFromBottom;
+  }
+
+  void setScrollOffsetFromBottom(int offset) {
     if (height < terminal.viewHeight) return;
     final maxOffset = height - terminal.viewHeight;
     _scrollLinesFromBottom = offset.clamp(0, maxOffset);
     terminal.refresh();
   }
 
+  void setScrollOffsetFromTop(int offset) {
+    final bottomOffset = terminal.invisibleHeight - offset;
+    setScrollOffsetFromBottom(bottomOffset);
+  }
+
   void screenScrollUp(int lines) {
-    setScrollOffset(scrollOffset + lines);
+    setScrollOffsetFromBottom(scrollOffsetFromBottom + lines);
   }
 
   void screenScrollDown(int lines) {
-    setScrollOffset(scrollOffset - lines);
+    setScrollOffsetFromBottom(scrollOffsetFromBottom - lines);
   }
 
   void saveCursor() {

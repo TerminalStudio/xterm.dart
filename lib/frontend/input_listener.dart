@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:meta/meta.dart';
 
 typedef KeyStrokeHandler = void Function(RawKeyEvent);
-typedef InputHandler = void Function(String);
+typedef InputHandler = TextEditingValue Function(TextEditingValue);
 typedef ActionHandler = void Function(TextInputAction);
 typedef FocusHandler = void Function(bool);
 
@@ -15,18 +15,22 @@ class InputListener extends StatefulWidget {
   InputListener({
     @required this.child,
     @required this.onKeyStroke,
-    @required this.onInput,
+    @required this.onTextInput,
+    @required this.onAction,
     @required this.focusNode,
     this.onFocus,
     this.autofocus = false,
+    this.listenKeyStroke = true,
   });
 
   final Widget child;
-  final InputHandler onInput;
+  final InputHandler onTextInput;
   final KeyStrokeHandler onKeyStroke;
+  final ActionHandler onAction;
   final FocusHandler onFocus;
   final bool autofocus;
   final FocusNode focusNode;
+  final bool listenKeyStroke;
 
   @override
   InputListenerState createState() => InputListenerState();
@@ -60,10 +64,19 @@ class InputListenerState extends State<InputListener>
 
   @override
   Widget build(BuildContext context) {
-    return RawKeyboardListener(
+    if (widget.listenKeyStroke) {
+      return RawKeyboardListener(
+        focusNode: widget.focusNode,
+        onKey: widget.onKeyStroke,
+        autofocus: widget.autofocus,
+        child: widget.child,
+      );
+    }
+
+    return Focus(
       focusNode: widget.focusNode,
-      onKey: widget.onKeyStroke,
       autofocus: widget.autofocus,
+      includeSemantics: false,
       child: widget.child,
     );
   }
@@ -124,20 +137,23 @@ class InputListenerState extends State<InputListener>
     }
   }
 
-  void onInput(String text) {
-    widget.onInput(text);
-    conn?.setEditingState(TextEditingValue.empty);
+  void onInput(TextEditingValue value) {
+    final newValue = widget.onTextInput(value);
+
+    if (newValue != null) {
+      conn?.setEditingState(newValue);
+    }
   }
 
   void onAction(TextInputAction action) {
-    //
+    widget?.onAction(action);
   }
 }
 
 class TerminalTextInputClient extends TextInputClient {
   TerminalTextInputClient(this.onInput, this.onAction);
 
-  final InputHandler onInput;
+  final void Function(TextEditingValue) onInput;
   final ActionHandler onAction;
 
   TextEditingValue _savedValue;
@@ -153,7 +169,7 @@ class TerminalTextInputClient extends TextInputClient {
   void updateEditingValue(TextEditingValue value) {
     print('updateEditingValue $value');
 
-    onInput(value.text);
+    onInput(value);
 
     // if (_savedValue == null || _savedValue.text == '') {
     //   onInput(value.text);
@@ -168,6 +184,7 @@ class TerminalTextInputClient extends TextInputClient {
 
   void performAction(TextInputAction action) {
     // print('performAction $action');
+    onAction(action);
   }
 
   void updateFloatingCursor(RawFloatingCursorPoint point) {
