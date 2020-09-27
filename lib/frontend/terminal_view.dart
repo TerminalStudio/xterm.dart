@@ -29,6 +29,7 @@ class TerminalView extends StatefulWidget {
     this.onResize,
     this.style = const TerminalStyle(),
     FocusNode focusNode,
+    this.autofocus = false,
     ScrollController scrollController,
     InputBehavior inputBehavior,
   })  : assert(terminal != null),
@@ -40,6 +41,7 @@ class TerminalView extends StatefulWidget {
   final Terminal terminal;
   final ResizeHandler onResize;
   final FocusNode focusNode;
+  final bool autofocus;
   final ScrollController scrollController;
 
   final TerminalStyle style;
@@ -147,7 +149,7 @@ class _TerminalViewState extends State<TerminalView> {
       onAction: onAction,
       onFocus: onFocus,
       focusNode: widget.focusNode,
-      autofocus: true,
+      autofocus: false,
       child: MouseRegion(
         cursor: SystemMouseCursors.text,
         child: LayoutBuilder(builder: (context, constraints) {

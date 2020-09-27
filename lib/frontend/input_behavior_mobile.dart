@@ -13,7 +13,7 @@ class InputBehaviorMobile extends InputBehaviorDefault {
 
   TextEditingValue onTextEdit(TextEditingValue value, Terminal terminal) {
     if (value.text.length > _placeholder.length) {
-      terminal.onInput(value.text.substring(_placeholder.length));
+      terminal.onInput(value.text.substring(1, value.text.length - 1));
     } else if (value.text.length < _placeholder.length) {
       terminal.keyInput(TerminalKey.backspace);
     } else {
@@ -24,11 +24,9 @@ class InputBehaviorMobile extends InputBehaviorDefault {
       }
     }
 
-    print(value);
-    // return TextEditingValue(text: '  ', composing: TextRange());
     return TextEditingValue(
       text: _placeholder,
-      selection: TextSelection.collapsed(offset: 2),
+      selection: TextSelection.collapsed(offset: 1),
     );
   }
 
