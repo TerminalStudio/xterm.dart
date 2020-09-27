@@ -1,30 +1,30 @@
-class CharSize {
-  CharSize({
-    this.width,
-    this.height,
+class CellSize {
+  CellSize({
+    this.charWidth,
+    this.charHeight,
     this.letterSpacing,
     this.lineSpacing,
-    this.effectWidth,
-    this.effectHeight,
+    this.cellWidth,
+    this.cellHeight,
   });
 
-  final double width;
-  final double height;
+  final double charWidth;
+  final double charHeight;
+  final double cellWidth;
+  final double cellHeight;
   final double letterSpacing;
   final double lineSpacing;
-  final double effectWidth;
-  final double effectHeight;
 
   @override
   String toString() {
     final data = {
-      'width': width,
-      'height': height,
+      'charWidth': charWidth,
+      'charHeight': charHeight,
       'letterSpacing': letterSpacing,
       'lineSpacing': lineSpacing,
-      'effectWidth': effectWidth,
-      'effectHeight': effectHeight,
+      'cellWidth': cellWidth,
+      'cellHeight': cellHeight,
     };
-    return 'CharSize$data';
+    return 'CellSize$data';
   }
 }

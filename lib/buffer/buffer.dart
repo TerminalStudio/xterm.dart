@@ -54,7 +54,7 @@ class Buffer {
     final cell = line.getCell(_cursorX);
     cell.setCodePoint(codePoint);
     cell.setWidth(cellWidth);
-    cell.setAttr(terminal.cellAttr.copy());
+    cell.setAttr(terminal.cellAttr.value);
 
     if (_cursorX < terminal.viewWidth) {
       _cursorX++;
@@ -128,7 +128,7 @@ class Buffer {
     final result = <BufferLine>[];
 
     for (var i = height - terminal.viewHeight; i < height; i++) {
-      final y = i - scrollOffset;
+      final y = i - scrollOffsetFromBottom;
       if (y >= 0 && y < height) {
         result.add(lines[y]);
       }
@@ -141,7 +141,7 @@ class Buffer {
     eraseLineFromCursor();
 
     for (var i = _cursorY + 1; i < terminal.viewHeight; i++) {
-      getViewLine(i).erase(terminal.cellAttr.copy(), 0, terminal.viewWidth);
+      getViewLine(i).erase(terminal.cellAttr.value, 0, terminal.viewWidth);
     }
   }
 
@@ -149,36 +149,36 @@ class Buffer {
     eraseLineToCursor();
 
     for (var i = 0; i < _cursorY; i++) {
-      getViewLine(i).erase(terminal.cellAttr.copy(), 0, terminal.viewWidth);
+      getViewLine(i).erase(terminal.cellAttr.value, 0, terminal.viewWidth);
     }
   }
 
   void eraseDisplay() {
     for (var i = 0; i < terminal.viewHeight; i++) {
       final line = getViewLine(i);
-      line.erase(terminal.cellAttr.copy(), 0, terminal.viewWidth);
+      line.erase(terminal.cellAttr.value, 0, terminal.viewWidth);
     }
   }
 
   void eraseLineFromCursor() {
-    currentLine.erase(terminal.cellAttr.copy(), _cursorX, terminal.viewWidth);
+    currentLine.erase(terminal.cellAttr.value, _cursorX, terminal.viewWidth);
   }
 
   void eraseLineToCursor() {
-    currentLine.erase(terminal.cellAttr.copy(), 0, _cursorX);
+    currentLine.erase(terminal.cellAttr.value, 0, _cursorX);
   }
 
   void eraseLine() {
-    currentLine.erase(terminal.cellAttr.copy(), 0, terminal.viewWidth);
+    currentLine.erase(terminal.cellAttr.value, 0, terminal.viewWidth);
   }
 
   void eraseCharacters(int count) {
     final start = _cursorX;
     for (var i = start; i < start + count; i++) {
       if (i >= currentLine.length) {
-        currentLine.add(Cell(attr: terminal.cellAttr.copy()));
+        currentLine.add(Cell(attr: terminal.cellAttr.value));
       } else {
-        currentLine.getCell(i).erase(terminal.cellAttr.copy());
+        currentLine.getCell(i).erase(terminal.cellAttr.value);
       }
     }
   }
@@ -310,27 +310,36 @@ class Buffer {
     setPosition(cursorX, cursorY);
   }
 
-  int get scrollOffset {
+  int get scrollOffsetFromBottom {
     return _scrollLinesFromBottom;
   }
 
-  void setScrollOffset(int offset) {
+  int get scrollOffsetFromTop {
+    return terminal.invisibleHeight - scrollOffsetFromBottom;
+  }
+
+  void setScrollOffsetFromBottom(int offset) {
     if (height < terminal.viewHeight) return;
     final maxOffset = height - terminal.viewHeight;
     _scrollLinesFromBottom = offset.clamp(0, maxOffset);
     terminal.refresh();
   }
 
+  void setScrollOffsetFromTop(int offset) {
+    final bottomOffset = terminal.invisibleHeight - offset;
+    setScrollOffsetFromBottom(bottomOffset);
+  }
+
   void screenScrollUp(int lines) {
-    setScrollOffset(scrollOffset + lines);
+    setScrollOffsetFromBottom(scrollOffsetFromBottom + lines);
   }
 
   void screenScrollDown(int lines) {
-    setScrollOffset(scrollOffset - lines);
+    setScrollOffsetFromBottom(scrollOffsetFromBottom - lines);
   }
 
   void saveCursor() {
-    _savedCellAttr = terminal.cellAttr.copy();
+    _savedCellAttr = terminal.cellAttr.value;
     _savedCursorX = _cursorX;
     _savedCursorY = _cursorY;
     charset.save();
@@ -338,7 +347,7 @@ class Buffer {
 
   void restoreCursor() {
     if (_savedCellAttr != null) {
-      terminal.cellAttr = _savedCellAttr.copy();
+      terminal.cellAttr.use(_savedCellAttr);
     }
 
     if (_savedCursorX != null) {
@@ -394,7 +403,7 @@ class Buffer {
 
   void insertBlankCharacters(int count) {
     for (var i = 0; i < count; i++) {
-      final cell = Cell(attr: terminal.cellAttr.copy());
+      final cell = Cell(attr: terminal.cellAttr.value);
       currentLine.insert(_cursorX + i, cell);
     }
   }

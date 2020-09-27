@@ -10,88 +10,70 @@ import 'package:meta/meta.dart';
 import 'package:xterm/buffer/cell.dart';
 import 'package:xterm/frontend/char_size.dart';
 import 'package:xterm/frontend/helpers.dart';
+import 'package:xterm/frontend/input_behavior.dart';
+import 'package:xterm/frontend/input_behaviors.dart';
 import 'package:xterm/frontend/input_listener.dart';
-import 'package:xterm/frontend/input_map.dart';
-import 'package:xterm/frontend/mouse_listener.dart';
 import 'package:xterm/frontend/oscillator.dart';
 import 'package:xterm/frontend/cache.dart';
 import 'package:xterm/mouse/position.dart';
 import 'package:xterm/terminal/terminal.dart';
+import 'package:xterm/theme/terminal_style.dart';
+import 'package:xterm/utli/hash_values.dart';
 
 typedef ResizeHandler = void Function(int width, int height);
-
-const _kDefaultFontFamily = [
-  'Droid Sans Mono',
-  'Noto Sans Mono',
-  'Roboto Mono',
-  'Consolas',
-  'Noto Sans Mono CJK SC',
-  'Noto Sans Mono CJK TC',
-  'Noto Sans Mono CJK KR',
-  'Noto Sans Mono CJK JP',
-  'Noto Sans Mono CJK HK',
-  'monospace',
-  'Noto Color Emoji',
-  'Noto Sans Symbols',
-  'Roboto',
-  'Ubuntu',
-  'Cantarell',
-  'DejaVu Sans',
-  'Liberation Sans',
-  'Arial',
-  'Droid Sans Fallback',
-  'sans-serif',
-];
 
 class TerminalView extends StatefulWidget {
   TerminalView({
     Key key,
     @required this.terminal,
     this.onResize,
-    this.fontSize = 16,
-    this.fontFamily = _kDefaultFontFamily,
-    this.fontWidthScaleFactor = 1.0,
-    this.fontHeightScaleFactor = 1.1,
+    this.style = const TerminalStyle(),
     FocusNode focusNode,
+    this.autofocus = false,
+    ScrollController scrollController,
+    InputBehavior inputBehavior,
   })  : assert(terminal != null),
         focusNode = focusNode ?? FocusNode(),
+        scrollController = scrollController ?? ScrollController(),
+        inputBehavior = inputBehavior ?? InputBehaviors.platform,
         super(key: key ?? ValueKey(terminal));
 
   final Terminal terminal;
   final ResizeHandler onResize;
   final FocusNode focusNode;
+  final bool autofocus;
+  final ScrollController scrollController;
 
-  final double fontSize;
-  final double fontWidthScaleFactor;
-  final double fontHeightScaleFactor;
-  final List<String> fontFamily;
+  final TerminalStyle style;
 
-  CharSize getCharSize() {
+  final InputBehavior inputBehavior;
+
+  CellSize measureCellSize() {
     final testString = 'xxxxxxxxxx' * 1000;
+
     final text = Text(
       testString,
       style: TextStyle(
-        fontFamilyFallback: _kDefaultFontFamily,
-        fontSize: fontSize,
+        fontFamilyFallback: style.fontFamily,
+        fontSize: style.fontSize,
       ),
     );
+
     final size = textSize(text);
 
-    final width = (size.width / testString.length);
-    final height = size.height;
+    final charWidth = (size.width / testString.length);
+    final charHeight = size.height;
 
-    final effectWidth = width * fontWidthScaleFactor;
-    final effectHeight = size.height * fontHeightScaleFactor;
+    final cellWidth = charWidth * style.fontWidthScaleFactor;
+    final cellHeight = size.height * style.fontHeightScaleFactor;
 
-    // final ls
-
-    return CharSize(
-      width: width,
-      height: height,
-      effectWidth: effectWidth,
-      effectHeight: effectHeight,
-      letterSpacing: effectWidth - width,
-      lineSpacing: effectHeight - height,
+    return CellSize(
+      charWidth: charWidth,
+      charHeight: charHeight,
+      cellWidth: cellWidth,
+      cellHeight: cellHeight,
+      letterSpacing: cellWidth - charWidth,
+      lineSpacing: cellHeight - charHeight,
     );
   }
 
@@ -108,9 +90,22 @@ class _TerminalViewState extends State<TerminalView> {
 
   int _lastTerminalWidth;
   int _lastTerminalHeight;
-  CharSize _charSize;
+  CellSize _cellSize;
+  ViewportOffset _offset;
+
+  var _minScrollExtent = 0.0;
+  var _maxScrollExtent = 0.0;
 
   void onTerminalChange() {
+    // if (_offset != null) {
+    //   final currentScrollExtent =
+    //       _cellSize.cellHeight * widget.terminal.buffer.scrollOffsetFromTop;
+
+    //   if (_offset.pixels != currentScrollExtent) {
+    //     _offset.correctBy(currentScrollExtent - _offset.pixels - 1);
+    //   }
+    // }
+
     if (mounted) {
       setState(() {});
     }
@@ -124,7 +119,7 @@ class _TerminalViewState extends State<TerminalView> {
   void initState() {
     // oscillator.start();
     // oscillator.addListener(onTick);
-    _charSize = widget.getCharSize();
+    _cellSize = widget.measureCellSize();
     widget.terminal.addListener(onTerminalChange);
     super.initState();
   }
@@ -147,26 +142,57 @@ class _TerminalViewState extends State<TerminalView> {
 
   @override
   Widget build(BuildContext context) {
-    Widget result = Container(
-      constraints: BoxConstraints.expand(),
-      color: Color(widget.terminal.colorScheme.background.value),
-      child: CustomPaint(
-        painter: TerminalPainter(
-          terminal: widget.terminal,
-          view: widget,
-          oscillator: oscillator,
-          focused: focused,
-          charSize: _charSize,
-        ),
+    return InputListener(
+      listenKeyStroke: widget.inputBehavior.acceptKeyStroke,
+      onKeyStroke: onKeyStroke,
+      onTextInput: onInput,
+      onAction: onAction,
+      onFocus: onFocus,
+      focusNode: widget.focusNode,
+      autofocus: false,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.text,
+        child: LayoutBuilder(builder: (context, constraints) {
+          onResize(constraints.maxWidth, constraints.maxHeight);
+          return Scrollable(
+            viewportBuilder: (context, offset) {
+              offset.applyViewportDimension(constraints.maxHeight);
+
+              _minScrollExtent = 0.0;
+
+              _maxScrollExtent = math.max(
+                  0.0,
+                  _cellSize.cellHeight * widget.terminal.buffer.height -
+                      constraints.maxHeight);
+
+              // final currentScrollExtent = _cellSize.cellHeight *
+              //     widget.terminal.buffer.scrollOffsetFromTop;
+
+              // offset.correctBy(currentScrollExtent - offset.pixels - 1);
+
+              offset.applyContentDimensions(_minScrollExtent, _maxScrollExtent);
+
+              _offset = offset;
+              _offset.addListener(onScroll);
+
+              return buildTerminal(context);
+            },
+          );
+        }),
       ),
     );
+  }
 
-    result = GestureDetector(
-      child: result,
+  Widget buildTerminal(BuildContext context) {
+    return GestureDetector(
       behavior: HitTestBehavior.deferToChild,
       dragStartBehavior: DragStartBehavior.down,
       onTapDown: (detail) {
-        widget.focusNode.requestFocus();
+        if (widget.terminal.selection.isEmpty) {
+          InputListener.of(context).requestKeyboard();
+        } else {
+          widget.terminal.selection.clear();
+        }
         final pos = detail.localPosition;
         final offset = getMouseOffset(pos.dx, pos.dy);
         widget.terminal.mouseMode.onTap(widget.terminal, offset);
@@ -184,41 +210,36 @@ class _TerminalViewState extends State<TerminalView> {
         widget.terminal.mouseMode.onPanUpdate(widget.terminal, offset);
         widget.terminal.refresh();
       },
-    );
-
-    return InputListener(
-      onKeyStroke: onKeyStroke,
-      onInput: onInput,
-      onFocus: onFocus,
-      focusNode: widget.focusNode,
-      autofocus: true,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.text,
-        child: MouseListener(
-          onScroll: onScroll,
-          child: LayoutBuilder(builder: (context, constraints) {
-            onResize(constraints.maxWidth, constraints.maxHeight);
-            return result;
-          }),
+      child: Container(
+        constraints: BoxConstraints.expand(),
+        color: Color(widget.terminal.theme.background.value),
+        child: CustomPaint(
+          painter: TerminalPainter(
+            terminal: widget.terminal,
+            view: widget,
+            oscillator: oscillator,
+            focused: focused,
+            charSize: _cellSize,
+          ),
         ),
       ),
     );
   }
 
   Position getMouseOffset(double px, double py) {
-    final col = (px / _charSize.effectWidth).floor();
-    final row = (py / _charSize.effectHeight).floor();
+    final col = (px / _cellSize.cellWidth).floor();
+    final row = (py / _cellSize.cellHeight).floor();
 
     final x = col;
     final y = widget.terminal.buffer.convertViewLineToRawLine(row) -
-        widget.terminal.buffer.scrollOffset;
+        widget.terminal.buffer.scrollOffsetFromBottom;
 
     return Position(x, y);
   }
 
   void onResize(double width, double height) {
-    final termWidth = (width / _charSize.effectWidth).floor();
-    final termHeight = (height / _charSize.effectHeight).floor();
+    final termWidth = (width / _cellSize.cellWidth).floor();
+    final termHeight = (height / _cellSize.cellHeight).floor();
 
     if (_lastTerminalWidth != termWidth || _lastTerminalHeight != termHeight) {
       _lastTerminalWidth = termWidth;
@@ -240,27 +261,13 @@ class _TerminalViewState extends State<TerminalView> {
     }
   }
 
-  void onInput(String input) {
-    widget.terminal.onInput(input);
+  TextEditingValue onInput(TextEditingValue value) {
+    return widget.inputBehavior.onTextEdit(value, widget.terminal);
   }
 
   void onKeyStroke(RawKeyEvent event) {
-    if (event is! RawKeyDownEvent) {
-      return;
-    }
-
-    final key = inputMap(event.logicalKey);
-    widget.terminal.debug.onMsg(key);
-    if (key != null) {
-      widget.terminal.input(
-        key,
-        ctrl: event.isControlPressed,
-        alt: event.isAltPressed,
-        shift: event.isShiftPressed,
-      );
-    }
-
-    widget.terminal.buffer.setScrollOffset(0);
+    widget.inputBehavior.onKeyStroke(event, widget.terminal);
+    _offset.moveTo(_maxScrollExtent);
   }
 
   void onFocus(bool focused) {
@@ -269,14 +276,14 @@ class _TerminalViewState extends State<TerminalView> {
     });
   }
 
-  void onScroll(Offset offset) {
-    final delta = math.max(1, offset.dy.abs() ~/ 10);
+  void onAction(TextInputAction action) {
+    widget.inputBehavior.onAction(action, widget.terminal);
+  }
 
-    if (offset.dy > 0) {
-      widget.terminal.buffer.screenScrollDown(delta);
-    } else if (offset.dy < 0) {
-      widget.terminal.buffer.screenScrollUp(delta);
-    }
+  void onScroll() {
+    final charOffset = (_offset.pixels / _cellSize.cellHeight).ceil();
+    final offset = widget.terminal.invisibleHeight - charOffset;
+    widget.terminal.buffer.setScrollOffsetFromBottom(offset);
   }
 }
 
@@ -293,7 +300,7 @@ class TerminalPainter extends CustomPainter {
   final TerminalView view;
   final Oscillator oscillator;
   final bool focused;
-  final CharSize charSize;
+  final CellSize charSize;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -318,7 +325,7 @@ class TerminalPainter extends CustomPainter {
 
     for (var i = 0; i < lines.length; i++) {
       final line = lines[i];
-      final offsetY = i * charSize.effectHeight;
+      final offsetY = i * charSize.cellHeight;
       final cellCount = math.min(terminal.viewWidth, line.length);
 
       for (var i = 0; i < cellCount; i++) {
@@ -328,9 +335,9 @@ class TerminalPainter extends CustomPainter {
           continue;
         }
 
-        final offsetX = i * charSize.effectWidth;
-        final effectWidth = charSize.effectWidth * cell.width + 1;
-        final effectHeight = charSize.effectHeight + 1;
+        final offsetX = i * charSize.cellWidth;
+        final effectWidth = charSize.cellWidth * cell.width + 1;
+        final effectHeight = charSize.cellHeight + 1;
 
         final bgColor =
             cell.attr.inverse ? cell.attr.fgColor : cell.attr.bgColor;
@@ -350,9 +357,9 @@ class TerminalPainter extends CustomPainter {
 
   void paintSelection(Canvas canvas) {
     for (var y = 0; y < terminal.viewHeight; y++) {
-      final offsetY = y * charSize.effectHeight;
+      final offsetY = y * charSize.cellHeight;
       final absoluteY = terminal.buffer.convertViewLineToRawLine(y) -
-          terminal.buffer.scrollOffset;
+          terminal.buffer.scrollOffsetFromBottom;
 
       for (var x = 0; x < terminal.viewWidth; x++) {
         var cellCount = 0;
@@ -367,9 +374,9 @@ class TerminalPainter extends CustomPainter {
           continue;
         }
 
-        final offsetX = x * charSize.effectWidth;
-        final effectWidth = cellCount * charSize.effectWidth;
-        final effectHeight = charSize.effectHeight;
+        final offsetX = x * charSize.cellWidth;
+        final effectWidth = cellCount * charSize.cellWidth;
+        final effectHeight = charSize.cellHeight;
 
         final paint = Paint()..color = Colors.white.withOpacity(0.3);
         canvas.drawRect(
@@ -387,7 +394,7 @@ class TerminalPainter extends CustomPainter {
 
     for (var i = 0; i < lines.length; i++) {
       final line = lines[i];
-      final offsetY = i * charSize.effectHeight;
+      final offsetY = i * charSize.cellHeight;
       final cellCount = math.min(terminal.viewWidth, line.length);
 
       for (var i = 0; i < cellCount; i++) {
@@ -397,7 +404,7 @@ class TerminalPainter extends CustomPainter {
           continue;
         }
 
-        final offsetX = i * charSize.effectWidth;
+        final offsetX = i * charSize.cellWidth;
         paintCell(canvas, cell, offsetX, offsetY);
       }
     }
@@ -408,7 +415,7 @@ class TerminalPainter extends CustomPainter {
 
     for (var i = 0; i < lines.length; i++) {
       final line = lines[i];
-      final offsetY = i * charSize.effectHeight;
+      final offsetY = i * charSize.cellHeight;
       final cellCount = math.min(terminal.viewWidth, line.length);
 
       final builder = StringBuffer();
@@ -433,12 +440,12 @@ class TerminalPainter extends CustomPainter {
         // color: color,
         // fontWeight: cell.attr.bold ? FontWeight.bold : FontWeight.normal,
         // fontStyle: cell.attr.italic ? FontStyle.italic : FontStyle.normal,
-        fontSize: view.fontSize,
+        fontSize: view.style.fontSize,
         letterSpacing: charSize.letterSpacing,
         fontFeatures: [FontFeature.tabularFigures()],
         // decoration:
         //     cell.attr.underline ? TextDecoration.underline : TextDecoration.none,
-        fontFamilyFallback: _kDefaultFontFamily,
+        fontFamilyFallback: view.style.fontFamily,
       );
 
       final span = TextSpan(
@@ -458,8 +465,8 @@ class TerminalPainter extends CustomPainter {
     }
 
     final cellColor = cell.attr.inverse
-        ? cell.attr.bgColor ?? terminal.colorScheme.background
-        : cell.attr.fgColor;
+        ? cell.attr.bgColor ?? terminal.theme.background
+        : cell.attr.fgColor ?? terminal.theme.foreground;
 
     var color = Color(cellColor.value);
 
@@ -468,14 +475,14 @@ class TerminalPainter extends CustomPainter {
     }
 
     final style = TextStyle(
-      color: color,
-      fontWeight: cell.attr.bold ? FontWeight.bold : FontWeight.normal,
-      fontStyle: cell.attr.italic ? FontStyle.italic : FontStyle.normal,
-      fontSize: view.fontSize,
-      decoration:
-          cell.attr.underline ? TextDecoration.underline : TextDecoration.none,
-      fontFamilyFallback: _kDefaultFontFamily,
-    );
+        color: color,
+        fontWeight: cell.attr.bold ? FontWeight.bold : FontWeight.normal,
+        fontStyle: cell.attr.italic ? FontStyle.italic : FontStyle.normal,
+        fontSize: view.style.fontSize,
+        decoration: cell.attr.underline
+            ? TextDecoration.underline
+            : TextDecoration.none,
+        fontFamilyFallback: view.style.fontFamily);
 
     final span = TextSpan(
       text: String.fromCharCode(cell.codePoint),
@@ -484,7 +491,8 @@ class TerminalPainter extends CustomPainter {
     );
 
     // final tp = textLayoutCache.getOrPerformLayout(span);
-    final tp = textLayoutCacheV2.getOrPerformLayout(span, cell.codePoint);
+    final tp = textLayoutCacheV2.getOrPerformLayout(
+        span, hashValues(cell.codePoint, cell.attr));
 
     tp.paint(canvas, Offset(offsetX, offsetY));
   }
@@ -497,16 +505,16 @@ class TerminalPainter extends CustomPainter {
 
     final char = terminal.buffer.getCellUnderCursor();
     final width =
-        char != null ? charSize.effectWidth * char.width : charSize.effectWidth;
+        char != null ? charSize.cellWidth * char.width : charSize.cellWidth;
 
-    final offsetX = charSize.effectWidth * terminal.cursorX;
-    final offsetY = charSize.effectHeight * screenCursorY;
+    final offsetX = charSize.cellWidth * terminal.cursorX;
+    final offsetY = charSize.cellHeight * screenCursorY;
     final paint = Paint()
-      ..color = Color(terminal.colorScheme.cursor.value)
+      ..color = Color(terminal.theme.cursor.value)
       ..strokeWidth = focused ? 0.0 : 1.0
       ..style = focused ? PaintingStyle.fill : PaintingStyle.stroke;
     canvas.drawRect(
-        Rect.fromLTWH(offsetX, offsetY, width, charSize.effectHeight), paint);
+        Rect.fromLTWH(offsetX, offsetY, width, charSize.cellHeight), paint);
   }
 
   @override

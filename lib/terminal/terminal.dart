@@ -1,12 +1,11 @@
 import 'dart:async';
-import 'dart:math' show max;
+import 'dart:math' show max, min;
 
 import 'package:async/async.dart';
 import 'package:xterm/buffer/buffer.dart';
 import 'package:xterm/buffer/buffer_line.dart';
 import 'package:xterm/buffer/cell_attr.dart';
 import 'package:xterm/mouse/selection.dart';
-import 'package:xterm/color/color_default.dart';
 import 'package:xterm/input/keys.dart';
 import 'package:xterm/input/keytab/keytab.dart';
 import 'package:xterm/input/keytab/keytab_escape.dart';
@@ -16,6 +15,8 @@ import 'package:xterm/terminal/ansi.dart';
 import 'package:xterm/terminal/platform.dart';
 import 'package:xterm/terminal/sbc.dart';
 import 'package:xterm/terminal/tabs.dart';
+import 'package:xterm/theme/terminal_theme.dart';
+import 'package:xterm/theme/terminal_themes.dart';
 import 'package:xterm/utli/debug_handler.dart';
 import 'package:xterm/utli/observable.dart';
 
@@ -31,6 +32,7 @@ class Terminal with Observable {
     this.onTitleChange,
     this.onIconChange,
     this.platform = PlatformBehavior.unix,
+    this.theme = TerminalThemes.defaultTheme,
     int maxLines,
   }) {
     _maxLines = maxLines;
@@ -70,6 +72,9 @@ class Terminal with Observable {
   int get viewWidth => _viewWidth;
   int get viewHeight => _viewHeight;
 
+  int get visibleHeight => min(_viewHeight, buffer.height);
+  int get invisibleHeight => buffer.height - visibleHeight;
+
   bool _originMode = false;
   bool _replaceMode = false;
   bool _lineFeed = true;
@@ -103,8 +108,8 @@ class Terminal with Observable {
   MouseMode _mouseMode = MouseMode.none;
   MouseMode get mouseMode => _mouseMode;
 
-  final colorScheme = defaultColorScheme;
-  var cellAttr = CellAttr(fgColor: defaultColorScheme.foreground);
+  final TerminalTheme theme;
+  final cellAttr = CellAttrTemplate();
 
   final keytab = Keytab.defaultKeytab();
   final selection = Selection();
@@ -128,7 +133,7 @@ class Terminal with Observable {
 
   int get cursorX => buffer.cursorX;
   int get cursorY => buffer.cursorY;
-  int get scrollOffset => buffer.scrollOffset;
+  int get scrollOffset => buffer.scrollOffsetFromBottom;
 
   void write(String text) async {
     for (var char in text.runes) {
@@ -266,13 +271,15 @@ class Terminal with Observable {
     }
   }
 
-  void input(
+  void keyInput(
     TerminalKey key, {
-    bool ctrl,
-    bool alt,
-    bool shift,
+    bool ctrl = false,
+    bool alt = false,
+    bool shift = false,
     // bool meta,
   }) {
+    debug.onMsg(key);
+
     if (onInput == null) {
       return;
     }

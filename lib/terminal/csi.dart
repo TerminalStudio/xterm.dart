@@ -223,7 +223,8 @@ void csiDeviceStatusReportHandler(CSI csi, Terminal terminal) {
       terminal.onInput("\x1b[${terminal.cursorX + 1};${terminal.cursorY + 1}R");
       break;
     default:
-      terminal.debug.onError('Unknown Device Status Report identifier: ${csi.params[0]}');
+      terminal.debug
+          .onError('Unknown Device Status Report identifier: ${csi.params[0]}');
       return;
   }
 }

@@ -20,7 +20,6 @@ class MouseModeNone extends MouseMode {
   @override
   void onTap(Terminal terminal, Position offset) {
     terminal.debug.onMsg('tap: $offset');
-    terminal.selection.clear();
   }
 
   @override
