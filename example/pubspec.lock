@@ -113,7 +113,7 @@ packages:
       name: source_span
       url: "https://mirrors.tuna.tsinghua.edu.cn/dart-pub"
     source: hosted
-    version: "1.8.0-nullsafety"
+    version: "1.8.0-nullsafety.2"
   stack_trace:
     dependency: transitive
     description:
