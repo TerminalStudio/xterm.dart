@@ -1,3 +1,11 @@
+## [1.0.0] - 2020-9-28
+
+* Update readme.
+
+## [1.0.0-dev] - 2020-9-28
+
+* Major issues are fixed.
+
 ## [0.1.0] - 2020-8-9
 
 * Bug fixes
