@@ -49,7 +49,7 @@
 ```yml
 dependencies:
   ...
-  xterm: ^0.0.1
+  xterm: ^1.0.0
 ```
 
 **2.** Create the terminal:
