@@ -31,8 +31,11 @@ class InputBehaviorDefault extends InputBehavior {
   @override
   TextEditingValue onTextEdit(TextEditingValue value, Terminal terminal) {
     terminal.onInput(value.text);
-    print(value);
-    return TextEditingValue.empty;
+    if (value == TextEditingValue.empty) {
+      return null;
+    } else {
+      return TextEditingValue.empty;
+    }
   }
 
   @override
