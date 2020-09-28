@@ -1,5 +1,6 @@
 class TerminalStyle {
   static const defaultFontFamily = [
+    'Monaco',
     'Droid Sans Mono',
     'Noto Sans Mono',
     'Roboto Mono',
