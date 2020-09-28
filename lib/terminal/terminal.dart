@@ -257,8 +257,6 @@ class Terminal with Observable {
   }
 
   void resize(int width, int heigth) {
-    buffer.resetVerticalMargins();
-
     final cursorY = buffer.convertViewLineToRawLine(buffer.cursorY);
 
     _viewWidth = max(width, 1);
@@ -269,6 +267,8 @@ class Terminal with Observable {
     if (buffer == _altBuffer) {
       buffer.clearScrollback();
     }
+
+    buffer.resetVerticalMargins();
   }
 
   void keyInput(
