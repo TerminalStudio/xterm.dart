@@ -1,3 +1,7 @@
+## [1.0.2] - 2020-9-29
+
+* Update link.
+
 ## [1.0.1] - 2020-9-29
 
 * Disable debug print.
