@@ -1,3 +1,7 @@
+## [1.0.1] - 2020-9-29
+
+* Disable debug print.
+
 ## [1.0.0] - 2020-9-28
 
 * Update readme.
