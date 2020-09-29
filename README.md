@@ -86,6 +86,12 @@ terminal.write('Hello, world!');
 
 **Done!**
 
+### Example
+
+**[ssh example](https://github.com/TerminalStudio/xterm.dart/blob/master/example/lib/main.dart)**
+
+<img width="400px" src="https://raw.githubusercontent.com/TerminalStudio/xterm.dart/master/media/example-ssh.png">
+
 ### License
 
 This project is licensed under an MIT license.

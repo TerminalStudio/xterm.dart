@@ -23,6 +23,8 @@ environment:
 dependencies:
   xterm:
     path: ../
+
+  dartssh: ^1.0.3+3
     
   flutter:
     sdk: flutter
