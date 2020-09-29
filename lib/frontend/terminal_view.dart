@@ -54,6 +54,7 @@ class TerminalView extends StatefulWidget {
     final text = Text(
       testString,
       style: TextStyle(
+        fontFamily: 'monospace',
         fontFamilyFallback: style.fontFamily,
         fontSize: style.fontSize,
       ),
@@ -482,6 +483,7 @@ class TerminalPainter extends CustomPainter {
         decoration: cell.attr.underline
             ? TextDecoration.underline
             : TextDecoration.none,
+        fontFamily: 'monospace',
         fontFamilyFallback: view.style.fontFamily);
 
     final span = TextSpan(

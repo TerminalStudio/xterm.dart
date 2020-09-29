@@ -137,6 +137,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.9.2"
+  platform_info:
+    dependency: transitive
+    description:
+      name: platform_info
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.0.1"
   pointycastle:
     dependency: transitive
     description:
@@ -232,7 +239,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "1.0.2"
+    version: "1.1.0"
 sdks:
   dart: ">=2.10.0-0.0.dev <2.10.0"
   flutter: ">=1.17.0 <2.0.0"

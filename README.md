@@ -1,4 +1,4 @@
-**[xterm.dart 1.0.x](https://pub.dev/packages/xterm) is available! 🎉**
+**[xterm.dart 1.0.0+](https://pub.dev/packages/xterm) is available! 🎉**
 
 ## xterm.dart
 
@@ -49,7 +49,7 @@
 ```yml
 dependencies:
   ...
-  xterm: ^1.0.0
+  xterm: ^1.1.0
 ```
 
 **2.** Create the terminal:
