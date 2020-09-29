@@ -208,7 +208,7 @@ class TerminalTextInputClient extends TextInputClient {
   }
 
   void updateEditingValue(TextEditingValue value) {
-    print('updateEditingValue $value');
+    // print('updateEditingValue $value');
 
     onInput(value);
 
