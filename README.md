@@ -88,8 +88,9 @@ terminal.write('Hello, world!');
 
 ### Example
 
-**ssh example**: https://github.com/TerminalStudio/xterm.dart/blob/master/example/lib/ssh.dart
+- **local pty example**: [Terminal Lite](https://github.com/TerminalStudio/xterm.dart)
 
+- **ssh example**: https://github.com/TerminalStudio/xterm.dart/blob/master/example/lib/ssh.dart
 <img width="400px" src="https://raw.githubusercontent.com/TerminalStudio/xterm.dart/master/media/example-ssh.png">
 
 ### License
