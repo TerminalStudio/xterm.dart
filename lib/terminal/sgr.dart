@@ -1,7 +1,6 @@
 import 'package:xterm/theme/terminal_color.dart';
 import 'package:xterm/terminal/csi.dart';
 import 'package:xterm/terminal/terminal.dart';
-import 'package:xterm/theme/terminal_color_ref.dart';
 
 // reference to color
 class Cr implements TerminalColor {
