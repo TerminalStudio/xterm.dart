@@ -1,3 +1,7 @@
+## [1.1.1] - 2020-10-4
+
+* Add brightWhite to TerminalTheme
+
 ## [1.1.0] - 2020-9-29
 
 * Fix web support.
