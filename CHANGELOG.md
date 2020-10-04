@@ -1,3 +1,8 @@
+## [1.1.1+1] - 2020-10-4
+
+* Update readme
+
+
 ## [1.1.1] - 2020-10-4
 
 * Add brightWhite to TerminalTheme
