@@ -316,8 +316,6 @@ class TerminalPainter extends CustomPainter {
     }
 
     paintText(canvas);
-    // print(textLayoutCacheV2.length);
-    // or paintTextFast(canvas);
 
     paintSelection(canvas);
   }
@@ -409,55 +407,6 @@ class TerminalPainter extends CustomPainter {
         final offsetX = i * charSize.cellWidth;
         paintCell(canvas, cell, offsetX, offsetY);
       }
-    }
-  }
-
-  void paintTextFast(Canvas canvas) {
-    final lines = terminal.getVisibleLines();
-
-    for (var i = 0; i < lines.length; i++) {
-      final line = lines[i];
-      final offsetY = i * charSize.cellHeight;
-      final cellCount = math.min(terminal.viewWidth, line.length);
-
-      final builder = StringBuffer();
-      for (var i = 0; i < cellCount; i++) {
-        final cell = line.getCell(i);
-
-        if (cell.attr == null || cell.width == 0) {
-          continue;
-        }
-
-        if (cell.codePoint == null) {
-          builder.write(' ');
-        } else {
-          builder.writeCharCode(cell.codePoint);
-        }
-
-        // final offsetX = i * charSize.effectWidth;
-        // paintCell(canvas, cell, offsetX, offsetY);
-      }
-
-      final style = TextStyle(
-        // color: color,
-        // fontWeight: cell.attr.bold ? FontWeight.bold : FontWeight.normal,
-        // fontStyle: cell.attr.italic ? FontStyle.italic : FontStyle.normal,
-        fontSize: view.style.fontSize,
-        letterSpacing: charSize.letterSpacing,
-        fontFeatures: [FontFeature.tabularFigures()],
-        // decoration:
-        //     cell.attr.underline ? TextDecoration.underline : TextDecoration.none,
-        fontFamilyFallback: view.style.fontFamily,
-      );
-
-      final span = TextSpan(
-        text: builder.toString(),
-        style: style,
-      );
-
-      final tp = textLayoutCache.getOrPerformLayout(span);
-
-      tp.paint(canvas, Offset(0, offsetY));
     }
   }
 
