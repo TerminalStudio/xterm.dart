@@ -11,7 +11,7 @@ class InputBehaviorDefault extends InputBehavior {
   bool get acceptKeyStroke => true;
 
   @override
-  TextEditingValue get initTextEditingValue => TextEditingValue.empty;
+  TextEditingValue get initEditingState => TextEditingValue.empty;
 
   @override
   void onKeyStroke(RawKeyEvent event, Terminal terminal) {

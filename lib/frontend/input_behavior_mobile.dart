@@ -9,15 +9,15 @@ class InputBehaviorMobile extends InputBehaviorDefault {
 
   final acceptKeyStroke = false;
 
-  final initTextEditingValue = const TextEditingValue(
+  final initEditingState = const TextEditingValue(
     text: '  ',
     selection: TextSelection.collapsed(offset: 1),
   );
 
   TextEditingValue onTextEdit(TextEditingValue value, Terminal terminal) {
-    if (value.text.length > initTextEditingValue.text.length) {
+    if (value.text.length > initEditingState.text.length) {
       terminal.onInput(value.text.substring(1, value.text.length - 1));
-    } else if (value.text.length < initTextEditingValue.text.length) {
+    } else if (value.text.length < initEditingState.text.length) {
       terminal.keyInput(TerminalKey.backspace);
     } else {
       if (value.selection.baseOffset < 1) {
@@ -27,7 +27,7 @@ class InputBehaviorMobile extends InputBehaviorDefault {
       }
     }
 
-    return initTextEditingValue;
+    return initEditingState;
   }
 
   void onAction(TextInputAction action, Terminal terminal) {

@@ -7,7 +7,7 @@ abstract class InputBehavior {
 
   bool get acceptKeyStroke;
 
-  TextEditingValue get initTextEditingValue;
+  TextEditingValue get initEditingState;
 
   void onKeyStroke(RawKeyEvent event, Terminal terminal);
 

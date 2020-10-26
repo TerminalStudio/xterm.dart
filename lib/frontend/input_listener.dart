@@ -24,7 +24,7 @@ class InputListener extends StatefulWidget {
     this.autofocus = false,
     this.listenKeyStroke = true,
     this.readOnly = false,
-    this.initTextEditingValue = TextEditingValue.empty,
+    this.initEditingState = TextEditingValue.empty,
   });
 
   final Widget child;
@@ -36,7 +36,7 @@ class InputListener extends StatefulWidget {
   final FocusNode focusNode;
   final bool listenKeyStroke;
   final bool readOnly;
-  final TextEditingValue initTextEditingValue;
+  final TextEditingValue initEditingState;
 
   @override
   InputListenerState createState() => InputListenerState();
@@ -169,7 +169,7 @@ class InputListenerState extends State<InputListener>
         Matrix4.translationValues(dx, dy, 0.0),
       );
 
-      _conn.setEditingState(widget.initTextEditingValue);
+      _conn.setEditingState(widget.initEditingState);
     }
   }
 

@@ -151,7 +151,7 @@ class _TerminalViewState extends State<TerminalView> {
       onFocus: onFocus,
       focusNode: widget.focusNode,
       autofocus: false,
-      initTextEditingValue: widget.inputBehavior.initTextEditingValue,
+      initEditingState: widget.inputBehavior.initEditingState,
       child: MouseRegion(
         cursor: SystemMouseCursors.text,
         child: LayoutBuilder(builder: (context, constraints) {
