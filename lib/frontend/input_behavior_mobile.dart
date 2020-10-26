@@ -7,14 +7,17 @@ import 'package:xterm/xterm.dart';
 class InputBehaviorMobile extends InputBehaviorDefault {
   const InputBehaviorMobile();
 
-  static const _placeholder = '  ';
+  final acceptKeyStroke = false;
 
-  bool get acceptKeyStroke => false;
+  final initTextEditingValue = const TextEditingValue(
+    text: '  ',
+    selection: TextSelection.collapsed(offset: 1),
+  );
 
   TextEditingValue onTextEdit(TextEditingValue value, Terminal terminal) {
-    if (value.text.length > _placeholder.length) {
+    if (value.text.length > initTextEditingValue.text.length) {
       terminal.onInput(value.text.substring(1, value.text.length - 1));
-    } else if (value.text.length < _placeholder.length) {
+    } else if (value.text.length < initTextEditingValue.text.length) {
       terminal.keyInput(TerminalKey.backspace);
     } else {
       if (value.selection.baseOffset < 1) {
@@ -24,10 +27,7 @@ class InputBehaviorMobile extends InputBehaviorDefault {
       }
     }
 
-    return TextEditingValue(
-      text: _placeholder,
-      selection: TextSelection.collapsed(offset: 1),
-    );
+    return initTextEditingValue;
   }
 
   void onAction(TextInputAction action, Terminal terminal) {
