@@ -53,11 +53,15 @@ class TerminalView extends StatefulWidget {
 
     final text = Text(
       testString,
-      style: TextStyle(
-        fontFamily: 'monospace',
-        fontFamilyFallback: style.fontFamily,
-        fontSize: style.fontSize,
-      ),
+      style: (style.textStyleProvider != null)
+          ? style.textStyleProvider(
+              fontSize: style.fontSize,
+            )
+          : TextStyle(
+              fontFamily: 'monospace',
+              fontFamilyFallback: style.fontFamily,
+              fontSize: style.fontSize,
+            ),
     );
 
     final size = textSize(text);
@@ -425,16 +429,26 @@ class TerminalPainter extends CustomPainter {
       color = color.withOpacity(0.5);
     }
 
-    final style = TextStyle(
-        color: color,
-        fontWeight: cell.attr.bold ? FontWeight.bold : FontWeight.normal,
-        fontStyle: cell.attr.italic ? FontStyle.italic : FontStyle.normal,
-        fontSize: view.style.fontSize,
-        decoration: cell.attr.underline
-            ? TextDecoration.underline
-            : TextDecoration.none,
-        fontFamily: 'monospace',
-        fontFamilyFallback: view.style.fontFamily);
+    final style = (view.style.textStyleProvider != null)
+        ? view.style.textStyleProvider(
+            color: color,
+            fontWeight: cell.attr.bold ? FontWeight.bold : FontWeight.normal,
+            fontStyle: cell.attr.italic ? FontStyle.italic : FontStyle.normal,
+            fontSize: view.style.fontSize,
+            decoration: cell.attr.underline
+                ? TextDecoration.underline
+                : TextDecoration.none,
+          )
+        : TextStyle(
+            color: color,
+            fontWeight: cell.attr.bold ? FontWeight.bold : FontWeight.normal,
+            fontStyle: cell.attr.italic ? FontStyle.italic : FontStyle.normal,
+            fontSize: view.style.fontSize,
+            decoration: cell.attr.underline
+                ? TextDecoration.underline
+                : TextDecoration.none,
+            fontFamily: 'monospace',
+            fontFamilyFallback: view.style.fontFamily);
 
     final span = TextSpan(
       text: String.fromCharCode(cell.codePoint),
