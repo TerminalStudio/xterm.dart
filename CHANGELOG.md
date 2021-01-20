@@ -1,3 +1,7 @@
+## [1.2.0-pre] - 2021-1-20
+
+* add the ability to use fonts from the google_fonts package [#9](https://github.com/TerminalStudio/xterm.dart/pull/9)
+
 ## [1.1.1+1] - 2020-10-4
 
 * Update readme
