@@ -1,3 +1,6 @@
+import 'dart:ui' as ui;
+import 'package:flutter/material.dart';
+
 class TerminalStyle {
   static const defaultFontFamily = [
     'Monaco',
@@ -28,10 +31,34 @@ class TerminalStyle {
     this.fontSize = 14,
     this.fontWidthScaleFactor = 1.0,
     this.fontHeightScaleFactor = 1.1,
+    this.textStyleProvider,
   });
 
   final List<String> fontFamily;
   final double fontSize;
   final double fontWidthScaleFactor;
   final double fontHeightScaleFactor;
+  final TextStyleProvider textStyleProvider;
 }
+
+typedef TextStyleProvider = Function({
+  TextStyle textStyle,
+  Color color,
+  Color backgroundColor,
+  double fontSize,
+  FontWeight fontWeight,
+  FontStyle fontStyle,
+  double letterSpacing,
+  double wordSpacing,
+  TextBaseline textBaseline,
+  double height,
+  Locale locale,
+  Paint foreground,
+  Paint background,
+  List<ui.Shadow> shadows,
+  List<ui.FontFeature> fontFeatures,
+  TextDecoration decoration,
+  Color decorationColor,
+  TextDecorationStyle decorationStyle,
+  double decorationThickness,
+});
