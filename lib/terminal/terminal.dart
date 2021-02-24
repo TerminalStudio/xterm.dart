@@ -1,7 +1,6 @@
-import 'dart:async';
+import 'dart:collection';
 import 'dart:math' show max, min;
 
-import 'package:async/async.dart';
 import 'package:xterm/buffer/buffer.dart';
 import 'package:xterm/buffer/buffer_line.dart';
 import 'package:xterm/buffer/cell_attr.dart';
@@ -41,12 +40,8 @@ class Terminal with Observable {
     _altBuffer = Buffer(this);
     _buffer = _mainBuffer;
 
-    _input = StreamController<int>();
-    _queue = StreamQueue<int>(_input.stream);
-
     tabs.reset();
 
-    _processInput();
     // _buffer.write('this is magic!');
   }
 
@@ -99,8 +94,8 @@ class Terminal with Observable {
   Buffer _mainBuffer;
   Buffer _altBuffer;
 
-  StreamController<int> _input;
-  StreamQueue<int> _queue;
+  /// Queue of input characters. addLast() to add, removeFirst() to consume.
+  final _queue = Queue<int>();
 
   bool _slowMotion = false;
   bool get slowMotion => _slowMotion;
@@ -122,11 +117,6 @@ class Terminal with Observable {
   final IconChangeHandler onIconChange;
   final PlatformBehavior platform;
 
-  void close() {
-    _input.close();
-    _queue.cancel();
-  }
-
   Buffer get buffer {
     return _buffer;
   }
@@ -136,30 +126,30 @@ class Terminal with Observable {
   int get scrollOffset => buffer.scrollOffsetFromBottom;
 
   void write(String text) async {
-    for (var char in text.runes) {
-      writeChar(char);
-    }
+    _queue.addAll(text.runes);
+    _processInput();
   }
 
   void writeChar(int codePoint) {
-    _input.add(codePoint);
+    _queue.addLast(codePoint);
+    _processInput();
   }
 
   List<BufferLine> getVisibleLines() {
     return _buffer.getVisibleLines();
   }
 
-  void _processInput() async {
-    while (true) {
-      if (_slowMotion) {
-        await Future.delayed(Duration(milliseconds: 100));
-      }
+  void _processInput() {
+    while (_queue.isNotEmpty) {
+      // if (_slowMotion) {
+      //   await Future.delayed(Duration(milliseconds: 100));
+      // }
 
       const esc = 0x1b;
-      final char = await _queue.next;
+      final char = _queue.removeFirst();
 
       if (char == esc) {
-        await ansiHandler(_queue, this);
+        ansiHandler(_queue, this);
         refresh();
         continue;
       }

@@ -1,4 +1,5 @@
-import 'package:async/async.dart';
+import 'dart:collection';
+
 import 'package:xterm/terminal/terminal.dart';
 
 // bool _isOscTerminator(int codePoint) {
@@ -7,15 +8,12 @@ import 'package:xterm/terminal/terminal.dart';
 //   return terminator.contains(codePoint);
 // }
 
-Future<List<String>> _parseOsc(
-  StreamQueue<int> queue,
-  Set<int> terminators,
-) async {
+List<String> _parseOsc(Queue<int> queue, Set<int> terminators) {
   final params = <String>[];
   final param = StringBuffer();
 
-  while (true) {
-    final char = await queue.next;
+  while (queue.isNotEmpty) {
+    final char = queue.removeFirst();
 
     if (terminators.contains(char)) {
       params.add(param.toString());
@@ -35,8 +33,8 @@ Future<List<String>> _parseOsc(
   return params;
 }
 
-Future<void> oscHandler(StreamQueue<int> queue, Terminal terminal) async {
-  final params = await _parseOsc(queue, terminal.platform.oscTerminators);
+void oscHandler(Queue<int> queue, Terminal terminal) {
+  final params = _parseOsc(queue, terminal.platform.oscTerminators);
   terminal.debug.onOsc(params);
 
   if (params.isEmpty) {

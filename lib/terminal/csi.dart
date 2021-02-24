@@ -1,38 +1,39 @@
-import 'package:async/async.dart';
+import 'dart:collection';
+
 import 'package:xterm/terminal/modes.dart';
 import 'package:xterm/terminal/sgr.dart';
 import 'package:xterm/terminal/terminal.dart';
 
 typedef CsiSequenceHandler = void Function(CSI, Terminal);
 
-final _csiHandlers = <String, CsiSequenceHandler>{
-  'c': csiSendDeviceAttributesHandler,
-  'd': csiLinePositionAbsolute,
-  'f': csiCursorPositionHandler,
-  'g': csiTabClearHandler,
-  'h': csiModeHandler,
-  'l': csiModeHandler,
-  'm': sgrHandler,
-  'n': csiDeviceStatusReportHandler,
-  'r': csiSetMarginsHandler,
-  't': csiWindowManipulation,
-  'A': csiCursorUpHandler,
-  'B': csiCursorDownHandler,
-  'C': csiCursorForwardHandler,
-  'D': csiCursorBackwardHandler,
-  'E': csiCursorNextLineHandler,
-  'F': csiCursorPrecedingLineHandler,
-  'G': csiCursorHorizontalAbsoluteHandler,
-  'H': csiCursorPositionHandler,
-  'J': csiEraseInDisplayHandler,
-  'K': csiEraseInLineHandler,
-  'L': csiInsertLinesHandler,
-  'M': csiDeleteLinesHandler,
-  'P': csiDeleteHandler,
-  'S': csiScrollUpHandler,
-  'T': csiScrollDownHandler,
-  'X': csiEraseCharactersHandler,
-  '@': csiInsertBlankCharactersHandler,
+final _csiHandlers = <int, CsiSequenceHandler>{
+  'c'.codeUnitAt(0): csiSendDeviceAttributesHandler,
+  'd'.codeUnitAt(0): csiLinePositionAbsolute,
+  'f'.codeUnitAt(0): csiCursorPositionHandler,
+  'g'.codeUnitAt(0): csiTabClearHandler,
+  'h'.codeUnitAt(0): csiModeHandler,
+  'l'.codeUnitAt(0): csiModeHandler,
+  'm'.codeUnitAt(0): sgrHandler,
+  'n'.codeUnitAt(0): csiDeviceStatusReportHandler,
+  'r'.codeUnitAt(0): csiSetMarginsHandler,
+  't'.codeUnitAt(0): csiWindowManipulation,
+  'A'.codeUnitAt(0): csiCursorUpHandler,
+  'B'.codeUnitAt(0): csiCursorDownHandler,
+  'C'.codeUnitAt(0): csiCursorForwardHandler,
+  'D'.codeUnitAt(0): csiCursorBackwardHandler,
+  'E'.codeUnitAt(0): csiCursorNextLineHandler,
+  'F'.codeUnitAt(0): csiCursorPrecedingLineHandler,
+  'G'.codeUnitAt(0): csiCursorHorizontalAbsoluteHandler,
+  'H'.codeUnitAt(0): csiCursorPositionHandler,
+  'J'.codeUnitAt(0): csiEraseInDisplayHandler,
+  'K'.codeUnitAt(0): csiEraseInLineHandler,
+  'L'.codeUnitAt(0): csiInsertLinesHandler,
+  'M'.codeUnitAt(0): csiDeleteLinesHandler,
+  'P'.codeUnitAt(0): csiDeleteHandler,
+  'S'.codeUnitAt(0): csiScrollUpHandler,
+  'T'.codeUnitAt(0): csiScrollDownHandler,
+  'X'.codeUnitAt(0): csiEraseCharactersHandler,
+  '@'.codeUnitAt(0): csiInsertBlankCharactersHandler,
 };
 
 class CSI {
@@ -52,12 +53,14 @@ class CSI {
   }
 }
 
-Future<CSI> _parseCsi(StreamQueue<int> queue) async {
+CSI _parseCsi(Queue<int> queue) {
   final paramBuffer = StringBuffer();
   final intermediates = <int>[];
 
   while (true) {
-    final char = await queue.next;
+    // TODO: handle special case when queue is empty as this time.
+
+    final char = queue.removeFirst();
 
     if (char >= 0x30 && char <= 0x3F) {
       paramBuffer.writeCharCode(char);
@@ -83,12 +86,12 @@ Future<CSI> _parseCsi(StreamQueue<int> queue) async {
   }
 }
 
-Future<void> csiHandler(StreamQueue<int> queue, Terminal terminal) async {
-  final csi = await _parseCsi(queue);
+void csiHandler(Queue<int> queue, Terminal terminal) {
+  final csi = _parseCsi(queue);
 
   terminal.debug.onCsi(csi);
 
-  final handler = _csiHandlers[String.fromCharCode(csi.finalByte)];
+  final handler = _csiHandlers[csi.finalByte];
 
   if (handler != null) {
     handler(csi, terminal);

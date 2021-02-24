@@ -1,14 +1,13 @@
-import 'dart:async';
+import 'dart:collection';
 
-import 'package:async/async.dart';
 import 'package:xterm/terminal/csi.dart';
 import 'package:xterm/terminal/osc.dart';
 import 'package:xterm/terminal/terminal.dart';
 
-typedef AnsiHandler = FutureOr<void> Function(StreamQueue<int>, Terminal);
+typedef AnsiHandler = void Function(Queue<int>, Terminal);
 
-Future<void> ansiHandler(StreamQueue<int> queue, Terminal terminal) async {
-  final charAfterEsc = String.fromCharCode(await queue.next);
+void ansiHandler(Queue<int> queue, Terminal terminal) {
+  final charAfterEsc = String.fromCharCode(queue.removeFirst());
 
   final handler = _ansiHandlers[charAfterEsc];
   if (handler != null) {
@@ -47,38 +46,38 @@ AnsiHandler _voidHandler(int sequenceLength) {
   };
 }
 
-void _unsupportedHandler(StreamQueue<int> queue, Terminal terminal) async {
+void _unsupportedHandler(Queue<int> queue, Terminal terminal) async {
   // print('unimplemented ansi sequence.');
 }
 
-void _ansiSaveCursorHandler(StreamQueue<int> queue, Terminal terminal) {
+void _ansiSaveCursorHandler(Queue<int> queue, Terminal terminal) {
   terminal.buffer.saveCursor();
 }
 
-void _ansiRestoreCursorHandler(StreamQueue<int> queue, Terminal terminal) {
+void _ansiRestoreCursorHandler(Queue<int> queue, Terminal terminal) {
   terminal.buffer.restoreCursor();
 }
 
-void _ansiIndexHandler(StreamQueue<int> queue, Terminal terminal) {
+void _ansiIndexHandler(Queue<int> queue, Terminal terminal) {
   terminal.buffer.index();
 }
 
-void _ansiReverseIndexHandler(StreamQueue<int> queue, Terminal terminal) {
+void _ansiReverseIndexHandler(Queue<int> queue, Terminal terminal) {
   terminal.buffer.reverseIndex();
 }
 
 AnsiHandler _scsHandler(int which) {
-  return (StreamQueue<int> queue, Terminal terminal) async {
-    final name = String.fromCharCode(await queue.next);
+  return (Queue<int> queue, Terminal terminal) {
+    final name = String.fromCharCode(queue.removeFirst());
     terminal.buffer.charset.designate(which, name);
   };
 }
 
-void _ansiNextLineHandler(StreamQueue<int> queue, Terminal terminal) {
+void _ansiNextLineHandler(Queue<int> queue, Terminal terminal) {
   terminal.buffer.newLine();
   terminal.buffer.setCursorX(0);
 }
 
-void _ansiTabSetHandler(StreamQueue<int> queue, Terminal terminal) {
+void _ansiTabSetHandler(Queue<int> queue, Terminal terminal) {
   terminal.tabSetAtCursor();
 }
