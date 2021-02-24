@@ -1,3 +1,6 @@
+## [1.3.0] - 2021-2-24
+* Performance improvement.
+
 ## [1.2.0] - 2021-2-15
 
 * Pass TerminalView's autofocus to the InputListener that it creates. [#10](https://github.com/TerminalStudio/xterm.dart/pull/10), thanks [@timburks](https://github.com/timburks)
