@@ -1,3 +1,20 @@
+## [1.2.0] - 2021-2-15
+
+* Pass TerminalView's autofocus to the InputListener that it creates. [#10](https://github.com/TerminalStudio/xterm.dart/pull/10), thanks [@timburks](https://github.com/timburks)
+
+## [1.2.0-pre] - 2021-1-20
+
+* add the ability to use fonts from the google_fonts package [#9](https://github.com/TerminalStudio/xterm.dart/pull/9)
+
+## [1.1.1+1] - 2020-10-4
+
+* Update readme
+
+
+## [1.1.1] - 2020-10-4
+
+* Add brightWhite to TerminalTheme
+
 ## [1.1.0] - 2020-9-29
 
 * Fix web support.

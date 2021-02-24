@@ -53,11 +53,15 @@ class TerminalView extends StatefulWidget {
 
     final text = Text(
       testString,
-      style: TextStyle(
-        fontFamily: 'monospace',
-        fontFamilyFallback: style.fontFamily,
-        fontSize: style.fontSize,
-      ),
+      style: (style.textStyleProvider != null)
+          ? style.textStyleProvider(
+              fontSize: style.fontSize,
+            )
+          : TextStyle(
+              fontFamily: 'monospace',
+              fontFamilyFallback: style.fontFamily,
+              fontSize: style.fontSize,
+            ),
     );
 
     final size = textSize(text);
@@ -150,7 +154,8 @@ class _TerminalViewState extends State<TerminalView> {
       onAction: onAction,
       onFocus: onFocus,
       focusNode: widget.focusNode,
-      autofocus: false,
+      autofocus: widget.autofocus,
+      initEditingState: widget.inputBehavior.initEditingState,
       child: MouseRegion(
         cursor: SystemMouseCursors.text,
         child: LayoutBuilder(builder: (context, constraints) {
@@ -315,8 +320,6 @@ class TerminalPainter extends CustomPainter {
     }
 
     paintText(canvas);
-    // print(textLayoutCacheV2.length);
-    // or paintTextFast(canvas);
 
     paintSelection(canvas);
   }
@@ -411,55 +414,6 @@ class TerminalPainter extends CustomPainter {
     }
   }
 
-  void paintTextFast(Canvas canvas) {
-    final lines = terminal.getVisibleLines();
-
-    for (var i = 0; i < lines.length; i++) {
-      final line = lines[i];
-      final offsetY = i * charSize.cellHeight;
-      final cellCount = math.min(terminal.viewWidth, line.length);
-
-      final builder = StringBuffer();
-      for (var i = 0; i < cellCount; i++) {
-        final cell = line.getCell(i);
-
-        if (cell.attr == null || cell.width == 0) {
-          continue;
-        }
-
-        if (cell.codePoint == null) {
-          builder.write(' ');
-        } else {
-          builder.writeCharCode(cell.codePoint);
-        }
-
-        // final offsetX = i * charSize.effectWidth;
-        // paintCell(canvas, cell, offsetX, offsetY);
-      }
-
-      final style = TextStyle(
-        // color: color,
-        // fontWeight: cell.attr.bold ? FontWeight.bold : FontWeight.normal,
-        // fontStyle: cell.attr.italic ? FontStyle.italic : FontStyle.normal,
-        fontSize: view.style.fontSize,
-        letterSpacing: charSize.letterSpacing,
-        fontFeatures: [FontFeature.tabularFigures()],
-        // decoration:
-        //     cell.attr.underline ? TextDecoration.underline : TextDecoration.none,
-        fontFamilyFallback: view.style.fontFamily,
-      );
-
-      final span = TextSpan(
-        text: builder.toString(),
-        style: style,
-      );
-
-      final tp = textLayoutCache.getOrPerformLayout(span);
-
-      tp.paint(canvas, Offset(0, offsetY));
-    }
-  }
-
   void paintCell(Canvas canvas, Cell cell, double offsetX, double offsetY) {
     if (cell.codePoint == null || cell.attr.invisible) {
       return;
@@ -475,16 +429,26 @@ class TerminalPainter extends CustomPainter {
       color = color.withOpacity(0.5);
     }
 
-    final style = TextStyle(
-        color: color,
-        fontWeight: cell.attr.bold ? FontWeight.bold : FontWeight.normal,
-        fontStyle: cell.attr.italic ? FontStyle.italic : FontStyle.normal,
-        fontSize: view.style.fontSize,
-        decoration: cell.attr.underline
-            ? TextDecoration.underline
-            : TextDecoration.none,
-        fontFamily: 'monospace',
-        fontFamilyFallback: view.style.fontFamily);
+    final style = (view.style.textStyleProvider != null)
+        ? view.style.textStyleProvider(
+            color: color,
+            fontWeight: cell.attr.bold ? FontWeight.bold : FontWeight.normal,
+            fontStyle: cell.attr.italic ? FontStyle.italic : FontStyle.normal,
+            fontSize: view.style.fontSize,
+            decoration: cell.attr.underline
+                ? TextDecoration.underline
+                : TextDecoration.none,
+          )
+        : TextStyle(
+            color: color,
+            fontWeight: cell.attr.bold ? FontWeight.bold : FontWeight.normal,
+            fontStyle: cell.attr.italic ? FontStyle.italic : FontStyle.normal,
+            fontSize: view.style.fontSize,
+            decoration: cell.attr.underline
+                ? TextDecoration.underline
+                : TextDecoration.none,
+            fontFamily: 'monospace',
+            fontFamilyFallback: view.style.fontFamily);
 
     final span = TextSpan(
       text: String.fromCharCode(cell.codePoint),

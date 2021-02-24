@@ -22,6 +22,7 @@ class TerminalTheme {
     @required this.brightBlue,
     @required this.brightMagenta,
     @required this.brightCyan,
+    @required this.brightWhite,
   });
 
   final TerminalColor cursor;
@@ -36,6 +37,7 @@ class TerminalTheme {
   final TerminalColor blue;
   final TerminalColor magenta;
   final TerminalColor cyan;
+  final TerminalColor white;
 
   final TerminalColor brightBlack;
   final TerminalColor brightRed;
@@ -44,5 +46,5 @@ class TerminalTheme {
   final TerminalColor brightBlue;
   final TerminalColor brightMagenta;
   final TerminalColor brightCyan;
-  final TerminalColor white;
+  final TerminalColor brightWhite;
 }

@@ -1,7 +1,6 @@
 import 'package:xterm/theme/terminal_color.dart';
 import 'package:xterm/terminal/csi.dart';
 import 'package:xterm/terminal/terminal.dart';
-import 'package:xterm/theme/terminal_color_ref.dart';
 
 // reference to color
 class Cr implements TerminalColor {
@@ -133,7 +132,7 @@ void sgrHandler(CSI csi, Terminal terminal) {
         terminal.cellAttr.fgColor = Cr(() => terminal.theme.brightCyan);
         break;
       case '97':
-        terminal.cellAttr.fgColor = Cr(() => terminal.theme.white);
+        terminal.cellAttr.fgColor = Cr(() => terminal.theme.brightWhite);
         break;
       case '49':
         terminal.cellAttr.bgColor = Cr(() => terminal.theme.background);
@@ -184,7 +183,7 @@ void sgrHandler(CSI csi, Terminal terminal) {
         terminal.cellAttr.bgColor = Cr(() => terminal.theme.brightCyan);
         break;
       case '107':
-        terminal.cellAttr.bgColor = Cr(() => terminal.theme.white);
+        terminal.cellAttr.bgColor = Cr(() => terminal.theme.brightWhite);
         break;
       case '38': // set foreground
         final color = parseAnsiColour(params.sublist(i), terminal);

@@ -30,7 +30,7 @@ class Terminal with Observable {
     this.onBell,
     this.onTitleChange,
     this.onIconChange,
-    this.platform = PlatformBehavior.unix,
+    this.platform = PlatformBehaviors.unix,
     this.theme = TerminalThemes.defaultTheme,
     int maxLines,
   }) {

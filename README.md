@@ -13,7 +13,7 @@
 
 > This package requires Flutter version >=1.22.0
 
-### Screenshots
+## Screenshots
 
 <table>
   <tr>
@@ -34,7 +34,7 @@
   </tr>
 </table>
 
-### Features
+## Features
 
 - 📦 **Works out of the box** No special configuration required.
 - 🚀 **Fast** Renders at 60fps.
@@ -42,7 +42,7 @@
 - ✂️ **Customizable** 
 - ✔ **Frontend independent**: The terminal core can work without flutter frontend.
 
-### Getting Started
+## Getting Started
 
 **1.** Add this to your package's pubspec.yaml file:
 
@@ -86,12 +86,19 @@ terminal.write('Hello, world!');
 
 **Done!**
 
-### Example
+## Example
 
-**ssh example**: https://github.com/TerminalStudio/xterm.dart/blob/master/example/lib/ssh.dart
+- **local pty example**: [Terminal Lite](https://github.com/TerminalStudio/xterm.dart)
 
+- **ssh example**: https://github.com/TerminalStudio/xterm.dart/blob/master/example/lib/ssh.dart
 <img width="400px" src="https://raw.githubusercontent.com/TerminalStudio/xterm.dart/master/media/example-ssh.png">
 
-### License
+## Features and bugs
+
+Please file feature requests and bugs at the [issue tracker](https://github.com/TerminalStudio/xterm.dart/issues).
+
+Contributions are always welcome!
+
+## License
 
 This project is licensed under an MIT license.
