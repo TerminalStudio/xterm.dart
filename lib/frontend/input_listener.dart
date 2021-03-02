@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:meta/meta.dart';
 
 typedef KeyStrokeHandler = void Function(RawKeyEvent);
-typedef InputHandler = TextEditingValue Function(TextEditingValue);
+typedef InputHandler = TextEditingValue? Function(TextEditingValue);
 typedef ActionHandler = void Function(TextInputAction);
 typedef FocusHandler = void Function(bool);
 
@@ -15,11 +15,11 @@ abstract class InputListenerController {
 
 class InputListener extends StatefulWidget {
   InputListener({
-    @required this.child,
-    @required this.onKeyStroke,
-    @required this.onTextInput,
-    @required this.onAction,
-    @required this.focusNode,
+    required this.child,
+    required this.onKeyStroke,
+    required this.onTextInput,
+    required this.onAction,
+    required this.focusNode,
     this.onFocus,
     this.autofocus = false,
     this.listenKeyStroke = true,
@@ -31,7 +31,7 @@ class InputListener extends StatefulWidget {
   final InputHandler onTextInput;
   final KeyStrokeHandler onKeyStroke;
   final ActionHandler onAction;
-  final FocusHandler onFocus;
+  final FocusHandler? onFocus;
   final bool autofocus;
   final FocusNode focusNode;
   final bool listenKeyStroke;
@@ -41,15 +41,15 @@ class InputListener extends StatefulWidget {
   @override
   InputListenerState createState() => InputListenerState();
 
-  static InputListenerController of(BuildContext context) {
+  static InputListenerController? of(BuildContext context) {
     return context.findAncestorStateOfType<InputListenerState>();
   }
 }
 
 class InputListenerState extends State<InputListener>
     implements InputListenerController {
-  TextInputConnection _conn;
-  FocusAttachment _focusAttachment;
+  TextInputConnection? _conn;
+  FocusAttachment? _focusAttachment;
   bool _didAutoFocus = false;
 
   @override
@@ -65,7 +65,7 @@ class InputListenerState extends State<InputListener>
 
     if (!_didAutoFocus && widget.autofocus) {
       _didAutoFocus = true;
-      SchedulerBinding.instance.addPostFrameCallback((_) {
+      SchedulerBinding.instance!.addPostFrameCallback((_) {
         if (mounted) {
           FocusScope.of(context).autofocus(widget.focusNode);
         }
@@ -75,7 +75,7 @@ class InputListenerState extends State<InputListener>
 
   bool get _shouldCreateInputConnection => kIsWeb || !widget.readOnly;
 
-  bool get _hasInputConnection => _conn != null && _conn.attached;
+  bool get _hasInputConnection => _conn != null && _conn!.attached;
 
   @override
   void didUpdateWidget(InputListener oldWidget) {
@@ -100,12 +100,12 @@ class InputListenerState extends State<InputListener>
   @override
   void dispose() {
     super.dispose();
-    _focusAttachment.detach();
+    _focusAttachment?.detach();
   }
 
   @override
   Widget build(BuildContext context) {
-    _focusAttachment.reparent();
+    _focusAttachment?.reparent();
 
     if (widget.listenKeyStroke) {
       return RawKeyboardListener(
@@ -134,7 +134,7 @@ class InputListenerState extends State<InputListener>
 
   void onFocusChange() {
     if (widget.onFocus != null) {
-      widget.onFocus(widget.focusNode.hasFocus);
+      widget.onFocus?.call(widget.focusNode.hasFocus);
     }
 
     openOrCloseInputConnectionIfNeeded();
@@ -154,28 +154,28 @@ class InputListenerState extends State<InputListener>
     }
 
     if (_hasInputConnection) {
-      _conn.show();
+      _conn!.show();
     } else {
       final config = TextInputConfiguration();
       final client = TerminalTextInputClient(onInput, onAction);
       _conn = TextInput.attach(client, config);
 
-      _conn.show();
+      _conn!.show();
 
       final dx = 0.0;
       final dy = 0.0;
-      _conn.setEditableSizeAndTransform(
+      _conn!.setEditableSizeAndTransform(
         Size(10, 10),
         Matrix4.translationValues(dx, dy, 0.0),
       );
 
-      _conn.setEditingState(widget.initEditingState);
+      _conn!.setEditingState(widget.initEditingState);
     }
   }
 
   void closeInputConnectionIfNeeded() {
-    if (_conn != null && _conn.attached) {
-      _conn.close();
+    if (_conn != null && _conn!.attached) {
+      _conn!.close();
       _conn = null;
     }
   }
@@ -189,7 +189,7 @@ class InputListenerState extends State<InputListener>
   }
 
   void onAction(TextInputAction action) {
-    widget?.onAction(action);
+    widget.onAction(action);
   }
 }
 
@@ -199,13 +199,13 @@ class TerminalTextInputClient extends TextInputClient {
   final void Function(TextEditingValue) onInput;
   final ActionHandler onAction;
 
-  TextEditingValue _savedValue;
+  TextEditingValue? _savedValue;
 
-  TextEditingValue get currentTextEditingValue {
+  TextEditingValue? get currentTextEditingValue {
     return _savedValue;
   }
 
-  AutofillScope get currentAutofillScope {
+  AutofillScope? get currentAutofillScope {
     return null;
   }
 

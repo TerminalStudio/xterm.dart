@@ -32,13 +32,13 @@ class LineReader {
 
   bool get done => _pos > line.length - 1;
 
-  String take([int count = 1]) {
+  String? take([int count = 1]) {
     final result = peek(count);
     _pos += count;
     return result;
   }
 
-  String peek([int count = 1]) {
+  String? peek([int count = 1]) {
     if (done) return null;
     final end = min(_pos + count, line.length);
     final result = line.substring(_pos, end);
@@ -142,7 +142,7 @@ Iterable<KeytabToken> _parseKeyDefine(String line) sync* {
   reader.skipWhitespace();
 
   while (reader.peek() == '+' || reader.peek() == '-') {
-    final modeStatus = reader.take();
+    final modeStatus = reader.take()!;
     yield KeytabToken(KeytabTokenType.modeStatus, modeStatus);
     final mode = reader.readString();
     yield KeytabToken(KeytabTokenType.mode, mode);

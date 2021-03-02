@@ -91,5 +91,5 @@ int decSpecGraphicsTranslator(int codePoint) {
     return codePoint;
   }
 
-  return decSpecGraphics[codePoint] ?? decSpecGraphics;
+  return decSpecGraphics[codePoint] ?? codePoint;
 }

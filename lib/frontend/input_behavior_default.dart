@@ -32,7 +32,7 @@ class InputBehaviorDefault extends InputBehavior {
   }
 
   @override
-  TextEditingValue onTextEdit(TextEditingValue value, Terminal terminal) {
+  TextEditingValue? onTextEdit(TextEditingValue value, Terminal terminal) {
     terminal.onInput(value.text);
     if (value == TextEditingValue.empty) {
       return null;

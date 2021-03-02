@@ -24,6 +24,8 @@ class TerminalStyle {
     'Arial',
     'Droid Sans Fallback',
     'sans-serif',
+    'Cascadia Mono',
+    'Arial Unicode MS',
   ];
 
   const TerminalStyle({
@@ -38,7 +40,7 @@ class TerminalStyle {
   final double fontSize;
   final double fontWidthScaleFactor;
   final double fontHeightScaleFactor;
-  final TextStyleProvider textStyleProvider;
+  final TextStyleProvider? textStyleProvider;
 }
 
 typedef TextStyleProvider = Function({

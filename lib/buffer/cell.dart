@@ -3,9 +3,9 @@ import 'package:xterm/buffer/cell_attr.dart';
 class Cell {
   Cell({this.codePoint, this.width = 1, this.attr});
 
-  int codePoint;
+  int? codePoint;
   int width;
-  CellAttr attr;
+  CellAttr? attr;
 
   void setCodePoint(int codePoint) {
     this.codePoint = codePoint;

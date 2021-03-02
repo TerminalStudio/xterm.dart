@@ -24,27 +24,28 @@ typedef ResizeHandler = void Function(int width, int height);
 
 class TerminalView extends StatefulWidget {
   TerminalView({
-    Key key,
-    @required this.terminal,
+    Key? key,
+    required this.terminal,
     this.onResize,
     this.style = const TerminalStyle(),
-    FocusNode focusNode,
+    this.opacity = 1.0,
+    FocusNode? focusNode,
     this.autofocus = false,
-    ScrollController scrollController,
-    InputBehavior inputBehavior,
-  })  : assert(terminal != null),
-        focusNode = focusNode ?? FocusNode(),
+    ScrollController? scrollController,
+    InputBehavior? inputBehavior,
+  })  : focusNode = focusNode ?? FocusNode(),
         scrollController = scrollController ?? ScrollController(),
         inputBehavior = inputBehavior ?? InputBehaviors.platform,
         super(key: key ?? ValueKey(terminal));
 
   final Terminal terminal;
-  final ResizeHandler onResize;
+  final ResizeHandler? onResize;
   final FocusNode focusNode;
   final bool autofocus;
   final ScrollController scrollController;
 
   final TerminalStyle style;
+  final double opacity;
 
   final InputBehavior inputBehavior;
 
@@ -54,7 +55,7 @@ class TerminalView extends StatefulWidget {
     final text = Text(
       testString,
       style: (style.textStyleProvider != null)
-          ? style.textStyleProvider(
+          ? style.textStyleProvider!(
               fontSize: style.fontSize,
             )
           : TextStyle(
@@ -93,10 +94,10 @@ class _TerminalViewState extends State<TerminalView> {
     return widget.focusNode.hasFocus;
   }
 
-  int _lastTerminalWidth;
-  int _lastTerminalHeight;
-  CellSize _cellSize;
-  ViewportOffset _offset;
+  int? _lastTerminalWidth;
+  int? _lastTerminalHeight;
+  late CellSize _cellSize;
+  late ViewportOffset _offset;
 
   var _minScrollExtent = 0.0;
   var _maxScrollExtent = 0.0;
@@ -195,7 +196,7 @@ class _TerminalViewState extends State<TerminalView> {
       dragStartBehavior: DragStartBehavior.down,
       onTapDown: (detail) {
         if (widget.terminal.selection.isEmpty) {
-          InputListener.of(context).requestKeyboard();
+          InputListener.of(context)!.requestKeyboard();
         } else {
           widget.terminal.selection.clear();
         }
@@ -218,7 +219,8 @@ class _TerminalViewState extends State<TerminalView> {
       },
       child: Container(
         constraints: BoxConstraints.expand(),
-        color: Color(widget.terminal.theme.background.value),
+        color: Color(widget.terminal.theme.background.value)
+            .withOpacity(widget.opacity),
         child: CustomPaint(
           painter: TerminalPainter(
             terminal: widget.terminal,
@@ -253,11 +255,9 @@ class _TerminalViewState extends State<TerminalView> {
 
       // print('($termWidth, $termHeight)');
 
-      if (widget.onResize != null) {
-        widget.onResize(termWidth, termHeight);
-      }
+      widget.onResize?.call(termWidth, termHeight);
 
-      SchedulerBinding.instance.addPostFrameCallback((_) {
+      SchedulerBinding.instance!.addPostFrameCallback((_) {
         widget.terminal.resize(termWidth, termHeight);
       });
 
@@ -267,7 +267,7 @@ class _TerminalViewState extends State<TerminalView> {
     }
   }
 
-  TextEditingValue onInput(TextEditingValue value) {
+  TextEditingValue? onInput(TextEditingValue value) {
     return widget.inputBehavior.onTextEdit(value, widget.terminal);
   }
 
@@ -277,7 +277,7 @@ class _TerminalViewState extends State<TerminalView> {
   }
 
   void onFocus(bool focused) {
-    SchedulerBinding.instance.addPostFrameCallback((_) {
+    SchedulerBinding.instance!.addPostFrameCallback((_) {
       widget.terminal.refresh();
     });
   }
@@ -295,11 +295,11 @@ class _TerminalViewState extends State<TerminalView> {
 
 class TerminalPainter extends CustomPainter {
   TerminalPainter({
-    this.terminal,
-    this.view,
-    this.oscillator,
-    this.focused,
-    this.charSize,
+    required this.terminal,
+    required this.view,
+    required this.oscillator,
+    required this.focused,
+    required this.charSize,
   });
 
   final Terminal terminal;
@@ -334,8 +334,9 @@ class TerminalPainter extends CustomPainter {
 
       for (var i = 0; i < cellCount; i++) {
         final cell = line.getCell(i);
+        final attr = cell.attr;
 
-        if (cell.attr == null || cell.width == 0) {
+        if (attr == null || cell.width == 0) {
           continue;
         }
 
@@ -343,8 +344,7 @@ class TerminalPainter extends CustomPainter {
         final effectWidth = charSize.cellWidth * cell.width + 1;
         final effectHeight = charSize.cellHeight + 1;
 
-        final bgColor =
-            cell.attr.inverse ? cell.attr.fgColor : cell.attr.bgColor;
+        final bgColor = attr.inverse ? attr.fgColor : attr.bgColor;
 
         if (bgColor == null) {
           continue;
@@ -415,50 +415,50 @@ class TerminalPainter extends CustomPainter {
   }
 
   void paintCell(Canvas canvas, Cell cell, double offsetX, double offsetY) {
-    if (cell.codePoint == null || cell.attr.invisible) {
+    final attr = cell.attr!;
+
+    if (cell.codePoint == null || attr.invisible) {
       return;
     }
 
-    final cellColor = cell.attr.inverse
-        ? cell.attr.bgColor ?? terminal.theme.background
-        : cell.attr.fgColor ?? terminal.theme.foreground;
+    final cellColor = attr.inverse
+        ? attr.bgColor ?? terminal.theme.background
+        : attr.fgColor ?? terminal.theme.foreground;
 
     var color = Color(cellColor.value);
 
-    if (cell.attr.faint) {
+    if (attr.faint) {
       color = color.withOpacity(0.5);
     }
 
     final style = (view.style.textStyleProvider != null)
-        ? view.style.textStyleProvider(
+        ? view.style.textStyleProvider!(
             color: color,
-            fontWeight: cell.attr.bold ? FontWeight.bold : FontWeight.normal,
-            fontStyle: cell.attr.italic ? FontStyle.italic : FontStyle.normal,
+            fontWeight: attr.bold ? FontWeight.bold : FontWeight.normal,
+            fontStyle: attr.italic ? FontStyle.italic : FontStyle.normal,
             fontSize: view.style.fontSize,
-            decoration: cell.attr.underline
-                ? TextDecoration.underline
-                : TextDecoration.none,
+            decoration:
+                attr.underline ? TextDecoration.underline : TextDecoration.none,
           )
         : TextStyle(
             color: color,
-            fontWeight: cell.attr.bold ? FontWeight.bold : FontWeight.normal,
-            fontStyle: cell.attr.italic ? FontStyle.italic : FontStyle.normal,
+            fontWeight: attr.bold ? FontWeight.bold : FontWeight.normal,
+            fontStyle: attr.italic ? FontStyle.italic : FontStyle.normal,
             fontSize: view.style.fontSize,
-            decoration: cell.attr.underline
-                ? TextDecoration.underline
-                : TextDecoration.none,
+            decoration:
+                attr.underline ? TextDecoration.underline : TextDecoration.none,
             fontFamily: 'monospace',
             fontFamilyFallback: view.style.fontFamily);
 
     final span = TextSpan(
-      text: String.fromCharCode(cell.codePoint),
+      text: String.fromCharCode(cell.codePoint!),
       // text: codePointCache.getOrConstruct(cell.codePoint),
       style: style,
     );
 
     // final tp = textLayoutCache.getOrPerformLayout(span);
     final tp = textLayoutCacheV2.getOrPerformLayout(
-        span, hashValues(cell.codePoint, cell.attr));
+        span, hashValues(cell.codePoint, attr));
 
     tp.paint(canvas, Offset(offsetX, offsetY));
   }

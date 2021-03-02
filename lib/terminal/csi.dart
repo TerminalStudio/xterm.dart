@@ -38,9 +38,9 @@ final _csiHandlers = <int, CsiSequenceHandler>{
 
 class CSI {
   CSI({
-    this.params,
-    this.finalByte,
-    this.intermediates,
+    required this.params,
+    required this.finalByte,
+    required this.intermediates,
   });
 
   final List<String> params;
@@ -53,11 +53,11 @@ class CSI {
   }
 }
 
-CSI _parseCsi(Queue<int> queue) {
+CSI? _parseCsi(Queue<int> queue) {
   final paramBuffer = StringBuffer();
   final intermediates = <int>[];
 
-  while (true) {
+  while (queue.isNotEmpty) {
     // TODO: handle special case when queue is empty as this time.
 
     final char = queue.removeFirst();
@@ -88,6 +88,10 @@ CSI _parseCsi(Queue<int> queue) {
 
 void csiHandler(Queue<int> queue, Terminal terminal) {
   final csi = _parseCsi(queue);
+
+  if (csi == null) {
+    return;
+  }
 
   terminal.debug.onCsi(csi);
 

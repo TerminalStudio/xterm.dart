@@ -1,11 +1,11 @@
 class CellSize {
   CellSize({
-    this.charWidth,
-    this.charHeight,
-    this.letterSpacing,
-    this.lineSpacing,
-    this.cellWidth,
-    this.cellHeight,
+    required this.charWidth,
+    required this.charHeight,
+    required this.letterSpacing,
+    required this.lineSpacing,
+    required this.cellWidth,
+    required this.cellHeight,
   });
 
   final double charWidth;

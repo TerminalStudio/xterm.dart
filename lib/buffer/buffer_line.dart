@@ -39,7 +39,7 @@ class BufferLine {
     return _cells[index];
   }
 
-  void removeRange(int start, [int end]) {
+  void removeRange(int start, [int? end]) {
     start = start.clamp(0, _cells.length);
     end ??= _cells.length;
     end = end.clamp(start, _cells.length);

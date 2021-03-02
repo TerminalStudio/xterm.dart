@@ -457,7 +457,22 @@ const HIGH_WIDE = [
   [0x30000, 0x3FFFD]
 ];
 
-Uint8List table;
+final table = buildTable();
+
+Uint8List buildTable() {
+  final table = Uint8List(65536);
+  table.fillRange(0, table.length, 1);
+  table[0] = 0;
+  table.fillRange(1, 32, 0);
+  table.fillRange(0x7f, 0xa0, 0);
+  for (var r = 0; r < BMP_COMBINING.length; ++r) {
+    table.fillRange(BMP_COMBINING[r][0], BMP_COMBINING[r][1] + 1, 0);
+  }
+  for (var r = 0; r < BMP_WIDE.length; ++r) {
+    table.fillRange(BMP_WIDE[r][0], BMP_WIDE[r][1] + 1, 2);
+  }
+  return table;
+}
 
 bool bisearch(int ucs, List<List<int>> data) {
   var min = 0;
@@ -481,22 +496,6 @@ bool bisearch(int ucs, List<List<int>> data) {
 
 class UnicodeV11 {
   final version = '11';
-
-  UnicodeV11() {
-    if (table == null) {
-      table = Uint8List(65536);
-      table.fillRange(0, table.length, 1);
-      table[0] = 0;
-      table.fillRange(1, 32, 0);
-      table.fillRange(0x7f, 0xa0, 0);
-      for (var r = 0; r < BMP_COMBINING.length; ++r) {
-        table.fillRange(BMP_COMBINING[r][0], BMP_COMBINING[r][1] + 1, 0);
-      }
-      for (var r = 0; r < BMP_WIDE.length; ++r) {
-        table.fillRange(BMP_WIDE[r][0], BMP_WIDE[r][1] + 1, 2);
-      }
-    }
-  }
 
   int wcwidth(int codePoint) {
     if (codePoint < 32) return 0;

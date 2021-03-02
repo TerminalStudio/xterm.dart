@@ -347,5 +347,5 @@ TerminalColor parse8BitSgrColour(int colNum, Terminal terminal) {
     return TerminalColor.fromARGB(0xff, r, g, b);
   }
 
-  return TerminalColor(grayscaleColors[colNum.clamp(232, 255)]);
+  return TerminalColor(grayscaleColors[colNum.clamp(232, 255)]!);
 }

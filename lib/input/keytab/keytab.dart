@@ -1,4 +1,3 @@
-import 'package:meta/meta.dart';
 import 'package:xterm/input/keytab/keytab_default.dart';
 import 'package:xterm/input/keytab/keytab_parse.dart';
 import 'package:xterm/input/keytab/keytab_record.dart';
@@ -6,8 +5,8 @@ import 'package:xterm/input/keytab/keytab_token.dart';
 
 class Keytab {
   Keytab({
-    @required this.name,
-    @required this.records,
+    required this.name,
+    required this.records,
   });
 
   factory Keytab.parse(String source) {
@@ -20,7 +19,7 @@ class Keytab {
     return Keytab.parse(kDefaultKeytab);
   }
 
-  final String name;
+  final String? name;
   final List<KeytabRecord> records;
 
   @override

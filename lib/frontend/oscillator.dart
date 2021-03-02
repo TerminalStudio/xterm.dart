@@ -10,7 +10,7 @@ class Oscillator with Observable {
   final Duration duration;
 
   var _value = true;
-  Timer _timer;
+  Timer? _timer;
 
   void _onOscillation(_) {
     _value = !_value;
@@ -27,7 +27,7 @@ class Oscillator with Observable {
   }
 
   void stop() {
-    _timer.cancel();
+    _timer?.cancel();
     _timer = null;
   }
 }

@@ -282,6 +282,6 @@ final _idKeyMap = {
   // LogicalKeyboardKey.returnKey.keyId: TerminalKey.returnKey,
 };
 
-TerminalKey inputMap(LogicalKeyboardKey key) {
+TerminalKey? inputMap(LogicalKeyboardKey key) {
   return _idKeyMap[key.keyId];
 }

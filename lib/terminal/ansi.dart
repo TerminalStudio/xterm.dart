@@ -42,7 +42,7 @@ final _ansiHandlers = <String, AnsiHandler>{
 
 AnsiHandler _voidHandler(int sequenceLength) {
   return (queue, terminal) {
-    return queue.take(sequenceLength);
+    queue.take(sequenceLength);
   };
 }
 

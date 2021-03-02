@@ -1,12 +1,12 @@
 import 'package:xterm/mouse/position.dart';
 
 class Selection {
-  Position _start;
-  Position _end;
+  Position? _start;
+  Position? _end;
   var _endFixed = false;
 
-  Position get start => _start;
-  Position get end => _end;
+  Position? get start => _start;
+  Position? get end => _end;
 
   void init(Position position) {
     _start = position;
@@ -15,16 +15,17 @@ class Selection {
   }
 
   void update(Position position) {
-    if (_start == null) {
+    final start = _start;
+    if (start == null) {
       return;
     }
 
-    if (position.isBefore(_start) && !_endFixed) {
+    if (position.isBefore(start) && !_endFixed) {
       _endFixed = true;
       _end = _start;
     }
 
-    if (position.isAfter(_start) && _endFixed) {
+    if (position.isAfter(start) && _endFixed) {
       _endFixed = false;
       _start = _end;
     }
@@ -49,7 +50,7 @@ class Selection {
       return false;
     }
 
-    return _start.isBeforeOrSame(position) && _end.isAfterOrSame(position);
+    return _start!.isBeforeOrSame(position) && _end!.isAfterOrSame(position);
   }
 
   bool get isEmpty {

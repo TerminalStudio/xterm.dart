@@ -11,7 +11,7 @@ abstract class InputBehavior {
 
   void onKeyStroke(RawKeyEvent event, Terminal terminal);
 
-  TextEditingValue onTextEdit(TextEditingValue value, Terminal terminal);
+  TextEditingValue? onTextEdit(TextEditingValue value, Terminal terminal);
 
   void onAction(TextInputAction action, Terminal terminal);
 }

@@ -1,5 +1,5 @@
 class PlatformBehavior {
-  const PlatformBehavior({this.oscTerminators});
+  const PlatformBehavior({required this.oscTerminators});
 
   final Set<int> oscTerminators;
 }

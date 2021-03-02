@@ -14,32 +14,32 @@ class TokensReader {
 
   bool get done => _pos > tokens.length - 1;
 
-  KeytabToken take() {
+  KeytabToken? take() {
     final result = peek();
     _pos += 1;
     return result;
   }
 
-  KeytabToken peek() {
+  KeytabToken? peek() {
     if (done) return null;
     return tokens[_pos];
   }
 }
 
 class KeytabParser {
-  String _name;
+  String? _name;
   final _records = <KeytabRecord>[];
 
   void addTokens(List<KeytabToken> tokens) {
     final reader = TokensReader(tokens);
 
     while (!reader.done) {
-      if (reader.peek().type == KeytabTokenType.keyboard) {
+      if (reader.peek()!.type == KeytabTokenType.keyboard) {
         _parseName(reader);
         continue;
       }
 
-      if (reader.peek().type == KeytabTokenType.keyDefine) {
+      if (reader.peek()!.type == KeytabTokenType.keyDefine) {
         _parseKeyDefine(reader);
         continue;
       }
@@ -53,11 +53,11 @@ class KeytabParser {
   }
 
   void _parseName(TokensReader reader) {
-    if (reader.take().type != KeytabTokenType.keyboard) {
+    if (reader.take()!.type != KeytabTokenType.keyboard) {
       throw ParseError();
     }
 
-    final name = reader.take();
+    final name = reader.take()!;
     if (name.type != KeytabTokenType.input) {
       throw ParseError();
     }
@@ -66,11 +66,11 @@ class KeytabParser {
   }
 
   void _parseKeyDefine(TokensReader reader) {
-    if (reader.take().type != KeytabTokenType.keyDefine) {
+    if (reader.take()!.type != KeytabTokenType.keyDefine) {
       throw ParseError();
     }
 
-    final keyName = reader.take();
+    final keyName = reader.take()!;
 
     if (keyName.type != KeytabTokenType.keyName) {
       throw ParseError();
@@ -81,20 +81,20 @@ class KeytabParser {
       throw ParseError();
     }
 
-    bool alt;
-    bool ctrl;
-    bool shift;
-    bool anyModifier;
-    bool ansi;
-    bool appScreen;
-    bool keyPad;
-    bool appCursorKeys;
-    bool appKeyPad;
-    bool newLine;
+    bool? alt;
+    bool? ctrl;
+    bool? shift;
+    bool? anyModifier;
+    bool? ansi;
+    bool? appScreen;
+    bool? keyPad;
+    bool? appCursorKeys;
+    bool? appKeyPad;
+    bool? newLine;
 
-    while (reader.peek().type == KeytabTokenType.modeStatus) {
+    while (reader.peek()!.type == KeytabTokenType.modeStatus) {
       bool modeStatus;
-      switch (reader.take().value) {
+      switch (reader.take()!.value) {
         case '+':
           modeStatus = true;
           break;
@@ -106,7 +106,7 @@ class KeytabParser {
       }
 
       final mode = reader.take();
-      if (mode.type != KeytabTokenType.mode) {
+      if (mode!.type != KeytabTokenType.mode) {
         throw ParseError();
       }
 
@@ -146,11 +146,11 @@ class KeytabParser {
       }
     }
 
-    if (reader.take().type != KeytabTokenType.colon) {
+    if (reader.take()!.type != KeytabTokenType.colon) {
       throw ParseError();
     }
 
-    final actionToken = reader.take();
+    final actionToken = reader.take()!;
     KeytabAction action;
     if (actionToken.type == KeytabTokenType.input) {
       action = KeytabAction(KeytabActionType.input, actionToken.value);

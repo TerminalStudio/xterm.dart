@@ -27,35 +27,35 @@ class KeytabAction {
 
 class KeytabRecord {
   KeytabRecord({
-    @required this.qtKeyName,
-    @required this.key,
-    @required this.action,
-    @required this.alt,
-    @required this.ctrl,
-    @required this.shift,
-    @required this.anyModifier,
-    @required this.ansi,
-    @required this.appScreen,
-    @required this.keyPad,
-    @required this.appCursorKeys,
-    @required this.appKeyPad,
-    @required this.newLine,
+    required this.qtKeyName,
+    required this.key,
+    required this.action,
+    required this.alt,
+    required this.ctrl,
+    required this.shift,
+    required this.anyModifier,
+    required this.ansi,
+    required this.appScreen,
+    required this.keyPad,
+    required this.appCursorKeys,
+    required this.appKeyPad,
+    required this.newLine,
   });
 
   String qtKeyName;
   TerminalKey key;
   KeytabAction action;
 
-  bool alt;
-  bool ctrl;
-  bool shift;
-  bool anyModifier;
-  bool ansi;
-  bool appScreen;
-  bool keyPad;
-  bool appCursorKeys;
-  bool appKeyPad;
-  bool newLine;
+  bool? alt;
+  bool? ctrl;
+  bool? shift;
+  bool? anyModifier;
+  bool? ansi;
+  bool? appScreen;
+  bool? keyPad;
+  bool? appCursorKeys;
+  bool? appKeyPad;
+  bool? newLine;
 
   @override
   String toString() {
@@ -63,43 +63,43 @@ class KeytabRecord {
     buffer.write('$qtKeyName ');
 
     if (alt != null) {
-      buffer.write(modeStatus(alt, 'Alt'));
+      buffer.write(modeStatus(alt!, 'Alt'));
     }
 
     if (ctrl != null) {
-      buffer.write(modeStatus(ctrl, 'Control'));
+      buffer.write(modeStatus(ctrl!, 'Control'));
     }
 
     if (shift != null) {
-      buffer.write(modeStatus(shift, 'Shift'));
+      buffer.write(modeStatus(shift!, 'Shift'));
     }
 
     if (anyModifier != null) {
-      buffer.write(modeStatus(anyModifier, 'AnyMod'));
+      buffer.write(modeStatus(anyModifier!, 'AnyMod'));
     }
 
     if (ansi != null) {
-      buffer.write(modeStatus(ansi, 'Ansi'));
+      buffer.write(modeStatus(ansi!, 'Ansi'));
     }
 
     if (appScreen != null) {
-      buffer.write(modeStatus(appScreen, 'AppScreen'));
+      buffer.write(modeStatus(appScreen!, 'AppScreen'));
     }
 
     if (keyPad != null) {
-      buffer.write(modeStatus(keyPad, 'KeyPad'));
+      buffer.write(modeStatus(keyPad!, 'KeyPad'));
     }
 
     if (appCursorKeys != null) {
-      buffer.write(modeStatus(appCursorKeys, 'AppCuKeys'));
+      buffer.write(modeStatus(appCursorKeys!, 'AppCuKeys'));
     }
 
     if (appKeyPad != null) {
-      buffer.write(modeStatus(appKeyPad, 'AppKeyPad'));
+      buffer.write(modeStatus(appKeyPad!, 'AppKeyPad'));
     }
 
     if (newLine != null) {
-      buffer.write(modeStatus(newLine, 'NewLine'));
+      buffer.write(modeStatus(newLine!, 'NewLine'));
     }
 
     buffer.write(' : $action');

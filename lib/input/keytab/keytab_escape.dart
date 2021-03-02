@@ -12,7 +12,7 @@ String keytabUnescape(String str) {
 
   final hexPattern = RegExp(r'\\x([0-9a-fA-F][0-9a-fA-F])');
   str = str.replaceAllMapped(hexPattern, (match) {
-    final hexString = match.group(1);
+    final hexString = match.group(1)!;
     final hexValue = int.parse(hexString, radix: 16);
     return String.fromCharCode(hexValue);
   });

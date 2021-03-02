@@ -19,12 +19,12 @@ class Buffer {
 
   int _cursorX = 0;
   int _cursorY = 0;
-  int _savedCursorX;
-  int _savedCursorY;
+  int? _savedCursorX;
+  int? _savedCursorY;
   int _scrollLinesFromBottom = 0;
-  int _marginTop;
-  int _marginBottom;
-  CellAttr _savedCellAttr;
+  late int _marginTop;
+  late int _marginBottom;
+  CellAttr? _savedCellAttr;
 
   int get cursorX => _cursorX.clamp(0, terminal.viewWidth - 1);
   int get cursorY => _cursorY;
@@ -230,8 +230,9 @@ class Buffer {
 
     if (_cursorY >= terminal.viewHeight - 1) {
       lines.add(BufferLine());
-      if (terminal.maxLines != null && lines.length > terminal.maxLines) {
-        lines.removeRange(0, lines.length - terminal.maxLines);
+      final maxLines = terminal.maxLines;
+      if (maxLines != null && lines.length > maxLines) {
+        lines.removeRange(0, lines.length - maxLines);
       }
     } else {
       moveCursorY(1);
@@ -247,12 +248,12 @@ class Buffer {
     }
   }
 
-  Cell getCell(int col, int row) {
+  Cell? getCell(int col, int row) {
     final rawRow = convertViewLineToRawLine(row);
     return getRawCell(col, rawRow);
   }
 
-  Cell getRawCell(int col, int rawRow) {
+  Cell? getRawCell(int col, int rawRow) {
     if (col < 0 || rawRow < 0 || rawRow >= lines.length) {
       return null;
     }
@@ -265,7 +266,7 @@ class Buffer {
     return line.getCell(col);
   }
 
-  Cell getCellUnderCursor() {
+  Cell? getCellUnderCursor() {
     return getCell(cursorX, cursorY);
   }
 
@@ -347,15 +348,15 @@ class Buffer {
 
   void restoreCursor() {
     if (_savedCellAttr != null) {
-      terminal.cellAttr.use(_savedCellAttr);
+      terminal.cellAttr.use(_savedCellAttr!);
     }
 
     if (_savedCursorX != null) {
-      _cursorX = _savedCursorX;
+      _cursorX = _savedCursorX!;
     }
 
     if (_savedCursorY != null) {
-      _cursorY = _savedCursorY;
+      _cursorY = _savedCursorY!;
     }
 
     charset.restore();
@@ -426,8 +427,9 @@ class Buffer {
       final newLine = BufferLine();
       lines.insert(index, newLine);
 
-      if (terminal.maxLines != null && lines.length > terminal.maxLines) {
-        lines.removeRange(0, lines.length - terminal.maxLines);
+      final maxLines = terminal.maxLines;
+      if (maxLines != null && lines.length > maxLines) {
+        lines.removeRange(0, lines.length - maxLines);
       }
     } else {
       final bottom = convertViewLineToRawLine(marginBottom);

@@ -24,8 +24,8 @@ class CellAttr {
           invisible,
         );
 
-  final TerminalColor fgColor;
-  final TerminalColor bgColor;
+  final TerminalColor? fgColor;
+  final TerminalColor? bgColor;
   final bool bold;
   final bool faint;
   final bool italic;
@@ -77,15 +77,15 @@ class CellAttr {
   // }
 
   CellAttr copyWith({
-    TerminalColor fgColor,
-    TerminalColor bgColor,
-    bool bold,
-    bool faint,
-    bool italic,
-    bool underline,
-    bool blink,
-    bool inverse,
-    bool invisible,
+    TerminalColor? fgColor,
+    TerminalColor? bgColor,
+    bool? bold,
+    bool? faint,
+    bool? italic,
+    bool? underline,
+    bool? blink,
+    bool? inverse,
+    bool? invisible,
   }) {
     return CellAttr(
       fgColor: fgColor ?? this.fgColor,
@@ -106,7 +106,7 @@ class CellAttrTemplate {
     reset();
   }
 
-  CellAttr _attr;
+  late CellAttr _attr;
 
   set fgColor(TerminalColor value) {
     _attr = _attr.copyWith(fgColor: value);

@@ -24,15 +24,20 @@ typedef BellHandler = void Function();
 typedef TitleChangeHandler = void Function(String);
 typedef IconChangeHandler = void Function(String);
 
+void _defaultInputHandler(String _) {}
+void _defaultBellHandler() {}
+void _defaultTitleHandler(String _) {}
+void _defaultIconHandler(String _) {}
+
 class Terminal with Observable {
   Terminal({
-    this.onInput,
-    this.onBell,
-    this.onTitleChange,
-    this.onIconChange,
+    this.onInput = _defaultInputHandler,
+    this.onBell = _defaultBellHandler,
+    this.onTitleChange = _defaultTitleHandler,
+    this.onIconChange = _defaultIconHandler,
     this.platform = PlatformBehaviors.unix,
     this.theme = TerminalThemes.defaultTheme,
-    int maxLines,
+    int? maxLines,
   }) {
     _maxLines = maxLines;
 
@@ -55,10 +60,10 @@ class Terminal with Observable {
     }
   }
 
-  int _maxLines;
-  int get maxLines {
+  int? _maxLines;
+  int? get maxLines {
     if (_maxLines == null) return null;
-    return max(viewHeight, _maxLines);
+    return max(viewHeight, _maxLines!);
   }
 
   int _viewWidth = 80;
@@ -70,14 +75,45 @@ class Terminal with Observable {
   int get visibleHeight => min(_viewHeight, buffer.height);
   int get invisibleHeight => buffer.height - visibleHeight;
 
-  bool _originMode = false;
-  bool _replaceMode = false;
+  /// Insert/Replace Mode (IRM)
+  /// 
+  /// The terminal displays received characters at the cursor position.
+  /// Insert/Replace mode determines how the terminal adds characters to the
+  /// screen. Insert mode displays the new character and moves previously
+  /// displayed characters to the right. Replace mode adds characters by
+  /// replacing the character at the cursor position. 
+  ///
+  /// You can set or reset insert/replace mode as follows.
+  bool _replaceMode = true;
+
+
   bool _lineFeed = true;
   bool _screenMode = false; // DECSCNM (black on white background)
   bool _autoWrapMode = true;
   bool _bracketedPasteMode = false;
 
+  /// DECOM – Origin Mode (DEC Private)
+  ///
+  /// This is a private parameter applicable to set mode (SM) and reset mode
+  /// (RM) control sequences. The reset state causes the origin to be at the
+  /// upper-left character position on the screen. Line and column numbers are,
+  /// therefore, independent of current margin settings. The cursor may be
+  /// positioned outside the margins with a cursor position (CUP) or horizontal
+  /// and vertical position (HVP) control.
+  ///
+  /// The set state causes the origin to be at the upper-left character position
+  /// within the margins. Line and column numbers are therefore relative to the
+  /// current margin settings. The cursor is not allowed to be positioned
+  /// outside the margins.
+  ///
+  /// The cursor is moved to the new home position when this mode is set or
+  /// reset.
+  ///
+  /// Lines and columns are numbered consecutively, with the origin being line
+  /// 1, column 1.
   bool get originMode => _originMode;
+  bool _originMode = false;
+
   bool get lineFeed => _lineFeed;
   bool get newLineMode => !_lineFeed;
   bool get bracketedPasteMode => _bracketedPasteMode;
@@ -90,9 +126,9 @@ class Terminal with Observable {
   bool get applicationCursorKeys => _applicationCursorKeys;
   bool get blinkingCursor => _blinkingCursor;
 
-  Buffer _buffer;
-  Buffer _mainBuffer;
-  Buffer _altBuffer;
+  late Buffer _buffer;
+  late Buffer _mainBuffer;
+  late Buffer _altBuffer;
 
   /// Queue of input characters. addLast() to add, removeFirst() to consume.
   final _queue = Queue<int>();
@@ -127,6 +163,11 @@ class Terminal with Observable {
 
   void write(String text) async {
     _queue.addAll(text.runes);
+    _processInput();
+  }
+
+  void writeBytes(Iterable<int> data) async {
+    _queue.addAll(data);
     _processInput();
   }
 
@@ -270,6 +311,9 @@ class Terminal with Observable {
   }) {
     debug.onMsg(key);
 
+    // keep a local reference to bypass nnbd checks.
+    final onInput = this.onInput;
+
     if (onInput == null) {
       return;
     }
@@ -346,14 +390,14 @@ class Terminal with Observable {
     }
   }
 
-  String getSelectedText() {
+  String? getSelectedText() {
     if (selection.isEmpty) {
-      return '';
+      return null;
     }
 
     final builder = StringBuffer();
 
-    for (var row = selection.start.y; row <= selection.end.y; row++) {
+    for (var row = selection.start!.y; row <= selection.end!.y; row++) {
       if (row >= buffer.height) {
         break;
       }
@@ -363,14 +407,14 @@ class Terminal with Observable {
       var xStart = 0;
       var xEnd = viewWidth - 1;
 
-      if (row == selection.start.y) {
-        xStart = selection.start.x;
+      if (row == selection.start!.y) {
+        xStart = selection.start!.x;
       } else if (!line.isWrapped) {
         builder.write("\n");
       }
 
-      if (row == selection.end.y) {
-        xEnd = selection.end.x;
+      if (row == selection.end!.y) {
+        xEnd = selection.end!.x;
       }
 
       for (var col = xStart; col <= xEnd; col++) {
