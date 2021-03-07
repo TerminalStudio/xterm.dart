@@ -11,7 +11,7 @@
 
 **xterm.dart** is a fast and fully-featured terminal emulator for Flutter applications, with support for mobile and desktop platforms.
 
-> This package requires Flutter version >=1.22.0
+> This package requires Flutter version >=2.0.0
 
 ## Screenshots
 
@@ -49,7 +49,7 @@
 ```yml
 dependencies:
   ...
-  xterm: ^1.3.0
+  xterm: ^2.0.0
 ```
 
 **2.** Create the terminal:
