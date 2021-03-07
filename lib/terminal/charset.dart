@@ -41,8 +41,8 @@ class Charset {
   }
 
   void restore() {
-    _charsetMap = _savedCharsetMap ?? _charsetMap;
-    _currentIndex = _savedIndex ?? _currentIndex;
+    _charsetMap = _savedCharsetMap;
+    _currentIndex = _savedIndex;
     _updateCache();
   }
 }

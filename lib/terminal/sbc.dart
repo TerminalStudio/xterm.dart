@@ -16,9 +16,7 @@ final sbcHandlers = <int, SbcHandler>{
 };
 
 void _bellHandler(int code, Terminal terminal) {
-  if (terminal.onBell != null) {
-    terminal.onBell();
-  }
+  terminal.onBell();
 }
 
 void _voidHandler(int code, Terminal terminal) {

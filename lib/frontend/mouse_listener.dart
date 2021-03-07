@@ -21,7 +21,7 @@ class MouseListener extends StatelessWidget {
   }
 
   void onPointerSignal(PointerSignalEvent event) {
-    if (event is PointerScrollEvent && onScroll != null) {
+    if (event is PointerScrollEvent) {
       onScroll(event.scrollDelta);
     }
   }

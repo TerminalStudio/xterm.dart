@@ -8,7 +8,7 @@ class DebugHandler {
   var _enabled = false;
 
   void enable([bool enabled = true]) {
-    _enabled = enabled ?? _enabled;
+    _enabled = enabled;
   }
 
   void _checkBuffer() {

@@ -76,16 +76,15 @@ class Terminal with Observable {
   int get invisibleHeight => buffer.height - visibleHeight;
 
   /// Insert/Replace Mode (IRM)
-  /// 
+  ///
   /// The terminal displays received characters at the cursor position.
   /// Insert/Replace mode determines how the terminal adds characters to the
   /// screen. Insert mode displays the new character and moves previously
   /// displayed characters to the right. Replace mode adds characters by
-  /// replacing the character at the cursor position. 
+  /// replacing the character at the cursor position.
   ///
   /// You can set or reset insert/replace mode as follows.
   bool _replaceMode = true;
-
 
   bool _lineFeed = true;
   bool _screenMode = false; // DECSCNM (black on white background)
@@ -219,11 +218,11 @@ class Terminal with Observable {
   }
 
   void setSlowMotion(bool enabled) {
-    _slowMotion = enabled ?? _slowMotion;
+    _slowMotion = enabled;
   }
 
   void setOriginMode(bool enabled) {
-    _originMode = enabled ?? _originMode;
+    _originMode = enabled;
     buffer.setPosition(0, 0);
   }
 
@@ -232,15 +231,15 @@ class Terminal with Observable {
   }
 
   void setApplicationCursorKeys(bool enabled) {
-    _applicationCursorKeys = enabled ?? _applicationCursorKeys;
+    _applicationCursorKeys = enabled;
   }
 
   void setShowCursor(bool showCursor) {
-    _showCursor = showCursor ?? _showCursor;
+    _showCursor = showCursor;
   }
 
   void setBlinkingCursor(bool enabled) {
-    _blinkingCursor = enabled ?? _blinkingCursor;
+    _blinkingCursor = enabled;
   }
 
   void setAutoWrapMode(bool enabled) {
@@ -268,7 +267,7 @@ class Terminal with Observable {
   }
 
   void setMouseMode(MouseMode mode) {
-    _mouseMode = mode ?? _mouseMode;
+    _mouseMode = mode;
   }
 
   void useMainBuffer() {
@@ -310,13 +309,6 @@ class Terminal with Observable {
     // bool meta,
   }) {
     debug.onMsg(key);
-
-    // keep a local reference to bypass nnbd checks.
-    final onInput = this.onInput;
-
-    if (onInput == null) {
-      return;
-    }
 
     for (var record in keytab.records) {
       if (record.key != key) {
