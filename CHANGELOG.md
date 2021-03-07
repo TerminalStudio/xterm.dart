@@ -1,8 +1,11 @@
-## [3.0.0] - 2021-2-24
-* Performance improvement.
+## [2.0.0] - 2021-3-7
+* Clean up for release
 
 ## [2.0.0-pre] - 2021-3-7
 * Migrate to nnbd
+
+## [1.3.0] - 2021-2-24
+* Performance improvement.
 
 ## [1.2.0] - 2021-2-15
 
