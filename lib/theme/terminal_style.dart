@@ -13,7 +13,6 @@ class TerminalStyle {
     'Noto Sans Mono CJK KR',
     'Noto Sans Mono CJK JP',
     'Noto Sans Mono CJK HK',
-    'monospace',
     'Noto Color Emoji',
     'Noto Sans Symbols',
     'Roboto',
@@ -23,9 +22,10 @@ class TerminalStyle {
     'Liberation Sans',
     'Arial',
     'Droid Sans Fallback',
-    'sans-serif',
     'Cascadia Mono',
     'Arial Unicode MS',
+    'sans-serif',
+    'monospace',
   ];
 
   const TerminalStyle({
