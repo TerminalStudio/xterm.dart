@@ -286,11 +286,13 @@ class Terminal with Observable {
     return _buffer == _altBuffer;
   }
 
-  void resize(int width, int heigth) {
+  void resize(int width, int height) {
+    _altBuffer.resize(width, height);
+    _mainBuffer.resize(width, height);
     final cursorY = buffer.convertViewLineToRawLine(buffer.cursorY);
 
     _viewWidth = max(width, 1);
-    _viewHeight = max(heigth, 1);
+    _viewHeight = max(height, 1);
 
     buffer.setCursorY(buffer.convertRawLineToViewLine(cursorY));
 

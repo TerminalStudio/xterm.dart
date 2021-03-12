@@ -346,6 +346,15 @@ class Buffer {
     charset.save();
   }
 
+  void adjustSavedCursor(int diffX, int diffY) {
+    if(_savedCursorX != null) {
+      _savedCursorX = _savedCursorX! + diffX;
+    }
+    if(_savedCursorY != null) {
+      _savedCursorY = _savedCursorY! + diffY;
+    }
+  }
+
   void restoreCursor() {
     if (_savedCellAttr != null) {
       terminal.cellAttr.use(_savedCellAttr!);
@@ -463,4 +472,9 @@ class Buffer {
 
     lines.removeAt(index);
   }
+
+  void resize(int width, int height) {
+    
+  }
+
 }
