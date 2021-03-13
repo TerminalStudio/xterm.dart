@@ -188,7 +188,7 @@ class Terminal with Observable {
       const esc = 0x1b;
       final char = _queue.removeFirst();
 
-      if (char == esc) {
+      if (char == esc && _queue.isNotEmpty) {
         ansiHandler(_queue, this);
         refresh();
         continue;
@@ -287,12 +287,16 @@ class Terminal with Observable {
   }
 
   void resize(int width, int height) {
-    _altBuffer.resize(width, height);
-    _mainBuffer.resize(width, height);
     final cursorY = buffer.convertViewLineToRawLine(buffer.cursorY);
+
+    final oldWidth = _viewWidth;
+    final oldHeight = _viewHeight;
 
     _viewWidth = max(width, 1);
     _viewHeight = max(height, 1);
+
+    //_altBuffer.resize(width, height, oldWidth, oldHeight);
+    _mainBuffer.resize(width, height, oldWidth, oldHeight);
 
     buffer.setCursorY(buffer.convertRawLineToViewLine(cursorY));
 

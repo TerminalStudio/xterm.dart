@@ -5,8 +5,11 @@ import 'package:xterm/buffer/cell.dart';
 import 'package:xterm/buffer/cell_attr.dart';
 import 'package:xterm/terminal/charset.dart';
 import 'package:xterm/terminal/terminal.dart';
+import 'package:xterm/theme/terminal_color.dart';
 import 'package:xterm/utli/scroll_range.dart';
 import 'package:xterm/utli/unicode_v11.dart';
+
+import 'buffer_reflow.dart';
 
 class Buffer {
   Buffer(this.terminal) {
@@ -347,10 +350,10 @@ class Buffer {
   }
 
   void adjustSavedCursor(int diffX, int diffY) {
-    if(_savedCursorX != null) {
+    if (_savedCursorX != null) {
       _savedCursorX = _savedCursorX! + diffX;
     }
-    if(_savedCursorY != null) {
+    if (_savedCursorY != null) {
       _savedCursorY = _savedCursorY! + diffY;
     }
   }
@@ -473,8 +476,81 @@ class Buffer {
     lines.removeAt(index);
   }
 
-  void resize(int width, int height) {
-    
-  }
+  void resize(int width, int height, int oldWidth, int oldHeight) {
+    if (this.lines.length > 0) {
+      // Deal with columns increasing (reducing needs to happen after reflow)
+      if (oldWidth < width) {
+        lines.forEach((l) {
+          l.resize(width);
+        });
+      }
 
+      if (oldHeight < height) {
+        for (int y = oldHeight; y < height; y++) {
+          //as long as we can we will adjust the scrolling
+          if (scrollOffsetFromBottom > 0) {
+            _scrollLinesFromBottom--;
+          }
+        }
+      } else {
+        // (this._rows >= newRows)
+        //TODO: check if correct: I think we don't have anything to do here... things will correct automatically
+        // for (int y = rows; y > newRows; y--) {
+        //   if (lines.Length > newRows + YBase) {
+        //     if (lines.Length > YBase + this.y + 1) {
+        //       // The line is a blank line below the cursor, remove it
+        //       lines.Pop();
+        //     } else {
+        //       // The line is the cursor, scroll down
+        //       YBase++;
+        //       YDisp++;
+        //     }
+        //   }
+        // }
+      }
+
+      // // Reduce max length if needed after adjustments, this is done after as it
+      // // would otherwise cut data from the bottom of the buffer.
+      // if (newMaxLength < lines.MaxLength) {
+      //   // Trim from the top of the buffer and adjust ybase and ydisp.
+      //   int amountToTrim = lines.Length - newMaxLength;
+      //   if (amountToTrim > 0) {
+      //     lines.TrimStart(amountToTrim);
+      //     YBase = Math.Max(YBase - amountToTrim, 0);
+      //     YDisp = Math.Max(YDisp - amountToTrim, 0);
+      //     SavedY = Math.Max(SavedY - amountToTrim, 0);
+      //   }
+      //
+      //   lines.MaxLength = newMaxLength;
+      // }
+      //
+      // // Make sure that the cursor stays on screen
+      // X = Math.Min(X, newCols - 1);
+      // Y = Math.Min(Y, newRows - 1);
+      // if (addToY != 0) {
+      //   Y += addToY;
+      // }
+      //
+      // SavedX = Math.Min(SavedX, newCols - 1);
+
+      // ScrollTop = 0;
+    }
+
+    // ScrollBottom = newRows - 1;
+
+    if (/*IsReflowEnabled*/ true) {
+      final rf = BufferReflow(
+          this,
+          CellAttr(
+              fgColor: TerminalColor.empty(), bgColor: TerminalColor.empty()));
+      rf.doReflow(oldWidth, width);
+
+      // Trim the end of the line off if cols shrunk
+      if (oldWidth > width) {
+        lines.forEach((l) {
+          l.resize(width, erase: true);
+        });
+      }
+    }
+  }
 }

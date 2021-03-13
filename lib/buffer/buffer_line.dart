@@ -6,7 +6,8 @@ class BufferLine {
   bool _isWrapped = false;
 
   BufferLine({int numOfCells = 0, attr}) {
-    _cells.addAll(List<Cell>.generate(numOfCells, (index) => Cell(codePoint: 0, attr: attr)));
+    _cells.addAll(List<Cell>.generate(
+        numOfCells, (index) => Cell(codePoint: 0, attr: attr)));
   }
 
   bool get isWrapped {
@@ -29,12 +30,11 @@ class BufferLine {
     _cells.clear();
   }
 
-  int getTrimmedLength () {
+  int getTrimmedLength() {
     for (int i = _cells.length - 1; i >= 0; --i)
       if (_cells[i].codePoint != 0) {
         int width = 0;
-        for (int j = 0; j <= i; j++)
-          width += _cells[i].width;
+        for (int j = 0; j <= i; j++) width += _cells[i].width;
         return width;
       }
     return 0;
@@ -61,8 +61,7 @@ class BufferLine {
     _cells.removeRange(start, end);
   }
 
-  void copyCellsFrom (BufferLine src, int srcCol, int dstCol, int len)
-  {
+  void copyCellsFrom(BufferLine src, int srcCol, int dstCol, int len) {
     List.copyRange(_cells, dstCol, src._cells, srcCol, srcCol + len);
   }
 
@@ -72,5 +71,15 @@ class BufferLine {
 
   bool hasContentAt(int col) {
     return _cells[col].codePoint != 0;
+  }
+
+  void resize(int width, {bool erase = false}) {
+    var missing = width - _cells.length;
+    if (missing > 0) {
+      _cells.addAll(List<Cell>.generate(missing, (index) => Cell()));
+    }
+    if (missing < 0 && erase) {
+      _cells.removeRange(width, _cells.length - 1);
+    }
   }
 }
