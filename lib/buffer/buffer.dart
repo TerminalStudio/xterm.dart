@@ -272,17 +272,14 @@ class Buffer {
 
   void cursorGoForward() {
     setCursorX(_cursorX + 1);
-    terminal.refresh();
   }
 
   void setCursorX(int cursorX) {
     _cursorX = cursorX.clamp(0, terminal.viewWidth - 1);
-    terminal.refresh();
   }
 
   void setCursorY(int cursorY) {
     _cursorY = cursorY.clamp(0, terminal.viewHeight - 1);
-    terminal.refresh();
   }
 
   void moveCursorX(int offset) {
@@ -323,7 +320,6 @@ class Buffer {
     if (height < terminal.viewHeight) return;
     final maxOffset = height - terminal.viewHeight;
     _scrollLinesFromBottom = offset.clamp(0, maxOffset);
-    terminal.refresh();
   }
 
   void setScrollOffsetFromTop(int offset) {
