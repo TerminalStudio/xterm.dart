@@ -7,7 +7,7 @@ import 'package:xterm/terminal/terminal.dart';
 typedef AnsiHandler = void Function(Queue<int>, Terminal);
 
 void ansiHandler(Queue<int> queue, Terminal terminal) {
-  final charAfterEsc = String.fromCharCode(queue.removeFirst());
+  final charAfterEsc = queue.removeFirst();
 
   final handler = _ansiHandlers[charAfterEsc];
   if (handler != null) {
@@ -20,24 +20,24 @@ void ansiHandler(Queue<int> queue, Terminal terminal) {
   terminal.debug.onError('unsupported ansi sequence: $charAfterEsc');
 }
 
-final _ansiHandlers = <String, AnsiHandler>{
-  '[': csiHandler,
-  ']': oscHandler,
-  '7': _ansiSaveCursorHandler,
-  '8': _ansiRestoreCursorHandler,
-  'D': _ansiIndexHandler,
-  'E': _ansiNextLineHandler,
-  'H': _ansiTabSetHandler,
-  'M': _ansiReverseIndexHandler,
-  'P': _unsupportedHandler, // Sixel
-  'c': _unsupportedHandler,
-  '#': _unsupportedHandler,
-  '(': _scsHandler(0), //  G0
-  ')': _scsHandler(1), //  G1
-  '*': _voidHandler(1), // TODO: G2 (vt220)
-  '+': _voidHandler(1), // TODO: G3 (vt220)
-  '>': _voidHandler(0), // TODO: Normal Keypad
-  '=': _voidHandler(0), // TODO: Application Keypad
+final _ansiHandlers = <int, AnsiHandler>{
+  '['.codeUnitAt(0): csiHandler,
+  ']'.codeUnitAt(0): oscHandler,
+  '7'.codeUnitAt(0): _ansiSaveCursorHandler,
+  '8'.codeUnitAt(0): _ansiRestoreCursorHandler,
+  'D'.codeUnitAt(0): _ansiIndexHandler,
+  'E'.codeUnitAt(0): _ansiNextLineHandler,
+  'H'.codeUnitAt(0): _ansiTabSetHandler,
+  'M'.codeUnitAt(0): _ansiReverseIndexHandler,
+  'P'.codeUnitAt(0): _unsupportedHandler, // Sixel
+  'c'.codeUnitAt(0): _unsupportedHandler,
+  '#'.codeUnitAt(0): _unsupportedHandler,
+  '('.codeUnitAt(0): _scsHandler(0), //  G0
+  ')'.codeUnitAt(0): _scsHandler(1), //  G1
+  '*'.codeUnitAt(0): _voidHandler(1), // TODO: G2 (vt220)
+  '+'.codeUnitAt(0): _voidHandler(1), // TODO: G3 (vt220)
+  '>'.codeUnitAt(0): _voidHandler(0), // TODO: Normal Keypad
+  '='.codeUnitAt(0): _voidHandler(0), // TODO: Application Keypad
 };
 
 AnsiHandler _voidHandler(int sequenceLength) {

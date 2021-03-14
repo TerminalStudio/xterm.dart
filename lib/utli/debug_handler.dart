@@ -26,10 +26,10 @@ class DebugHandler {
     print(AnsiColor.green('<CSI $csi>'));
   }
 
-  void onEsc(String charAfterEsc) {
+  void onEsc(int charAfterEsc) {
     if (!_enabled) return;
     _checkBuffer();
-    print(AnsiColor.green('<ESC $charAfterEsc>'));
+    print(AnsiColor.green('<ESC ${String.fromCharCode(charAfterEsc)}>'));
   }
 
   void onOsc(List<String> params) {

@@ -160,19 +160,16 @@ class Terminal with Observable {
   int get cursorY => buffer.cursorY;
   int get scrollOffset => buffer.scrollOffsetFromBottom;
 
-  void write(String text) async {
+  void write(String text) {
     _queue.addAll(text.runes);
     _processInput();
-  }
-
-  void writeBytes(Iterable<int> data) async {
-    _queue.addAll(data);
-    _processInput();
+    refresh();
   }
 
   void writeChar(int codePoint) {
     _queue.addLast(codePoint);
     _processInput();
+    refresh();
   }
 
   List<BufferLine> getVisibleLines() {
@@ -190,7 +187,6 @@ class Terminal with Observable {
 
       if (char == esc && _queue.isNotEmpty) {
         ansiHandler(_queue, this);
-        refresh();
         continue;
       }
 
@@ -208,8 +204,6 @@ class Terminal with Observable {
       debug.onChar(codePoint);
       _buffer.writeChar(codePoint);
     }
-
-    refresh();
   }
 
   void refresh() {
