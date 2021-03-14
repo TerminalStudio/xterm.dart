@@ -5,9 +5,8 @@ class BufferLine {
   final _cells = <Cell>[];
   bool _isWrapped = false;
 
-  BufferLine({int numOfCells = 0, attr}) {
-    _cells.addAll(List<Cell>.generate(
-        numOfCells, (index) => Cell(codePoint: 0, attr: attr)));
+  BufferLine({isWrapped = false}) {
+    _isWrapped = isWrapped;
   }
 
   bool get isWrapped {
@@ -31,13 +30,14 @@ class BufferLine {
   }
 
   int getTrimmedLength() {
-    for (int i = _cells.length - 1; i >= 0; --i)
-      if (_cells[i].codePoint != 0) {
-        int width = 0;
-        for (int j = 0; j <= i; j++) width += _cells[i].width;
+    int width = 0;
+    for (int i = 0; i < _cells.length; i++)
+      if (_cells[i].codePoint != null && _cells[i].codePoint != 0) {
+        width += _cells[i].width;
+      } else {
         return width;
       }
-    return 0;
+    return width;
   }
 
   void erase(CellAttr attr, int start, int end) {
@@ -62,24 +62,26 @@ class BufferLine {
   }
 
   void copyCellsFrom(BufferLine src, int srcCol, int dstCol, int len) {
-    List.copyRange(_cells, dstCol, src._cells, srcCol, srcCol + len);
+    final requiredCells = dstCol + len;
+    if(_cells.length < requiredCells) {
+      _cells.addAll(List<Cell>.generate(requiredCells - _cells.length, (index) => Cell()));
+    }
+    for(var i=0; i<len; i++) {
+      _cells[dstCol + i] = src._cells[srcCol + i].clone();
+    }
   }
 
   int getWidthAt(int col) {
+    if(col >= _cells.length) {
+      return 1;
+    }
     return _cells[col].width;
   }
 
   bool hasContentAt(int col) {
+    if(col >= _cells.length) {
+      return false;
+    }
     return _cells[col].codePoint != 0;
-  }
-
-  void resize(int width, {bool erase = false}) {
-    var missing = width - _cells.length;
-    if (missing > 0) {
-      _cells.addAll(List<Cell>.generate(missing, (index) => Cell()));
-    }
-    if (missing < 0 && erase) {
-      _cells.removeRange(width, _cells.length - 1);
-    }
   }
 }

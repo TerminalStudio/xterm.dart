@@ -1,7 +1,5 @@
 import 'dart:math';
 
-import 'package:xterm/buffer/cell_attr.dart';
-
 import 'buffer.dart';
 import 'buffer_line.dart';
 
@@ -23,10 +21,9 @@ class InsertionSet {
 }
 
 class BufferReflow {
-  BufferReflow(this._buffer, this._emptyCellAttr);
+  BufferReflow(this._buffer);
 
   final Buffer _buffer;
-  final CellAttr _emptyCellAttr;
 
   void doReflow(int colsBefore, int colsAfter) {
     if (colsBefore == colsAfter) {
@@ -47,7 +44,7 @@ class BufferReflow {
     if (toRemove.length > 0) {
       var newLayoutResult =
           _reflowLargerCreateNewLayout(_buffer.lines, toRemove);
-      _reflowLargerApplyNewLayout(_buffer.lines, newLayoutResult.layout);
+      _reflowLargerApplyNewLayout(newLayoutResult.layout);
       _reflowLargerAdjustViewport(
           colsBefore, colsAfter, newLayoutResult.removedCount);
     }
@@ -92,7 +89,7 @@ class BufferReflow {
       // Add the new lines
       List<BufferLine> newLines = [];
       for (int i = 0; i < linesToAdd; i++) {
-        BufferLine newLine = BufferLine(numOfCells: colsAfter);
+        BufferLine newLine = BufferLine(isWrapped: true);
         newLines.add(newLine);
       }
 
@@ -188,7 +185,7 @@ class BufferReflow {
       // Record original lines so they don't get overridden when we rearrange the list
       List<BufferLine> originalLines = List<BufferLine>.from(_buffer.lines);
       _buffer.lines.addAll(List<BufferLine>.generate(countToInsert,
-          (index) => BufferLine(numOfCells: _buffer.terminal.viewWidth)));
+              (index) => BufferLine()));
 
       int originalLinesLength = originalLines.length;
 
@@ -298,7 +295,7 @@ class BufferReflow {
         if (_buffer.lines.length < _buffer.terminal.viewHeight) {
           // Add an extra row at the bottom of the viewport
           _buffer.lines
-              .add(new BufferLine(numOfCells: colsAfter, attr: _emptyCellAttr));
+              .add(BufferLine());
         }
       } else {
         //Nothing to do here due to the way scrolling is handled
@@ -316,25 +313,20 @@ class BufferReflow {
     _buffer.adjustSavedCursor(0, -countRemoved);
   }
 
-  void _reflowLargerApplyNewLayout(
-      List<BufferLine> lines, List<int> newLayout) {
-    var newLayoutLines = List<BufferLine>.empty();
-
-    for (int i = 0; i < newLayout.length; i++) {
-      newLayoutLines.add(lines[newLayout[i]]);
-    }
+  void _reflowLargerApplyNewLayout(List<int> newLayout) {
+    var newLayoutLines = List<BufferLine>.generate(newLayout.length, (index) => _buffer.lines[newLayout[index]]);
 
     // Rearrange the list
     for (int i = 0; i < newLayoutLines.length; i++) {
-      lines[i] = newLayoutLines[i];
+      _buffer.lines[i] = newLayoutLines[i];
     }
 
-    lines.removeRange(newLayoutLines.length, lines.length - 1);
+    _buffer.lines.removeRange(newLayoutLines.length - 1, _buffer.lines.length - 1);
   }
 
   LayoutResult _reflowLargerCreateNewLayout(
       List<BufferLine> lines, List<int> toRemove) {
-    var layout = List<int>.empty();
+    var layout = List<int>.empty(growable: true);
 
     // First iterate through the list and get the actual indexes to use for rows
     int nextToRemoveIndex = 0;
@@ -366,7 +358,7 @@ class BufferReflow {
   }
 
   List<int> _reflowLargerGetLinesToRemove(int colsBefore, int colsAfter) {
-    List<int> toRemove = List<int>.empty();
+    List<int> toRemove = List<int>.empty(growable: true);
 
     for (int y = 0; y < _buffer.lines.length - 1; y++) {
       // Check if this row is wrapped
@@ -377,14 +369,14 @@ class BufferReflow {
       }
 
       // Check how many lines it's wrapped for
-      List<BufferLine> wrappedLines = List<BufferLine>.empty();
+      List<BufferLine> wrappedLines = List<BufferLine>.empty(growable: true);
       wrappedLines.add(_buffer.lines[y]);
       while (i < _buffer.lines.length && nextLine.isWrapped) {
         wrappedLines.add(nextLine);
         nextLine = _buffer.lines[++i];
       }
 
-      final bufferAbsoluteY = _buffer.cursorY - _buffer.scrollOffsetFromBottom;
+      final bufferAbsoluteY = _buffer.cursorY/* - _buffer.scrollOffsetFromBottom*/;
 
       // If these lines contain the cursor don't touch them, the program will handle fixing up wrapped
       // lines with the cursor
@@ -428,13 +420,13 @@ class BufferReflow {
                 wrappedLines[destLineIndex - 1], colsAfter - 1, destCol++, 1);
             // Null out the end of the last row
             wrappedLines[destLineIndex - 1]
-                .erase(_emptyCellAttr, colsAfter - 1, colsAfter);
+                .erase(_buffer.terminal.cellAttr.value, colsAfter - 1, colsAfter);
           }
         }
       }
 
       // Clear out remaining cells or fragments could remain;
-      wrappedLines[destLineIndex].erase(_emptyCellAttr, destCol, colsAfter);
+      wrappedLines[destLineIndex].erase(_buffer.terminal.cellAttr.value, destCol, colsAfter);
 
       // Work backwards and remove any rows at the end that only contain null cells
       int countToRemove = 0;

@@ -478,13 +478,6 @@ class Buffer {
 
   void resize(int width, int height, int oldWidth, int oldHeight) {
     if (this.lines.length > 0) {
-      // Deal with columns increasing (reducing needs to happen after reflow)
-      if (oldWidth < width) {
-        lines.forEach((l) {
-          l.resize(width);
-        });
-      }
-
       if (oldHeight < height) {
         for (int y = oldHeight; y < height; y++) {
           //as long as we can we will adjust the scrolling
@@ -539,18 +532,8 @@ class Buffer {
     // ScrollBottom = newRows - 1;
 
     if (/*IsReflowEnabled*/ true) {
-      final rf = BufferReflow(
-          this,
-          CellAttr(
-              fgColor: TerminalColor.empty(), bgColor: TerminalColor.empty()));
+      final rf = BufferReflow(this);
       rf.doReflow(oldWidth, width);
-
-      // Trim the end of the line off if cols shrunk
-      if (oldWidth > width) {
-        lines.forEach((l) {
-          l.resize(width, erase: true);
-        });
-      }
     }
   }
 }

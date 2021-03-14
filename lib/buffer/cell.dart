@@ -33,4 +33,6 @@ class Cell {
   String toString() {
     return 'Cell($codePoint)';
   }
+
+  Cell clone() => Cell(codePoint: this.codePoint, width: this.width, attr: this.attr);
 }
