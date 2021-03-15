@@ -224,14 +224,19 @@ class Terminal with Observable {
   }
 
   void _processChar(int codePoint) {
-    final sbcHandler = sbcHandlers[codePoint];
+    // If the character doesn't have special effect. Write it directly to the
+    // buffer.
+    if (codePoint > sbcMaxCodepoint) {
+      debug.onChar(codePoint);
+      _buffer.writeChar(codePoint);
+      return;
+    }
 
+    // The character may have special effect.
+    final sbcHandler = sbcHandlers[codePoint];
     if (sbcHandler != null) {
       debug.onSbc(codePoint);
       sbcHandler(codePoint, this);
-    } else {
-      debug.onChar(codePoint);
-      _buffer.writeChar(codePoint);
     }
   }
 
