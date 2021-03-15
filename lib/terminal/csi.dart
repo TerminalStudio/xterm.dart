@@ -15,7 +15,7 @@ final _csiHandlers = <int, CsiSequenceHandler>{
   'l'.codeUnitAt(0): csiModeHandler,
   'm'.codeUnitAt(0): sgrHandler,
   'n'.codeUnitAt(0): csiDeviceStatusReportHandler,
-  'r'.codeUnitAt(0): csiSetMarginsHandler,
+  'r'.codeUnitAt(0): csiSetMarginsHandler, // DECSTBM
   't'.codeUnitAt(0): csiWindowManipulation,
   'A'.codeUnitAt(0): csiCursorUpHandler,
   'B'.codeUnitAt(0): csiCursorDownHandler,
@@ -266,6 +266,17 @@ void csiCursorDownHandler(CSI csi, Terminal terminal) {
   terminal.buffer.movePosition(0, distance);
 }
 
+/// DECSTBM – Set Top and Bottom Margins (DEC Private) 
+///
+/// ESC [ Pn; Pn r
+///
+/// This sequence sets the top and bottom margins to define the scrolling
+/// region. The first parameter is the line number of the first line in the
+/// scrolling region; the second parameter is the line number of the bottom line
+/// in the scrolling region. Default is the en tire screen (no margins). The
+/// minimum size of the scrolling region allowed is two lines, i.e., the top
+/// margin must be less than the bottom margin. The cursor is placed in the home
+/// position (see Origin Mode DECOM).  
 void csiSetMarginsHandler(CSI csi, Terminal terminal) {
   var top = 1;
   var bottom = terminal.viewHeight;

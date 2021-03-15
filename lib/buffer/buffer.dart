@@ -106,7 +106,7 @@ class Buffer {
   }
 
   void newLine() {
-    if (terminal.lineFeed == false) {
+    if (terminal.newLineMode) {
       setCursorX(0);
     }
 
@@ -128,6 +128,10 @@ class Buffer {
   }
 
   List<BufferLine> getVisibleLines() {
+    if (height < terminal.viewHeight) {
+      return lines.toList();
+    }
+
     final result = <BufferLine>[];
 
     for (var i = height - terminal.viewHeight; i < height; i++) {
@@ -220,7 +224,13 @@ class Buffer {
     }
   }
 
-  /// https://vt100.net/docs/vt100-ug/chapter3.html#IND
+  /// https://vt100.net/docs/vt100-ug/chapter3.html#IND IND – Index
+  ///
+  /// ESC D  
+  ///
+  /// [index] causes the active position to move downward one line without
+  /// changing the column position. If the active position is at the bottom
+  /// margin, a scroll up is performed.
   void index() {
     if (isInScrollableRegion) {
       if (_cursorY < _marginBottom) {
@@ -231,13 +241,18 @@ class Buffer {
       return;
     }
 
+    // the cursor is not in the scrollable region
     if (_cursorY >= terminal.viewHeight - 1) {
+      // we are ait the bottom so a new line is created.
       lines.add(BufferLine());
+
+      // clean extra lines if needed.
       final maxLines = terminal.maxLines;
       if (maxLines != null && lines.length > maxLines) {
         lines.removeRange(0, lines.length - maxLines);
       }
     } else {
+      // there're still lines so we simply move cursor down.
       moveCursorY(1);
     }
   }

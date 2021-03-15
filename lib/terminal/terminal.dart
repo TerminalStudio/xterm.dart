@@ -46,8 +46,6 @@ class Terminal with Observable {
     _buffer = _mainBuffer;
 
     tabs.reset();
-
-    // _buffer.write('this is magic!');
   }
 
   bool _dirty = false;
@@ -75,7 +73,7 @@ class Terminal with Observable {
   int get visibleHeight => min(_viewHeight, buffer.height);
   int get invisibleHeight => buffer.height - visibleHeight;
 
-  /// Insert/Replace Mode (IRM)
+  /// ### Insert/Replace Mode (IRM)
   ///
   /// The terminal displays received characters at the cursor position.
   /// Insert/Replace mode determines how the terminal adds characters to the
@@ -86,12 +84,10 @@ class Terminal with Observable {
   /// You can set or reset insert/replace mode as follows.
   bool _replaceMode = true;
 
-  bool _lineFeed = true;
   bool _screenMode = false; // DECSCNM (black on white background)
   bool _autoWrapMode = true;
-  bool _bracketedPasteMode = false;
 
-  /// DECOM – Origin Mode (DEC Private)
+  /// ### DECOM – Origin Mode (DEC Private)
   ///
   /// This is a private parameter applicable to set mode (SM) and reset mode
   /// (RM) control sequences. The reset state causes the origin to be at the
@@ -113,16 +109,49 @@ class Terminal with Observable {
   bool get originMode => _originMode;
   bool _originMode = false;
 
-  bool get lineFeed => _lineFeed;
-  bool get newLineMode => !_lineFeed;
+  /// ### LNM – Line Feed/New Line Mode
+  ///
+  /// This is a parameter applicable to set mode (SM) and reset mode (RM)
+  /// control sequences. The reset state causes the interpretation of the line
+  /// feed (LF), defined in ANSI Standard X3.4-1977, to imply only vertical
+  /// movement of the active position and causes the RETURN key (CR) to send the
+  /// single code CR. The set state causes the LF to imply movement to the first
+  /// position of the following line and causes the RETURN key to send the two
+  /// codes (CR, LF). This is the New Line (NL) option.
+  ///
+  /// This mode does not affect the index (IND), or next line (NEL) format
+  /// effectors.
+  bool get lineFeedMode => _lineFeedMode;
+  bool _lineFeedMode = true;
+
+  /// See: [lineFeedMode]
+  bool get newLineMode => !_lineFeedMode;
+
+  /// ### Bracketed Paste Mode
+  ///
+  /// When bracketed paste mode is set, pasted text is bracketed with control
+  /// sequences so that the program can differentiate pasted text from typed-in
+  /// text. When bracketed paste mode is set, the program will receive: `ESC
+  /// [200 ~`, followed by the pasted text, followed by `ESC [ 201 ~`.
   bool get bracketedPasteMode => _bracketedPasteMode;
+  bool _bracketedPasteMode = false;
 
   bool _showCursor = true;
-  bool _applicationCursorKeys = false;
-  bool _blinkingCursor = true;
-
   bool get showCursor => _showCursor;
+
+  /// DECCKM – Cursor Keys Mode (DEC Private)
+  ///
+  /// This is a private parameter applicable to set mode (SM) and reset mode
+  /// (RM) control sequences. This mode is only effective when the terminal is
+  /// in keypad application mode (see DECKPAM) and the ANSI/VT52 mode (DECANM)
+  /// is set (see DECANM). Under these conditions, if the cursor key mode is
+  /// reset, the four cursor function keys will send ANSI cursor control
+  /// commands. If cursor key mode is set, the four cursor function keys will
+  /// send application functions.
   bool get applicationCursorKeys => _applicationCursorKeys;
+  bool _applicationCursorKeys = false;
+
+  bool _blinkingCursor = true;
   bool get blinkingCursor => _blinkingCursor;
 
   late Buffer _buffer;
@@ -195,14 +224,19 @@ class Terminal with Observable {
   }
 
   void _processChar(int codePoint) {
-    final sbcHandler = sbcHandlers[codePoint];
+    // If the character doesn't have special effect. Write it directly to the
+    // buffer.
+    if (codePoint > sbcMaxCodepoint) {
+      debug.onChar(codePoint);
+      _buffer.writeChar(codePoint);
+      return;
+    }
 
+    // The character may have special effect.
+    final sbcHandler = sbcHandlers[codePoint];
     if (sbcHandler != null) {
       debug.onSbc(codePoint);
       sbcHandler(codePoint, this);
-    } else {
-      debug.onChar(codePoint);
-      _buffer.writeChar(codePoint);
     }
   }
 
@@ -253,11 +287,11 @@ class Terminal with Observable {
   }
 
   void setNewLineMode() {
-    _lineFeed = false;
+    _lineFeedMode = false;
   }
 
   void setLineFeedMode() {
-    _lineFeed = true;
+    _lineFeedMode = true;
   }
 
   void setMouseMode(MouseMode mode) {
