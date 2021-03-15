@@ -19,7 +19,7 @@ import 'package:xterm/terminal/terminal.dart';
 import 'package:xterm/theme/terminal_style.dart';
 import 'package:xterm/utli/hash_values.dart';
 
-typedef ResizeHandler = void Function(int width, int height);
+typedef TerminalResizeHandler = void Function(int width, int height);
 
 class TerminalView extends StatefulWidget {
   TerminalView({
@@ -38,7 +38,7 @@ class TerminalView extends StatefulWidget {
         super(key: key ?? ValueKey(terminal));
 
   final Terminal terminal;
-  final ResizeHandler? onResize;
+  final TerminalResizeHandler? onResize;
   final FocusNode focusNode;
   final bool autofocus;
   final ScrollController scrollController;
