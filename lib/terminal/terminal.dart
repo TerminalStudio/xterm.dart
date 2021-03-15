@@ -73,7 +73,7 @@ class Terminal with Observable {
   int get visibleHeight => min(_viewHeight, buffer.height);
   int get invisibleHeight => buffer.height - visibleHeight;
 
-  /// Insert/Replace Mode (IRM)
+  /// ### Insert/Replace Mode (IRM)
   ///
   /// The terminal displays received characters at the cursor position.
   /// Insert/Replace mode determines how the terminal adds characters to the
@@ -87,7 +87,7 @@ class Terminal with Observable {
   bool _screenMode = false; // DECSCNM (black on white background)
   bool _autoWrapMode = true;
 
-  /// DECOM – Origin Mode (DEC Private)
+  /// ### DECOM – Origin Mode (DEC Private)
   ///
   /// This is a private parameter applicable to set mode (SM) and reset mode
   /// (RM) control sequences. The reset state causes the origin to be at the
@@ -109,7 +109,7 @@ class Terminal with Observable {
   bool get originMode => _originMode;
   bool _originMode = false;
 
-  /// LNM – Line Feed/New Line Mode
+  /// ### LNM – Line Feed/New Line Mode
   ///
   /// This is a parameter applicable to set mode (SM) and reset mode (RM)
   /// control sequences. The reset state causes the interpretation of the line
@@ -127,8 +127,14 @@ class Terminal with Observable {
   /// See: [lineFeedMode]
   bool get newLineMode => !_lineFeedMode;
 
-  bool _bracketedPasteMode = false;
+  /// ### Bracketed Paste Mode
+  ///
+  /// When bracketed paste mode is set, pasted text is bracketed with control
+  /// sequences so that the program can differentiate pasted text from typed-in
+  /// text. When bracketed paste mode is set, the program will receive: `ESC
+  /// [200 ~`, followed by the pasted text, followed by `ESC [ 201 ~`.
   bool get bracketedPasteMode => _bracketedPasteMode;
+  bool _bracketedPasteMode = false;
 
   bool _showCursor = true;
   bool get showCursor => _showCursor;
