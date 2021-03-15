@@ -133,8 +133,17 @@ class Terminal with Observable {
   bool _showCursor = true;
   bool get showCursor => _showCursor;
 
-  bool _applicationCursorKeys = false;
+  /// DECCKM – Cursor Keys Mode (DEC Private)
+  ///
+  /// This is a private parameter applicable to set mode (SM) and reset mode
+  /// (RM) control sequences. This mode is only effective when the terminal is
+  /// in keypad application mode (see DECKPAM) and the ANSI/VT52 mode (DECANM)
+  /// is set (see DECANM). Under these conditions, if the cursor key mode is
+  /// reset, the four cursor function keys will send ANSI cursor control
+  /// commands. If cursor key mode is set, the four cursor function keys will
+  /// send application functions.
   bool get applicationCursorKeys => _applicationCursorKeys;
+  bool _applicationCursorKeys = false;
 
   bool _blinkingCursor = true;
   bool get blinkingCursor => _blinkingCursor;
