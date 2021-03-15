@@ -66,8 +66,10 @@ class BufferLine {
     if(_cells.length < requiredCells) {
       _cells.addAll(List<Cell>.generate(requiredCells - _cells.length, (index) => Cell()));
     }
+    //we have to make a copy first as src and dst might be the same line
+    List<Cell> sourceCells = List<Cell>.generate(len, (index) => src._cells[srcCol + index].clone());
     for(var i=0; i<len; i++) {
-      _cells[dstCol + i] = src._cells[srcCol + i].clone();
+      _cells[dstCol + i] = sourceCells[i];
     }
   }
 

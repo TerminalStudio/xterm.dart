@@ -75,7 +75,7 @@ class BufferReflow {
 
       // If these lines contain the cursor don't touch them, the program will handle fixing up
       // wrapped lines with the cursor
-      final absoluteY = _buffer.cursorY - _buffer.scrollOffsetFromBottom;
+      final absoluteY = _buffer.cursorY + _buffer.scrollOffsetFromTop;
 
       if (absoluteY >= y && absoluteY < y + wrappedLines.length) {
         continue;
@@ -376,7 +376,7 @@ class BufferReflow {
         nextLine = _buffer.lines[++i];
       }
 
-      final bufferAbsoluteY = _buffer.cursorY/* - _buffer.scrollOffsetFromBottom*/;
+      final bufferAbsoluteY = _buffer.cursorY + _buffer.scrollOffsetFromTop;
 
       // If these lines contain the cursor don't touch them, the program will handle fixing up wrapped
       // lines with the cursor
