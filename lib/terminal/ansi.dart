@@ -32,8 +32,8 @@ final _ansiHandlers = <int, AnsiHandler>{
   'P'.codeUnitAt(0): _unsupportedHandler, // Sixel
   'c'.codeUnitAt(0): _unsupportedHandler,
   '#'.codeUnitAt(0): _unsupportedHandler,
-  '('.codeUnitAt(0): _scsHandler(0), //  G0
-  ')'.codeUnitAt(0): _scsHandler(1), //  G1
+  '('.codeUnitAt(0): _scsHandler(0), //  SCS - G0
+  ')'.codeUnitAt(0): _scsHandler(1), //  SCS - G1
   '*'.codeUnitAt(0): _voidHandler(1), // TODO: G2 (vt220)
   '+'.codeUnitAt(0): _voidHandler(1), // TODO: G3 (vt220)
   '>'.codeUnitAt(0): _voidHandler(0), // TODO: Normal Keypad
@@ -73,6 +73,11 @@ void _ansiReverseIndexHandler(Queue<int> queue, Terminal terminal) {
   terminal.buffer.reverseIndex();
 }
 
+/// SCS – Select Character Set
+///
+/// The appropriate G0 and G1 character sets are designated from one of the five
+/// possible character sets. The G0 and G1 sets are invoked by the codes SI and
+/// SO (shift in and shift out) respectively.
 AnsiHandler _scsHandler(int which) {
   return (Queue<int> queue, Terminal terminal) {
     final name = String.fromCharCode(queue.removeFirst());
