@@ -2,13 +2,13 @@ import 'package:xterm/terminal/terminal.dart';
 
 typedef SbcHandler = void Function(int, Terminal);
 
-const sbcMaxCodepoint = 0x0f;
+const sbcMaxCodePoint = 0x0f;
 
 final sbcHandlers = _sbcHandlers();
 
 // build single byte character lookup table
 List<SbcHandler?> _sbcHandlers() {
-  final result = List<SbcHandler?>.filled(sbcMaxCodepoint + 1, null);
+  final result = List<SbcHandler?>.filled(sbcMaxCodePoint + 1, null);
   result[0x05] = _voidHandler;
   result[0x07] = _bellHandler;
   result[0x08] = _backspaceReturnHandler;

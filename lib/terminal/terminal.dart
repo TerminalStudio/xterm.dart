@@ -226,7 +226,7 @@ class Terminal with Observable {
   void _processChar(int codePoint) {
     // If the character doesn't have special effect. Write it directly to the
     // buffer.
-    if (codePoint > sbcMaxCodepoint) {
+    if (codePoint > sbcMaxCodePoint) {
       debug.onChar(codePoint);
       _buffer.writeChar(codePoint);
       return;
