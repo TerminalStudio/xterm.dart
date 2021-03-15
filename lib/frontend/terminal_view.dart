@@ -48,6 +48,7 @@ class TerminalView extends StatefulWidget {
 
   final InputBehavior inputBehavior;
 
+  // get the dimensions of a rendered character
   CellSize measureCellSize() {
     final testString = 'xxxxxxxxxx' * 1000;
 
@@ -87,6 +88,7 @@ class TerminalView extends StatefulWidget {
 }
 
 class _TerminalViewState extends State<TerminalView> {
+  /// blinking cursor and blinking character
   final oscillator = Oscillator.ms(600);
 
   bool get focused {
@@ -95,42 +97,41 @@ class _TerminalViewState extends State<TerminalView> {
 
   int? _lastTerminalWidth;
   int? _lastTerminalHeight;
-  late CellSize _cellSize;
-  late ViewportOffset _offset;
 
-  var _minScrollExtent = 0.0;
-  var _maxScrollExtent = 0.0;
+  late CellSize _cellSize;
 
   void onTerminalChange() {
-    // if (_offset != null) {
-    //   final currentScrollExtent =
-    //       _cellSize.cellHeight * widget.terminal.buffer.scrollOffsetFromTop;
+    final currentScrollExtent =
+        _cellSize.cellHeight * widget.terminal.buffer.scrollOffsetFromTop;
 
-    //   if (_offset.pixels != currentScrollExtent) {
-    //     _offset.correctBy(currentScrollExtent - _offset.pixels - 1);
-    //   }
-    // }
+    widget.scrollController.jumpTo(currentScrollExtent);
 
     if (mounted) {
       setState(() {});
     }
   }
 
-  void onTick() {
-    widget.terminal.refresh();
-  }
+  // listen to oscillator to update mouse blink etc.
+  // void onTick() {
+  //   widget.terminal.refresh();
+  // }
 
   @override
   void initState() {
     // oscillator.start();
     // oscillator.addListener(onTick);
+
+    // measureCellSize is expensive so we cache the result.
     _cellSize = widget.measureCellSize();
+
     widget.terminal.addListener(onTerminalChange);
+
     super.initState();
   }
 
   @override
   void didUpdateWidget(TerminalView oldWidget) {
+    oldWidget.terminal.removeListener(onTerminalChange);
     widget.terminal.addListener(onTerminalChange);
     super.didUpdateWidget(oldWidget);
   }
@@ -141,7 +142,6 @@ class _TerminalViewState extends State<TerminalView> {
     // oscillator.removeListener(onTick);
 
     widget.terminal.removeListener(onTerminalChange);
-
     super.dispose();
   }
 
@@ -160,29 +160,32 @@ class _TerminalViewState extends State<TerminalView> {
         cursor: SystemMouseCursors.text,
         child: LayoutBuilder(builder: (context, constraints) {
           onResize(constraints.maxWidth, constraints.maxHeight);
-          return Scrollable(
-            viewportBuilder: (context, offset) {
-              offset.applyViewportDimension(constraints.maxHeight);
-
-              _minScrollExtent = 0.0;
-
-              _maxScrollExtent = math.max(
-                  0.0,
-                  _cellSize.cellHeight * widget.terminal.buffer.height -
-                      constraints.maxHeight);
-
-              // final currentScrollExtent = _cellSize.cellHeight *
-              //     widget.terminal.buffer.scrollOffsetFromTop;
-
-              // offset.correctBy(currentScrollExtent - offset.pixels - 1);
-
-              offset.applyContentDimensions(_minScrollExtent, _maxScrollExtent);
-
-              _offset = offset;
-              _offset.addListener(onScroll);
-
-              return buildTerminal(context);
+          // use flutter's Scrollable to manage scrolling to better integrate
+          // with widgets such as Scrollbar.
+          return NotificationListener<UserScrollNotification>(
+            onNotification: (_) {
+              onScroll(_.metrics.pixels);
+              return false;
             },
+            child: Scrollable(
+              controller: widget.scrollController,
+              viewportBuilder: (context, offset) {
+                // set viewport height.
+                offset.applyViewportDimension(constraints.maxHeight);
+
+                final minScrollExtent = 0.0;
+
+                final maxScrollExtent = math.max(
+                    0.0,
+                    _cellSize.cellHeight * widget.terminal.buffer.height -
+                        constraints.maxHeight);
+
+                // set how much the terminal can scroll
+                offset.applyContentDimensions(minScrollExtent, maxScrollExtent);
+
+                return buildTerminal(context);
+              },
+            ),
           );
         }),
       ),
@@ -272,7 +275,7 @@ class _TerminalViewState extends State<TerminalView> {
 
   void onKeyStroke(RawKeyEvent event) {
     widget.inputBehavior.onKeyStroke(event, widget.terminal);
-    _offset.moveTo(_maxScrollExtent);
+    widget.terminal.buffer.setScrollOffsetFromBottom(0);
   }
 
   void onFocus(bool focused) {
@@ -285,10 +288,14 @@ class _TerminalViewState extends State<TerminalView> {
     widget.inputBehavior.onAction(action, widget.terminal);
   }
 
-  void onScroll() {
-    final charOffset = (_offset.pixels / _cellSize.cellHeight).ceil();
-    final offset = widget.terminal.invisibleHeight - charOffset;
-    widget.terminal.buffer.setScrollOffsetFromBottom(offset);
+  // synchronize flutter scroll offset to terminal
+  void onScroll(double offset) {
+    final topOffset = (offset / _cellSize.cellHeight).ceil();
+    final bottomOffset = widget.terminal.invisibleHeight - topOffset;
+
+    setState(() {
+      widget.terminal.buffer.setScrollOffsetFromBottom(bottomOffset);
+    });
   }
 }
 
@@ -309,21 +316,21 @@ class TerminalPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    paintBackground(canvas);
+    _paintBackground(canvas);
 
     // if (oscillator.value) {
     // }
 
     if (terminal.showCursor) {
-      paintCursor(canvas);
+      _paintCursor(canvas);
     }
 
-    paintText(canvas);
+    _paintText(canvas);
 
-    paintSelection(canvas);
+    _paintSelection(canvas);
   }
 
-  void paintBackground(Canvas canvas) {
+  void _paintBackground(Canvas canvas) {
     final lines = terminal.getVisibleLines();
 
     for (var i = 0; i < lines.length; i++) {
@@ -358,7 +365,7 @@ class TerminalPainter extends CustomPainter {
     }
   }
 
-  void paintSelection(Canvas canvas) {
+  void _paintSelection(Canvas canvas) {
     for (var y = 0; y < terminal.viewHeight; y++) {
       final offsetY = y * charSize.cellHeight;
       final absoluteY = terminal.buffer.convertViewLineToRawLine(y) -
@@ -392,7 +399,7 @@ class TerminalPainter extends CustomPainter {
     }
   }
 
-  void paintText(Canvas canvas) {
+  void _paintText(Canvas canvas) {
     final lines = terminal.getVisibleLines();
 
     for (var i = 0; i < lines.length; i++) {
@@ -408,12 +415,12 @@ class TerminalPainter extends CustomPainter {
         }
 
         final offsetX = i * charSize.cellWidth;
-        paintCell(canvas, cell, offsetX, offsetY);
+        _paintCell(canvas, cell, offsetX, offsetY);
       }
     }
   }
 
-  void paintCell(Canvas canvas, Cell cell, double offsetX, double offsetY) {
+  void _paintCell(Canvas canvas, Cell cell, double offsetX, double offsetY) {
     final attr = cell.attr!;
 
     if (cell.codePoint == null || attr.invisible) {
@@ -462,7 +469,7 @@ class TerminalPainter extends CustomPainter {
     tp.paint(canvas, Offset(offsetX, offsetY));
   }
 
-  void paintCursor(Canvas canvas) {
+  void _paintCursor(Canvas canvas) {
     final screenCursorY = terminal.cursorY + terminal.scrollOffset;
     if (screenCursorY < 0 || screenCursorY >= terminal.viewHeight) {
       return;
@@ -484,7 +491,7 @@ class TerminalPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(CustomPainter oldDelegate) {
-    // print('shouldRepaint');
+    /// paint only when the terminal has changed since last paint.
     return terminal.dirty;
   }
 }
