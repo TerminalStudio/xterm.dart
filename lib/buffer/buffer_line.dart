@@ -40,13 +40,16 @@ class BufferLine {
     return width;
   }
 
-  void erase(CellAttr attr, int start, int end) {
+  void erase(CellAttr attr, int start, int end, bool clearWrap) {
     for (var i = start; i < end; i++) {
       if (i >= length) {
         add(Cell(attr: attr));
       } else {
         getCell(i).erase(attr);
       }
+    }
+    if(_isWrapped && clearWrap) {
+      _isWrapped = false;
     }
   }
 

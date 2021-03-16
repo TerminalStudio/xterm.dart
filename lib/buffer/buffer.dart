@@ -73,12 +73,13 @@ class Buffer {
       return lines.last;
     }
 
-    while (index >= lines.length) {
-      final newLine = BufferLine();
-      lines.add(newLine);
+    final rawIndex = convertViewLineToRawLine(index);
+
+    if(rawIndex >= lines.length) {
+      lines.addAll(List<BufferLine>.generate(rawIndex - lines.length + 1, (index) => BufferLine()));
     }
 
-    return lines[convertViewLineToRawLine(index)];
+    return lines[rawIndex];
   }
 
   BufferLine get currentLine {
@@ -148,7 +149,7 @@ class Buffer {
     eraseLineFromCursor();
 
     for (var i = _cursorY + 1; i < terminal.viewHeight; i++) {
-      getViewLine(i).erase(terminal.cellAttr.value, 0, terminal.viewWidth);
+      getViewLine(i).erase(terminal.cellAttr.value, 0, terminal.viewWidth, true);
     }
   }
 
@@ -156,27 +157,27 @@ class Buffer {
     eraseLineToCursor();
 
     for (var i = 0; i < _cursorY; i++) {
-      getViewLine(i).erase(terminal.cellAttr.value, 0, terminal.viewWidth);
+      getViewLine(i).erase(terminal.cellAttr.value, 0, terminal.viewWidth, true);
     }
   }
 
   void eraseDisplay() {
     for (var i = 0; i < terminal.viewHeight; i++) {
       final line = getViewLine(i);
-      line.erase(terminal.cellAttr.value, 0, terminal.viewWidth);
+      line.erase(terminal.cellAttr.value, 0, terminal.viewWidth, true);
     }
   }
 
   void eraseLineFromCursor() {
-    currentLine.erase(terminal.cellAttr.value, _cursorX, terminal.viewWidth);
+    currentLine.erase(terminal.cellAttr.value, _cursorX, terminal.viewWidth, _cursorX == 0);
   }
 
   void eraseLineToCursor() {
-    currentLine.erase(terminal.cellAttr.value, 0, _cursorX);
+    currentLine.erase(terminal.cellAttr.value, 0, _cursorX, _cursorX == 0);
   }
 
   void eraseLine() {
-    currentLine.erase(terminal.cellAttr.value, 0, terminal.viewWidth);
+    currentLine.erase(terminal.cellAttr.value, 0, terminal.viewWidth, true);
   }
 
   void eraseCharacters(int count) {

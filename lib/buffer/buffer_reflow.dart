@@ -220,7 +220,7 @@ class BufferReflow {
           if (nextToInsertIndex < toInsert.length - 1) {
             nextToInsert = toInsert[++nextToInsertIndex];
           } else {
-            nextToInsert = InsertionSet.nullValue;
+            nextToInsert = InsertionSet.nullValue; //TODO: just break?
           }
         } else {
           _buffer.lines[i] = originalLines[originalLineIndex--];
@@ -420,13 +420,13 @@ class BufferReflow {
                 wrappedLines[destLineIndex - 1], colsAfter - 1, destCol++, 1);
             // Null out the end of the last row
             wrappedLines[destLineIndex - 1]
-                .erase(_buffer.terminal.cellAttr.value, colsAfter - 1, colsAfter);
+                .erase(_buffer.terminal.cellAttr.value, colsAfter - 1, colsAfter, false);
           }
         }
       }
 
       // Clear out remaining cells or fragments could remain;
-      wrappedLines[destLineIndex].erase(_buffer.terminal.cellAttr.value, destCol, colsAfter);
+      wrappedLines[destLineIndex].erase(_buffer.terminal.cellAttr.value, destCol, colsAfter, false);
 
       // Work backwards and remove any rows at the end that only contain null cells
       int countToRemove = 0;
