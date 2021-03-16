@@ -272,8 +272,13 @@ class Buffer {
 
     // the cursor is not in the scrollable region
     if (_cursorY >= terminal.viewHeight - 1) {
-      // we are ait the bottom so a new line is created.
+      // we are at the bottom so a new line is created.
       lines.add(BufferLine());
+
+      // keep viewport from moving if user is scrolling.
+      if (isUserScrolling) {
+        _scrollOffsetFromBottom++;
+      }
 
       // clean extra lines if needed.
       final maxLines = terminal.maxLines;
