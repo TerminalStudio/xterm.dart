@@ -519,7 +519,7 @@ class Buffer {
     lines.removeAt(index);
   }
 
-  void resize(int width, int height, int oldWidth, int oldHeight) {
+  void resize(int width, int height, int oldWidth, int oldHeight, bool doReflow) {
     if (this.lines.length > 0) {
       if (oldHeight < height) {
         for (int y = oldHeight; y < height; y++) {
@@ -542,7 +542,7 @@ class Buffer {
 
     // ScrollBottom = newRows - 1;
 
-    if (/*IsReflowEnabled*/ true) {
+    if (doReflow) {
       final rf = BufferReflow(this);
       rf.doReflow(oldWidth, width);
     }
