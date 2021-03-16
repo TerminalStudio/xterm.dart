@@ -327,8 +327,6 @@ class Terminal with Observable {
   /// Resize the terminal screen. [newWidth] and [newHeight] should be greater
   /// than 0.
   void resize(int newWidth, int newHeight) {
-    final cursorY = buffer.convertViewLineToRawLine(buffer.cursorY);
-
     final oldWidth = _viewWidth;
     final oldHeight = _viewHeight;
 

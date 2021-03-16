@@ -108,12 +108,13 @@ class Buffer {
       return lines.last;
     }
 
-    // while (index >= lines.length) {
-    //   final newLine = BufferLine();
-    //   lines.add(newLine);
-    // }
+    final rawIndex = convertViewLineToRawLine(index);
 
-    return lines[convertViewLineToRawLine(index)];
+    if(rawIndex >= lines.length) {
+      return BufferLine();
+    }
+
+    return lines[rawIndex];
   }
 
   BufferLine get currentLine {
