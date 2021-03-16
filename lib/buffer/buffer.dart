@@ -32,6 +32,13 @@ class Buffer {
     return terminal.invisibleHeight - scrollOffsetFromBottom;
   }
 
+  /// Indicated whether the terminal should automatically scroll to bottom when
+  /// new lines are added. When user is scrolling, [isUserScrolling] is true and
+  /// the automatical scroll-to-bottom behavior is disabled.
+  bool get isUserScrolling {
+    return _scrollOffsetFromBottom != 0;
+  }
+
   /// Horizontal position of the cursor relative to the top-left cornor of the
   /// screen, starting from 0.
   int get cursorX => _cursorX.clamp(0, terminal.viewWidth - 1);
