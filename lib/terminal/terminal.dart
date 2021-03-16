@@ -336,9 +336,6 @@ class Terminal with Observable {
     //_altBuffer.resize(width, height, oldWidth, oldHeight);
     _mainBuffer.resize(width, height, oldWidth, oldHeight);
 
-    _viewWidth = newWidth;
-    _viewHeight = newHeight;
-
     if (buffer == _altBuffer) {
       buffer.clearScrollback();
     }

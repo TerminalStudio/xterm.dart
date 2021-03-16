@@ -5,7 +5,6 @@ import 'package:xterm/buffer/cell.dart';
 import 'package:xterm/buffer/cell_attr.dart';
 import 'package:xterm/terminal/charset.dart';
 import 'package:xterm/terminal/terminal.dart';
-import 'package:xterm/theme/terminal_color.dart';
 import 'package:xterm/utli/scroll_range.dart';
 import 'package:xterm/utli/unicode_v11.dart';
 
