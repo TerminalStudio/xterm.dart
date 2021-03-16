@@ -139,33 +139,6 @@ class BufferReflow {
         }
       }
 
-      // Adjust viewport as needed
-      //TODO: probably nothing to do here because of the way the ViewPort is handled compared to the xterm.js project
-      // int viewportAdjustments = linesToAdd;
-      // while (viewportAdjustments-- > 0) {
-      //   if (Buffer.YBase == 0) {
-      //     if (Buffer.Y < newRows - 1) {
-      //       Buffer.Y++;
-      //       Buffer.Lines.Pop();
-      //     } else {
-      //       Buffer.YBase++;
-      //       Buffer.YDisp++;
-      //     }
-      //   } else {
-      //     // Ensure ybase does not exceed its maximum value
-      //     if (Buffer.YBase <
-      //         Math.Min(Buffer.Lines.MaxLength,
-      //                 Buffer.Lines.Length + countToInsert) -
-      //             newRows) {
-      //       if (Buffer.YBase == Buffer.YDisp) {
-      //         Buffer.YDisp++;
-      //       }
-      //
-      //       Buffer.YBase++;
-      //     }
-      //   }
-      // }
-
       _buffer.adjustSavedCursor(0, linesToAdd);
       //TODO: maybe row count has to be handled here?
     }
@@ -297,16 +270,6 @@ class BufferReflow {
           _buffer.lines
               .add(BufferLine());
         }
-      } else {
-        //Nothing to do here due to the way scrolling is handled
-
-        // //user didn't scroll
-        // if (this.ydisp === this.ybase) {
-        //   //scroll viewport according to...
-        //   this.ydisp--;
-        // }
-        // //base window
-        // this.ybase--;
       }
     }
     //TODO: adjust buffer content to max length
@@ -336,12 +299,6 @@ class BufferReflow {
     for (int i = 0; i < lines.length; i++) {
       if (nextToRemoveStart == i) {
         int countToRemove = toRemove[++nextToRemoveIndex];
-
-        // Tell markers that there was a deletion
-        //lines.onDeleteEmitter.fire ({
-        //	index: i - countRemovedSoFar,
-        //	amount: countToRemove
-        //});
 
         i += countToRemove - 1;
         countRemovedSoFar += countToRemove;
