@@ -110,7 +110,7 @@ class Buffer {
 
     final rawIndex = convertViewLineToRawLine(index);
 
-    if(rawIndex >= lines.length) {
+    if (rawIndex >= lines.length) {
       return BufferLine();
     }
 
@@ -184,7 +184,8 @@ class Buffer {
     eraseLineFromCursor();
 
     for (var i = _cursorY + 1; i < terminal.viewHeight; i++) {
-      getViewLine(i).erase(terminal.cellAttr.value, 0, terminal.viewWidth, true);
+      getViewLine(i)
+          .erase(terminal.cellAttr.value, 0, terminal.viewWidth, true);
     }
   }
 
@@ -192,7 +193,8 @@ class Buffer {
     eraseLineToCursor();
 
     for (var i = 0; i < _cursorY; i++) {
-      getViewLine(i).erase(terminal.cellAttr.value, 0, terminal.viewWidth, true);
+      getViewLine(i)
+          .erase(terminal.cellAttr.value, 0, terminal.viewWidth, true);
     }
   }
 
@@ -204,7 +206,8 @@ class Buffer {
   }
 
   void eraseLineFromCursor() {
-    currentLine.erase(terminal.cellAttr.value, _cursorX, terminal.viewWidth, _cursorX == 0);
+    currentLine.erase(
+        terminal.cellAttr.value, _cursorX, terminal.viewWidth, _cursorX == 0);
   }
 
   void eraseLineToCursor() {
@@ -520,7 +523,8 @@ class Buffer {
     lines.removeAt(index);
   }
 
-  void resize(int width, int height, int oldWidth, int oldHeight, bool doReflow) {
+  void resize(
+      int width, int height, int oldWidth, int oldHeight, bool doReflow) {
     if (this.lines.length > 0) {
       if (oldHeight < height) {
         for (int y = oldHeight; y < height; y++) {

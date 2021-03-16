@@ -157,8 +157,8 @@ class BufferReflow {
 
       // Record original lines so they don't get overridden when we rearrange the list
       List<BufferLine> originalLines = List<BufferLine>.from(_buffer.lines);
-      _buffer.lines.addAll(List<BufferLine>.generate(countToInsert,
-              (index) => BufferLine()));
+      _buffer.lines.addAll(
+          List<BufferLine>.generate(countToInsert, (index) => BufferLine()));
 
       int originalLinesLength = originalLines.length;
 
@@ -267,8 +267,7 @@ class BufferReflow {
         //buffer doesn't have enough lines
         if (_buffer.lines.length < _buffer.terminal.viewHeight) {
           // Add an extra row at the bottom of the viewport
-          _buffer.lines
-              .add(BufferLine());
+          _buffer.lines.add(BufferLine());
         }
       }
     }
@@ -277,14 +276,16 @@ class BufferReflow {
   }
 
   void _reflowLargerApplyNewLayout(List<int> newLayout) {
-    var newLayoutLines = List<BufferLine>.generate(newLayout.length, (index) => _buffer.lines[newLayout[index]]);
+    var newLayoutLines = List<BufferLine>.generate(
+        newLayout.length, (index) => _buffer.lines[newLayout[index]]);
 
     // Rearrange the list
     for (int i = 0; i < newLayoutLines.length; i++) {
       _buffer.lines[i] = newLayoutLines[i];
     }
 
-    _buffer.lines.removeRange(newLayoutLines.length - 1, _buffer.lines.length - 1);
+    _buffer.lines
+        .removeRange(newLayoutLines.length - 1, _buffer.lines.length - 1);
   }
 
   LayoutResult _reflowLargerCreateNewLayout(
@@ -376,14 +377,18 @@ class BufferReflow {
             wrappedLines[destLineIndex].copyCellsFrom(
                 wrappedLines[destLineIndex - 1], colsAfter - 1, destCol++, 1);
             // Null out the end of the last row
-            wrappedLines[destLineIndex - 1]
-                .erase(_buffer.terminal.cellAttr.value, colsAfter - 1, colsAfter, false);
+            wrappedLines[destLineIndex - 1].erase(
+                _buffer.terminal.cellAttr.value,
+                colsAfter - 1,
+                colsAfter,
+                false);
           }
         }
       }
 
       // Clear out remaining cells or fragments could remain;
-      wrappedLines[destLineIndex].erase(_buffer.terminal.cellAttr.value, destCol, colsAfter, false);
+      wrappedLines[destLineIndex]
+          .erase(_buffer.terminal.cellAttr.value, destCol, colsAfter, false);
 
       // Work backwards and remove any rows at the end that only contain null cells
       int countToRemove = 0;

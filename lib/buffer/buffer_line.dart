@@ -48,7 +48,7 @@ class BufferLine {
         getCell(i).erase(attr);
       }
     }
-    if(_isWrapped && clearWrap) {
+    if (_isWrapped && clearWrap) {
       _isWrapped = false;
     }
   }
@@ -66,25 +66,27 @@ class BufferLine {
 
   void copyCellsFrom(BufferLine src, int srcCol, int dstCol, int len) {
     final requiredCells = dstCol + len;
-    if(_cells.length < requiredCells) {
-      _cells.addAll(List<Cell>.generate(requiredCells - _cells.length, (index) => Cell()));
+    if (_cells.length < requiredCells) {
+      _cells.addAll(List<Cell>.generate(
+          requiredCells - _cells.length, (index) => Cell()));
     }
     //we have to make a copy first as src and dst might be the same line
-    List<Cell> sourceCells = List<Cell>.generate(len, (index) => src._cells[srcCol + index].clone());
-    for(var i=0; i<len; i++) {
+    List<Cell> sourceCells =
+        List<Cell>.generate(len, (index) => src._cells[srcCol + index].clone());
+    for (var i = 0; i < len; i++) {
       _cells[dstCol + i] = sourceCells[i];
     }
   }
 
   int getWidthAt(int col) {
-    if(col >= _cells.length) {
+    if (col >= _cells.length) {
       return 1;
     }
     return _cells[col].width;
   }
 
   bool hasContentAt(int col) {
-    if(col >= _cells.length) {
+    if (col >= _cells.length) {
       return false;
     }
     return _cells[col].codePoint != 0;
