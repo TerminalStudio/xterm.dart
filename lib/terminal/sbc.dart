@@ -6,7 +6,7 @@ const sbcMaxCodePoint = 0x0f;
 
 final sbcHandlers = _sbcHandlers();
 
-// build single byte character lookup table
+// Build single byte character lookup table
 List<SbcHandler?> _sbcHandlers() {
   final result = List<SbcHandler?>.filled(sbcMaxCodePoint + 1, null);
   result[0x05] = _voidHandler;

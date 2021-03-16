@@ -11,8 +11,8 @@ final _csiHandlers = <int, CsiSequenceHandler>{
   'd'.codeUnitAt(0): csiLinePositionAbsolute,
   'f'.codeUnitAt(0): csiCursorPositionHandler,
   'g'.codeUnitAt(0): csiTabClearHandler,
-  'h'.codeUnitAt(0): csiModeHandler,
-  'l'.codeUnitAt(0): csiModeHandler,
+  'h'.codeUnitAt(0): csiModeHandler, // SM - Set Mode
+  'l'.codeUnitAt(0): csiModeHandler, // RM - Reset Mode
   'm'.codeUnitAt(0): sgrHandler,
   'n'.codeUnitAt(0): csiDeviceStatusReportHandler,
   'r'.codeUnitAt(0): csiSetMarginsHandler, // DECSTBM

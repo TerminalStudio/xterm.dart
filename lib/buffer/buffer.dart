@@ -17,26 +17,51 @@ class Buffer {
   final lines = <BufferLine>[];
   final charset = Charset();
 
-  int _cursorX = 0;
-  int _cursorY = 0;
   int? _savedCursorX;
   int? _savedCursorY;
-  int _scrollLinesFromBottom = 0;
-  late int _marginTop;
-  late int _marginBottom;
   CellAttr? _savedCellAttr;
 
-  int get cursorX => _cursorX.clamp(0, terminal.viewWidth - 1);
-  int get cursorY => _cursorY;
-  int get marginTop => _marginTop;
-  int get marginBottom => _marginBottom;
+  // Indicates how far the bottom of the viewport is from the bottom of the
+  // entire buffer. 0 if the viewport overlaps the terminal screen.
+  int get scrollOffsetFromBottom => _scrollOffsetFromBottom;
+  int _scrollOffsetFromBottom = 0;
 
+  // Indicates how far the top of the viewport is from the top of the entire
+  // buffer. 0 if the viewport is scrolled to the top.
+  int get scrollOffsetFromTop {
+    return terminal.invisibleHeight - scrollOffsetFromBottom;
+  }
+
+  /// Horizontal position of the cursor relative to the top-left cornor of the
+  /// screen, starting from 0.
+  int get cursorX => _cursorX.clamp(0, terminal.viewWidth - 1);
+  int _cursorX = 0;
+
+  /// Vertical position of the cursor relative to the top-left cornor of the
+  /// screen, starting from 0.
+  int get cursorY => _cursorY;
+  int _cursorY = 0;
+
+  int get marginTop => _marginTop;
+  late int _marginTop;
+
+  int get marginBottom => _marginBottom;
+  late int _marginBottom;
+
+  /// Writes data to the terminal. Terminal sequences or special characters are
+  /// not interpreted and directly added to the buffer.
+  ///
+  /// See also: [Terminal.write]
   void write(String text) {
     for (var char in text.runes) {
       writeChar(char);
     }
   }
 
+  /// Writes a single character to the terminal. Special chatacters are not
+  /// interpreted and directly added to the buffer.
+  ///
+  /// See also: [Terminal.writeChar]
   void writeChar(int codePoint) {
     codePoint = charset.translate(codePoint);
 
@@ -223,7 +248,7 @@ class Buffer {
 
   /// https://vt100.net/docs/vt100-ug/chapter3.html#IND IND – Index
   ///
-  /// ESC D  
+  /// ESC D
   ///
   /// [index] causes the active position to move downward one line without
   /// changing the column position. If the active position is at the bottom
@@ -323,22 +348,14 @@ class Buffer {
     setPosition(cursorX, cursorY);
   }
 
-  int get scrollOffsetFromBottom {
-    return _scrollLinesFromBottom;
-  }
-
-  int get scrollOffsetFromTop {
-    return terminal.invisibleHeight - scrollOffsetFromBottom;
-  }
-
-  void setScrollOffsetFromBottom(int offset) {
+  void setScrollOffsetFromBottom(int offsetFromBottom) {
     if (height < terminal.viewHeight) return;
-    final maxOffset = height - terminal.viewHeight;
-    _scrollLinesFromBottom = offset.clamp(0, maxOffset);
+    final maxOffsetFromBottom = height - terminal.viewHeight;
+    _scrollOffsetFromBottom = offsetFromBottom.clamp(0, maxOffsetFromBottom);
   }
 
-  void setScrollOffsetFromTop(int offset) {
-    final bottomOffset = terminal.invisibleHeight - offset;
+  void setScrollOffsetFromTop(int offsetFromTop) {
+    final bottomOffset = terminal.invisibleHeight - offsetFromTop;
     setScrollOffsetFromBottom(bottomOffset);
   }
 

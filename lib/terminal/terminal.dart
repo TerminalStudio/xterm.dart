@@ -189,12 +189,22 @@ class Terminal with Observable {
   int get cursorY => buffer.cursorY;
   int get scrollOffset => buffer.scrollOffsetFromBottom;
 
+  /// Writes data to the terminal. Terminal sequences and special characters are
+  /// interpreted.
+  ///
+  /// See also: [Buffer.write]
   void write(String text) {
     _queue.addAll(text.runes);
     _processInput();
     refresh();
   }
 
+  /// Writes data to the terminal. Special characters are interpreted. To write
+  /// terminal sequences, [Terminal.write] should be used instead. Writing a
+  /// terminal sequence by calling [Terminal.writeChar] multiple times is not
+  /// supported.
+  ///
+  /// See also: [Buffer.writeChar]
   void writeChar(int codePoint) {
     _queue.addLast(codePoint);
     _processInput();
@@ -314,11 +324,17 @@ class Terminal with Observable {
     return _buffer == _altBuffer;
   }
 
-  void resize(int width, int heigth) {
+  void resize(int width, int height) {
+    if (height > _viewHeight) {
+      // todo
+    } else {
+      // todo
+    }
+
     final cursorY = buffer.convertViewLineToRawLine(buffer.cursorY);
 
     _viewWidth = max(width, 1);
-    _viewHeight = max(heigth, 1);
+    _viewHeight = max(height, 1);
 
     buffer.setCursorY(buffer.convertRawLineToViewLine(cursorY));
 
