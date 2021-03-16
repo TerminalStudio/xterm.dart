@@ -24,8 +24,8 @@ final _csiHandlers = <int, CsiSequenceHandler>{
   'E'.codeUnitAt(0): csiCursorNextLineHandler,
   'F'.codeUnitAt(0): csiCursorPrecedingLineHandler,
   'G'.codeUnitAt(0): csiCursorHorizontalAbsoluteHandler,
-  'H'.codeUnitAt(0): csiCursorPositionHandler,
-  'J'.codeUnitAt(0): csiEraseInDisplayHandler,
+  'H'.codeUnitAt(0): csiCursorPositionHandler, // CUP - Cursor Position
+  'J'.codeUnitAt(0): csiEraseInDisplayHandler, // DECSED - Selective Erase
   'K'.codeUnitAt(0): csiEraseInLineHandler,
   'L'.codeUnitAt(0): csiInsertLinesHandler,
   'M'.codeUnitAt(0): csiDeleteLinesHandler,
@@ -105,6 +105,17 @@ void csiHandler(Queue<int> queue, Terminal terminal) {
   terminal.debug.onError('unknown: $csi');
 }
 
+/// DECSED - Selective Erase In Display
+///
+/// ```text
+/// CSI ? P s J
+///
+/// Erase in Display (DECSED)
+///
+/// P s = 0 → Selective Erase Below (default)
+/// P s = 1 → Selective Erase Above
+/// P s = 2 → Selective Erase All
+/// ```
 void csiEraseInDisplayHandler(CSI csi, Terminal terminal) {
   var ps = '0';
 
@@ -152,6 +163,7 @@ void csiEraseInLineHandler(CSI csi, Terminal terminal) {
   }
 }
 
+/// CUP - Cursor Position
 void csiCursorPositionHandler(CSI csi, Terminal terminal) {
   var x = 1;
   var y = 1;
@@ -266,7 +278,7 @@ void csiCursorDownHandler(CSI csi, Terminal terminal) {
   terminal.buffer.movePosition(0, distance);
 }
 
-/// DECSTBM – Set Top and Bottom Margins (DEC Private) 
+/// DECSTBM – Set Top and Bottom Margins (DEC Private)
 ///
 /// ESC [ Pn; Pn r
 ///
@@ -276,7 +288,7 @@ void csiCursorDownHandler(CSI csi, Terminal terminal) {
 /// in the scrolling region. Default is the en tire screen (no margins). The
 /// minimum size of the scrolling region allowed is two lines, i.e., the top
 /// margin must be less than the bottom margin. The cursor is placed in the home
-/// position (see Origin Mode DECOM).  
+/// position (see Origin Mode DECOM).
 void csiSetMarginsHandler(CSI csi, Terminal terminal) {
   var top = 1;
   var bottom = terminal.viewHeight;
