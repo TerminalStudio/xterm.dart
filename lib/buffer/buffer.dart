@@ -14,32 +14,68 @@ import 'buffer_reflow.dart';
 class Buffer {
   Buffer(this.terminal) {
     resetVerticalMargins();
+    lines = List.generate(terminal.viewHeight, (_) => BufferLine());
   }
 
   final Terminal terminal;
-  final lines = <BufferLine>[];
   final charset = Charset();
 
-  int _cursorX = 0;
-  int _cursorY = 0;
+  /// lines of the buffer. the length of [lines] should always be equal or
+  /// greater than [Terminal.viewHeight].
+  late final List<BufferLine> lines;
+
   int? _savedCursorX;
   int? _savedCursorY;
-  int _scrollLinesFromBottom = 0;
-  late int _marginTop;
-  late int _marginBottom;
   CellAttr? _savedCellAttr;
 
-  int get cursorX => _cursorX.clamp(0, terminal.viewWidth - 1);
-  int get cursorY => _cursorY;
-  int get marginTop => _marginTop;
-  int get marginBottom => _marginBottom;
+  // Indicates how far the bottom of the viewport is from the bottom of the
+  // entire buffer. 0 if the viewport overlaps the terminal screen.
+  int get scrollOffsetFromBottom => _scrollOffsetFromBottom;
+  int _scrollOffsetFromBottom = 0;
 
+  // Indicates how far the top of the viewport is from the top of the entire
+  // buffer. 0 if the viewport is scrolled to the top.
+  int get scrollOffsetFromTop {
+    return terminal.invisibleHeight - scrollOffsetFromBottom;
+  }
+
+  /// Indicated whether the terminal should automatically scroll to bottom when
+  /// new lines are added. When user is scrolling, [isUserScrolling] is true and
+  /// the automatical scroll-to-bottom behavior is disabled.
+  bool get isUserScrolling {
+    return _scrollOffsetFromBottom != 0;
+  }
+
+  /// Horizontal position of the cursor relative to the top-left cornor of the
+  /// screen, starting from 0.
+  int get cursorX => _cursorX.clamp(0, terminal.viewWidth - 1);
+  int _cursorX = 0;
+
+  /// Vertical position of the cursor relative to the top-left cornor of the
+  /// screen, starting from 0.
+  int get cursorY => _cursorY;
+  int _cursorY = 0;
+
+  int get marginTop => _marginTop;
+  late int _marginTop;
+
+  int get marginBottom => _marginBottom;
+  late int _marginBottom;
+
+  /// Writes data to the terminal. Terminal sequences or special characters are
+  /// not interpreted and directly added to the buffer.
+  ///
+  /// See also: [Terminal.write]
   void write(String text) {
     for (var char in text.runes) {
       writeChar(char);
     }
   }
 
+  /// Writes a single character to the terminal. Special chatacters are not
+  /// interpreted and directly added to the buffer.
+  ///
+  /// See also: [Terminal.writeChar]
   void writeChar(int codePoint) {
     codePoint = charset.translate(codePoint);
 
@@ -73,13 +109,12 @@ class Buffer {
       return lines.last;
     }
 
-    final rawIndex = convertViewLineToRawLine(index);
+    // while (index >= lines.length) {
+    //   final newLine = BufferLine();
+    //   lines.add(newLine);
+    // }
 
-    if(rawIndex >= lines.length) {
-      lines.addAll(List<BufferLine>.generate(rawIndex - lines.length + 1, (index) => BufferLine()));
-    }
-
-    return lines[rawIndex];
+    return lines[convertViewLineToRawLine(index)];
   }
 
   BufferLine get currentLine {
@@ -227,7 +262,7 @@ class Buffer {
 
   /// https://vt100.net/docs/vt100-ug/chapter3.html#IND IND – Index
   ///
-  /// ESC D  
+  /// ESC D
   ///
   /// [index] causes the active position to move downward one line without
   /// changing the column position. If the active position is at the bottom
@@ -244,8 +279,13 @@ class Buffer {
 
     // the cursor is not in the scrollable region
     if (_cursorY >= terminal.viewHeight - 1) {
-      // we are ait the bottom so a new line is created.
+      // we are at the bottom so a new line is created.
       lines.add(BufferLine());
+
+      // keep viewport from moving if user is scrolling.
+      if (isUserScrolling) {
+        _scrollOffsetFromBottom++;
+      }
 
       // clean extra lines if needed.
       final maxLines = terminal.maxLines;
@@ -327,22 +367,14 @@ class Buffer {
     setPosition(cursorX, cursorY);
   }
 
-  int get scrollOffsetFromBottom {
-    return _scrollLinesFromBottom;
-  }
-
-  int get scrollOffsetFromTop {
-    return terminal.invisibleHeight - scrollOffsetFromBottom;
-  }
-
-  void setScrollOffsetFromBottom(int offset) {
+  void setScrollOffsetFromBottom(int offsetFromBottom) {
     if (height < terminal.viewHeight) return;
-    final maxOffset = height - terminal.viewHeight;
-    _scrollLinesFromBottom = offset.clamp(0, maxOffset);
+    final maxOffsetFromBottom = height - terminal.viewHeight;
+    _scrollOffsetFromBottom = offsetFromBottom.clamp(0, maxOffsetFromBottom);
   }
 
-  void setScrollOffsetFromTop(int offset) {
-    final bottomOffset = terminal.invisibleHeight - offset;
+  void setScrollOffsetFromTop(int offsetFromTop) {
+    final bottomOffset = terminal.invisibleHeight - offsetFromTop;
     setScrollOffsetFromBottom(bottomOffset);
   }
 
@@ -492,53 +524,21 @@ class Buffer {
     if (this.lines.length > 0) {
       if (oldHeight < height) {
         for (int y = oldHeight; y < height; y++) {
-          //as long as we can we will adjust the scrolling
-          if (scrollOffsetFromBottom > 0) {
-            _scrollLinesFromBottom--;
+          if (_cursorY < terminal.viewHeight - 1) {
+            lines.add(BufferLine());
+          } else {
+            _cursorY++;
           }
         }
       } else {
-        // (this._rows >= newRows)
-        //TODO: check if correct: I think we don't have anything to do here... things will correct automatically
-        // for (int y = rows; y > newRows; y--) {
-        //   if (lines.Length > newRows + YBase) {
-        //     if (lines.Length > YBase + this.y + 1) {
-        //       // The line is a blank line below the cursor, remove it
-        //       lines.Pop();
-        //     } else {
-        //       // The line is the cursor, scroll down
-        //       YBase++;
-        //       YDisp++;
-        //     }
-        //   }
-        // }
+        for (var i = 0; i < oldHeight - height; i++) {
+          if (_cursorY < terminal.viewHeight - 1) {
+            lines.removeLast();
+          } else {
+            _cursorY++;
+          }
+        }
       }
-
-      // // Reduce max length if needed after adjustments, this is done after as it
-      // // would otherwise cut data from the bottom of the buffer.
-      // if (newMaxLength < lines.MaxLength) {
-      //   // Trim from the top of the buffer and adjust ybase and ydisp.
-      //   int amountToTrim = lines.Length - newMaxLength;
-      //   if (amountToTrim > 0) {
-      //     lines.TrimStart(amountToTrim);
-      //     YBase = Math.Max(YBase - amountToTrim, 0);
-      //     YDisp = Math.Max(YDisp - amountToTrim, 0);
-      //     SavedY = Math.Max(SavedY - amountToTrim, 0);
-      //   }
-      //
-      //   lines.MaxLength = newMaxLength;
-      // }
-      //
-      // // Make sure that the cursor stays on screen
-      // X = Math.Min(X, newCols - 1);
-      // Y = Math.Min(Y, newRows - 1);
-      // if (addToY != 0) {
-      //   Y += addToY;
-      // }
-      //
-      // SavedX = Math.Min(SavedX, newCols - 1);
-
-      // ScrollTop = 0;
     }
 
     // ScrollBottom = newRows - 1;
