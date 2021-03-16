@@ -324,19 +324,19 @@ class Terminal with Observable {
     return _buffer == _altBuffer;
   }
 
-  void resize(int width, int height) {
-    if (height > _viewHeight) {
-      // todo
-    } else {
-      // todo
-    }
+  /// Resize the terminal screen. [newWidth] and [newHeight] should be greater
+  /// than 0. Text reflow is currently not implemented and will be avaliable in
+  /// the future.
+  void resize(int newWidth, int newHeight) {
+    newWidth = max(newWidth, 1);
+    newHeight = max(newHeight, 1);
 
-    final cursorY = buffer.convertViewLineToRawLine(buffer.cursorY);
+    buffer.resize(newWidth, newHeight);
 
-    _viewWidth = max(width, 1);
-    _viewHeight = max(height, 1);
+    // maybe reflow should happen here.
 
-    buffer.setCursorY(buffer.convertRawLineToViewLine(cursorY));
+    _viewWidth = newWidth;
+    _viewHeight = newHeight;
 
     if (buffer == _altBuffer) {
       buffer.clearScrollback();

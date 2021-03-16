@@ -11,11 +11,15 @@ import 'package:xterm/utli/unicode_v11.dart';
 class Buffer {
   Buffer(this.terminal) {
     resetVerticalMargins();
+    lines = List.generate(terminal.viewHeight, (_) => BufferLine());
   }
 
   final Terminal terminal;
-  final lines = <BufferLine>[];
   final charset = Charset();
+
+  /// lines of the buffer. the length of [lines] should always be equal or
+  /// greater than [Terminal.viewHeight].
+  late final List<BufferLine> lines;
 
   int? _savedCursorX;
   int? _savedCursorY;
@@ -102,10 +106,10 @@ class Buffer {
       return lines.last;
     }
 
-    while (index >= lines.length) {
-      final newLine = BufferLine();
-      lines.add(newLine);
-    }
+    // while (index >= lines.length) {
+    //   final newLine = BufferLine();
+    //   lines.add(newLine);
+    // }
 
     return lines[convertViewLineToRawLine(index)];
   }
@@ -502,5 +506,31 @@ class Buffer {
     }
 
     lines.removeAt(index);
+  }
+
+  void resize(int newWidth, int newHeight) {
+    if (newHeight > terminal.viewHeight) {
+      // Grow larger
+      for (var i = 0; i < newHeight - terminal.viewHeight; i++) {
+        if (_cursorY < terminal.viewHeight - 1) {
+          lines.add(BufferLine());
+        } else {
+          _cursorY++;
+        }
+      }
+    } else {
+      // Shrink smaller
+      for (var i = 0; i < terminal.viewHeight - newHeight; i++) {
+        if (_cursorY < terminal.viewHeight - 1) {
+          lines.removeLast();
+        } else {
+          _cursorY++;
+        }
+      }
+    }
+
+    // Ensure cursor is within the screen.
+    _cursorX = _cursorX.clamp(0, newWidth - 1);
+    _cursorY = _cursorY.clamp(0, newHeight - 1);
   }
 }
