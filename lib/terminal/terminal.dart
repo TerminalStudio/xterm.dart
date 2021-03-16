@@ -324,17 +324,19 @@ class Terminal with Observable {
     return _buffer == _altBuffer;
   }
 
-  void resize(int width, int height) {
+  /// Resize the terminal screen. [newWidth] and [newHeight] should be greater
+  /// than 0.
+  void resize(int newWidth, int newHeight) {
     final cursorY = buffer.convertViewLineToRawLine(buffer.cursorY);
 
     final oldWidth = _viewWidth;
     final oldHeight = _viewHeight;
 
-    _viewWidth = max(width, 1);
-    _viewHeight = max(height, 1);
+    _viewWidth = max(newWidth, 1);
+    _viewHeight = max(newHeight, 1);
 
-    _altBuffer.resize(width, height, oldWidth, oldHeight, false);
-    _mainBuffer.resize(width, height, oldWidth, oldHeight, true /* might be a setting for the terminal */);
+    _altBuffer.resize(_viewWidth, _viewHeight, oldWidth, oldHeight, false);
+    _mainBuffer.resize(_viewWidth, _viewHeight, oldWidth, oldHeight, true /* might be a setting for the terminal */);
 
     if (buffer == _altBuffer) {
       buffer.clearScrollback();
