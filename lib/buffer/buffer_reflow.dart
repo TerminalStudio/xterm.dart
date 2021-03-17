@@ -151,10 +151,6 @@ class BufferReflow {
     // than earlier so that it's a single O(n) pass through the buffer, instead of O(n^2) from many
     // costly calls to CircularList.splice.
     if (toInsert.length > 0) {
-      // Record buffer insert events and then play them back backwards so that the indexes are
-      // correct
-      List<int> insertEvents = [];
-
       // Record original lines so they don't get overridden when we rearrange the list
       List<BufferLine> originalLines = List<BufferLine>.from(_buffer.lines);
       _buffer.lines.addAll(
