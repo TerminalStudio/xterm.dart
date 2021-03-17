@@ -459,6 +459,7 @@ class Buffer {
 
   void clear() {
     lines.clear();
+    lines.addAll(List.generate(terminal.viewHeight, (_) => BufferLine()));
   }
 
   void insertBlankCharacters(int count) {
