@@ -24,8 +24,10 @@ dependencies:
   xterm:
     path: ../
 
-  dartssh: ^1.0.3+3
-    
+  dartssh:
+    git:
+      url: https://github.com/TerminalStudio/dartssh
+
   flutter:
     sdk: flutter
 
