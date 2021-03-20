@@ -427,6 +427,13 @@ class TerminalPainter extends CustomPainter {
       return;
     }
 
+    final cellHash = hashValues(cell.codePoint, attr);
+    var tp = textLayoutCache.getLayoutFromCache(cellHash);
+    if (tp != null) {
+      tp.paint(canvas, Offset(offsetX, offsetY));
+      return;
+    }
+
     final cellColor = attr.inverse
         ? attr.bgColor ?? terminal.theme.background
         : attr.fgColor ?? terminal.theme.foreground;
@@ -454,7 +461,8 @@ class TerminalPainter extends CustomPainter {
             decoration:
                 attr.underline ? TextDecoration.underline : TextDecoration.none,
             fontFamily: 'monospace',
-            fontFamilyFallback: view.style.fontFamily);
+            fontFamilyFallback: view.style.fontFamily,
+          );
 
     final span = TextSpan(
       text: String.fromCharCode(cell.codePoint!),
@@ -463,8 +471,7 @@ class TerminalPainter extends CustomPainter {
     );
 
     // final tp = textLayoutCache.getOrPerformLayout(span);
-    final tp = textLayoutCacheV2.getOrPerformLayout(
-        span, hashValues(cell.codePoint, attr));
+    tp = textLayoutCache.performAndCacheLayout(span, cellHash);
 
     tp.paint(canvas, Offset(offsetX, offsetY));
   }
