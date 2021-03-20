@@ -3,53 +3,25 @@ import 'package:quiver/collection.dart';
 
 class TextLayoutCache {
   TextLayoutCache(this.textDirection, int maximumSize)
-      : _cache = LruMap<TextSpan, TextPainter>(maximumSize: maximumSize);
-
-  final LruMap<TextSpan, TextPainter> _cache;
-  final TextDirection textDirection;
-
-  TextPainter getOrPerformLayout(TextSpan text) {
-    final cachedPainter = _cache[text];
-    if (cachedPainter != null) {
-      return cachedPainter;
-    } else {
-      return _performAndCacheLayout(text);
-    }
-  }
-
-  TextPainter _performAndCacheLayout(TextSpan text) {
-    final textPainter = TextPainter(text: text, textDirection: textDirection);
-    textPainter.layout();
-
-    _cache[text] = textPainter;
-
-    return textPainter;
-  }
-
-  int get length {
-    return _cache.length;
-  }
-}
-
-final textLayoutCache = TextLayoutCache(TextDirection.ltr, 1024);
-
-class TextLayoutCacheV2 {
-  TextLayoutCacheV2(this.textDirection, int maximumSize)
       : _cache = LruMap<int, TextPainter>(maximumSize: maximumSize);
 
   final LruMap<int, TextPainter> _cache;
   final TextDirection textDirection;
 
-  TextPainter getOrPerformLayout(TextSpan text, int key) {
-    final cachedPainter = _cache[key];
-    if (cachedPainter != null) {
-      return cachedPainter;
-    } else {
-      return _performAndCacheLayout(text, key);
-    }
+  TextPainter? getLayoutFromCache(int key) {
+    return _cache[key];
   }
 
-  TextPainter _performAndCacheLayout(TextSpan text, int key) {
+  // TextPainter getOrPerformLayout(TextSpan text, int key) {
+  //   final cachedPainter = _cache[key];
+  //   if (cachedPainter != null) {
+  //     return cachedPainter;
+  //   } else {
+  //     return performAndCacheLayout(text, key);
+  //   }
+  // }
+
+  TextPainter performAndCacheLayout(TextSpan text, int key) {
     final textPainter = TextPainter(text: text, textDirection: textDirection);
     textPainter.layout();
 
@@ -63,7 +35,7 @@ class TextLayoutCacheV2 {
   }
 }
 
-final textLayoutCacheV2 = TextLayoutCacheV2(TextDirection.ltr, 1024);
+final textLayoutCache = TextLayoutCache(TextDirection.ltr, 10240);
 
 // class CodePointCache {
 //   CodePointCache(int maximumSize)

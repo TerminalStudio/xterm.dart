@@ -60,7 +60,7 @@ void _ansiRestoreCursorHandler(Queue<int> queue, Terminal terminal) {
 
 /// https://vt100.net/docs/vt100-ug/chapter3.html#IND IND – Index
 ///
-/// ESC D  
+/// ESC D
 ///
 /// This sequence causes the active position to move downward one line without
 /// changing the column position. If the active position is at the bottom
