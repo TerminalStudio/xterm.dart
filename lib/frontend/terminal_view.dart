@@ -221,8 +221,6 @@ class _TerminalViewState extends State<TerminalView> {
       },
       child: Container(
         constraints: BoxConstraints.expand(),
-        color: Color(widget.terminal.theme.background.value)
-            .withOpacity(widget.opacity),
         child: CustomPaint(
           painter: TerminalPainter(
             terminal: widget.terminal,
@@ -232,6 +230,8 @@ class _TerminalViewState extends State<TerminalView> {
             charSize: _cellSize,
           ),
         ),
+        color: Color(widget.terminal.theme.background.value)
+            .withOpacity(widget.opacity),
       ),
     );
   }
@@ -350,7 +350,12 @@ class TerminalPainter extends CustomPainter {
         final effectWidth = charSize.cellWidth * cell.width + 1;
         final effectHeight = charSize.cellHeight + 1;
 
-        final bgColor = attr.inverse ? attr.fgColor : attr.bgColor;
+        // background color is already painted with opacity by the Container of
+        // TerminalPainter so wo don't need to fallback to
+        // terminal.theme.background here.
+        final bgColor = attr.inverse
+            ? attr.fgColor ?? terminal.theme.foreground
+            : attr.bgColor;
 
         if (bgColor == null) {
           continue;
