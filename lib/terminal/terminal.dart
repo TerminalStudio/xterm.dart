@@ -225,7 +225,15 @@ class Terminal with Observable {
       final char = _queue.removeFirst();
 
       if (char == esc) {
-        ansiHandler(_queue, this);
+        final finished = ansiHandler(_queue, this);
+
+        // Terminal sequence in the queue is not completed, and no charater is
+        // consumed.
+        if (!finished) {
+          _queue.addFirst(esc);
+          break;
+        }
+
         continue;
       }
 
