@@ -57,10 +57,17 @@ CSI? _parseCsi(Queue<int> queue) {
   final paramBuffer = StringBuffer();
   final intermediates = <int>[];
 
-  while (queue.isNotEmpty) {
-    // TODO: handle special case when queue is empty as this time.
+  // Keep track of how many characters should be taken from the queue.
+  var readOffset = 0;
 
-    final char = queue.removeFirst();
+  while (true) {
+    // The sequence isn't completed, just ignore it.
+    if (queue.length <= readOffset) {
+      return null;
+    }
+
+    // final char = queue.removeFirst();
+    final char = queue.elementAt(readOffset++);
 
     if (char >= 0x30 && char <= 0x3F) {
       paramBuffer.writeCharCode(char);
@@ -76,6 +83,11 @@ CSI? _parseCsi(Queue<int> queue) {
     const csiMax = 0x7e;
 
     if (char >= csiMin && char <= csiMax) {
+      // The sequence is complete. So we consume it from the queue.
+      for (var i = 0; i < readOffset; i++) {
+        queue.removeFirst();
+      }
+
       final params = paramBuffer.toString().split(';');
       return CSI(
         params: params,
@@ -86,11 +98,11 @@ CSI? _parseCsi(Queue<int> queue) {
   }
 }
 
-void csiHandler(Queue<int> queue, Terminal terminal) {
+bool csiHandler(Queue<int> queue, Terminal terminal) {
   final csi = _parseCsi(queue);
 
   if (csi == null) {
-    return;
+    return false;
   }
 
   terminal.debug.onCsi(csi);
@@ -99,10 +111,11 @@ void csiHandler(Queue<int> queue, Terminal terminal) {
 
   if (handler != null) {
     handler(csi, terminal);
-    return;
+  } else {
+    terminal.debug.onError('unknown: $csi');
   }
 
-  terminal.debug.onError('unknown: $csi');
+  return true;
 }
 
 /// DECSED - Selective Erase In Display

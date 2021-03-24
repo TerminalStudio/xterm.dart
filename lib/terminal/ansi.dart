@@ -4,9 +4,17 @@ import 'package:xterm/terminal/csi.dart';
 import 'package:xterm/terminal/osc.dart';
 import 'package:xterm/terminal/terminal.dart';
 
-typedef AnsiHandler = void Function(Queue<int>, Terminal);
+/// Handler of terminal sequences. Returns true if the sequence is consumed,
+/// false to indicate that the sequence is not completed and no charater is
+/// consumed from the queue.
+typedef AnsiHandler = bool Function(Queue<int>, Terminal);
 
-void ansiHandler(Queue<int> queue, Terminal terminal) {
+bool ansiHandler(Queue<int> queue, Terminal terminal) {
+  // The sequence isn't completed, just ignore it.
+  if (queue.isEmpty) {
+    return false;
+  }
+
   final charAfterEsc = queue.removeFirst();
 
   final handler = _ansiHandlers[charAfterEsc];
@@ -14,10 +22,16 @@ void ansiHandler(Queue<int> queue, Terminal terminal) {
     if (handler != csiHandler && handler != oscHandler) {
       terminal.debug.onEsc(charAfterEsc);
     }
-    return handler(queue, terminal);
+
+    final finished = handler(queue, terminal);
+    if (!finished) {
+      queue.addFirst(charAfterEsc);
+    }
+    return finished;
   }
 
   terminal.debug.onError('unsupported ansi sequence: $charAfterEsc');
+  return true;
 }
 
 final _ansiHandlers = <int, AnsiHandler>{
@@ -42,20 +56,30 @@ final _ansiHandlers = <int, AnsiHandler>{
 
 AnsiHandler _voidHandler(int sequenceLength) {
   return (queue, terminal) {
-    queue.take(sequenceLength);
+    if (queue.length < sequenceLength) {
+      return false;
+    }
+
+    for (var i = 0; i < sequenceLength; i++) {
+      queue.removeFirst();
+    }
+    return true;
   };
 }
 
-void _unsupportedHandler(Queue<int> queue, Terminal terminal) async {
+bool _unsupportedHandler(Queue<int> queue, Terminal terminal) {
   // print('unimplemented ansi sequence.');
+  return true;
 }
 
-void _ansiSaveCursorHandler(Queue<int> queue, Terminal terminal) {
+bool _ansiSaveCursorHandler(Queue<int> queue, Terminal terminal) {
   terminal.buffer.saveCursor();
+  return true;
 }
 
-void _ansiRestoreCursorHandler(Queue<int> queue, Terminal terminal) {
+bool _ansiRestoreCursorHandler(Queue<int> queue, Terminal terminal) {
   terminal.buffer.restoreCursor();
+  return true;
 }
 
 /// https://vt100.net/docs/vt100-ug/chapter3.html#IND IND – Index
@@ -65,12 +89,14 @@ void _ansiRestoreCursorHandler(Queue<int> queue, Terminal terminal) {
 /// This sequence causes the active position to move downward one line without
 /// changing the column position. If the active position is at the bottom
 /// margin, a scroll up is performed.
-void _ansiIndexHandler(Queue<int> queue, Terminal terminal) {
+bool _ansiIndexHandler(Queue<int> queue, Terminal terminal) {
   terminal.buffer.index();
+  return true;
 }
 
-void _ansiReverseIndexHandler(Queue<int> queue, Terminal terminal) {
+bool _ansiReverseIndexHandler(Queue<int> queue, Terminal terminal) {
   terminal.buffer.reverseIndex();
+  return true;
 }
 
 /// SCS – Select Character Set
@@ -80,16 +106,24 @@ void _ansiReverseIndexHandler(Queue<int> queue, Terminal terminal) {
 /// SO (shift in and shift out) respectively.
 AnsiHandler _scsHandler(int which) {
   return (Queue<int> queue, Terminal terminal) {
-    final name = String.fromCharCode(queue.removeFirst());
+    // The sequence isn't completed, just ignore it.
+    if (queue.isEmpty) {
+      return false;
+    }
+
+    final name = queue.removeFirst();
     terminal.buffer.charset.designate(which, name);
+    return true;
   };
 }
 
-void _ansiNextLineHandler(Queue<int> queue, Terminal terminal) {
+bool _ansiNextLineHandler(Queue<int> queue, Terminal terminal) {
   terminal.buffer.newLine();
   terminal.buffer.setCursorX(0);
+  return true;
 }
 
-void _ansiTabSetHandler(Queue<int> queue, Terminal terminal) {
+bool _ansiTabSetHandler(Queue<int> queue, Terminal terminal) {
   terminal.tabSetAtCursor();
+  return true;
 }

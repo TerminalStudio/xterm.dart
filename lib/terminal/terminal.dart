@@ -199,10 +199,7 @@ class Terminal with Observable {
     refresh();
   }
 
-  /// Writes data to the terminal. Special characters are interpreted. To write
-  /// terminal sequences, [Terminal.write] should be used instead. Writing a
-  /// terminal sequence by calling [Terminal.writeChar] multiple times is not
-  /// supported.
+  /// Writes data to the terminal. Special characters are interpreted.
   ///
   /// See also: [Buffer.writeChar]
   void writeChar(int codePoint) {
@@ -225,7 +222,15 @@ class Terminal with Observable {
       final char = _queue.removeFirst();
 
       if (char == esc) {
-        ansiHandler(_queue, this);
+        final finished = ansiHandler(_queue, this);
+
+        // Terminal sequence in the queue is not completed, and no charater is
+        // consumed.
+        if (!finished) {
+          _queue.addFirst(esc);
+          break;
+        }
+
         continue;
       }
 

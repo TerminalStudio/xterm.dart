@@ -1,8 +1,8 @@
 typedef CharsetTranslator = int Function(int);
 
-const _charsets = <String, CharsetTranslator>{
-  '0': decSpecGraphicsTranslator,
-  'B': asciiTranslator,
+final _charsets = <int, CharsetTranslator>{
+  '0'.codeUnitAt(0): decSpecGraphicsTranslator,
+  'B'.codeUnitAt(0): asciiTranslator,
 };
 
 class Charset {
@@ -22,7 +22,7 @@ class Charset {
     return _cached(codePoint);
   }
 
-  void designate(int index, String name) {
+  void designate(int index, int name) {
     final charset = _charsets[name];
     if (charset != null) {
       _charsetMap[index] = charset;

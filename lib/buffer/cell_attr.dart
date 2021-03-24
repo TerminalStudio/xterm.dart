@@ -13,8 +13,8 @@ class CellAttr {
     this.inverse = false,
     this.invisible = false,
   }) : hashCode = hashValues(
-          fgColor,
-          bgColor,
+          fgColor?.value,
+          bgColor?.value,
           bold,
           faint,
           italic,
