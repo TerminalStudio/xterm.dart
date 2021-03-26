@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'package:xterm/terminal/csi.dart';
 import 'package:xterm/terminal/osc.dart';
 import 'package:xterm/terminal/terminal.dart';
+import 'package:xterm/utli/lookup_table.dart';
 
 /// Handler of terminal sequences. Returns true if the sequence is consumed,
 /// false to indicate that the sequence is not completed and no charater is
@@ -34,7 +35,7 @@ bool ansiHandler(Queue<int> queue, Terminal terminal) {
   return true;
 }
 
-final _ansiHandlers = <int, AnsiHandler>{
+final _ansiHandlers = FastLookupTable({
   '['.codeUnitAt(0): csiHandler,
   ']'.codeUnitAt(0): oscHandler,
   '7'.codeUnitAt(0): _ansiSaveCursorHandler,
@@ -52,7 +53,7 @@ final _ansiHandlers = <int, AnsiHandler>{
   '+'.codeUnitAt(0): _voidHandler(1), // TODO: G3 (vt220)
   '>'.codeUnitAt(0): _voidHandler(0), // TODO: Normal Keypad
   '='.codeUnitAt(0): _voidHandler(0), // TODO: Application Keypad
-};
+});
 
 AnsiHandler _voidHandler(int sequenceLength) {
   return (queue, terminal) {

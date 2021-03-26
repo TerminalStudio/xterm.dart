@@ -3,10 +3,11 @@ import 'dart:collection';
 import 'package:xterm/terminal/modes.dart';
 import 'package:xterm/terminal/sgr.dart';
 import 'package:xterm/terminal/terminal.dart';
+import 'package:xterm/utli/lookup_table.dart';
 
 typedef CsiSequenceHandler = void Function(CSI, Terminal);
 
-final _csiHandlers = <int, CsiSequenceHandler>{
+final _csiHandlers = FastLookupTable({
   'c'.codeUnitAt(0): csiSendDeviceAttributesHandler,
   'd'.codeUnitAt(0): csiLinePositionAbsolute,
   'f'.codeUnitAt(0): csiCursorPositionHandler,
@@ -34,7 +35,7 @@ final _csiHandlers = <int, CsiSequenceHandler>{
   'T'.codeUnitAt(0): csiScrollDownHandler,
   'X'.codeUnitAt(0): csiEraseCharactersHandler,
   '@'.codeUnitAt(0): csiInsertBlankCharactersHandler,
-};
+});
 
 class CSI {
   CSI({
@@ -53,6 +54,8 @@ class CSI {
   }
 }
 
+/// Parse a CSI from the head of the queue. Return null if the CSI isn't
+/// complete.
 CSI? _parseCsi(Queue<int> queue) {
   final paramBuffer = StringBuffer();
   final intermediates = <int>[];
@@ -98,6 +101,8 @@ CSI? _parseCsi(Queue<int> queue) {
   }
 }
 
+/// CSI - Control Sequence Introducer: sequence starting with ESC [ (7bit) or
+/// CSI (\x9B, 8bit)
 bool csiHandler(Queue<int> queue, Terminal terminal) {
   final csi = _parseCsi(queue);
 
