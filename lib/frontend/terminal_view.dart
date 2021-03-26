@@ -236,6 +236,7 @@ class _TerminalViewState extends State<TerminalView> {
     );
   }
 
+  /// Get global cell position from mouse position.
   Position getMouseOffset(double px, double py) {
     final col = (px / _cellSize.cellWidth).floor();
     final row = (py / _cellSize.cellHeight).floor();
