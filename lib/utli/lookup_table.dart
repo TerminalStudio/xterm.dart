@@ -22,7 +22,7 @@ class FastLookupTable<T> {
   late final List<T?> _table;
   late final int _maxIndex;
 
-  operator [](int index) {
+  T? operator [](int index) {
     if (index > _maxIndex) {
       return null;
     }
