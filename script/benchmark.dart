@@ -63,11 +63,11 @@ class BenchmarkWriteCMatrix extends Benchmark {
     data = File('script/cmatrix.txt').readAsStringSync();
   }
 
-  static const cycle = 1 << 0;
+  static const cycle = 10;
   late final String data;
 
   String explain() {
-    return 'write ${data.length / 1024} kb CMatrix output to Terminal for $cycle time(s)';
+    return 'write ${data.length / 1024} kb CMatrix -r output to Terminal for $cycle time(s)';
   }
 
   void benchmark() {
