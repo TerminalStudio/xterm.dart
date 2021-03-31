@@ -21,7 +21,7 @@ void sgrHandler(CSI csi, Terminal terminal) {
     switch (param) {
       case 0:
         terminal.cursor.fg = terminal.theme.foreground;
-        terminal.cursor.bg = 0x00000000;
+        terminal.cursor.bg = TerminalColor.transparent;
         terminal.cursor.flags = 0x00;
         break;
       case 1:
