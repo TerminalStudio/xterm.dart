@@ -1,5 +1,3 @@
-import 'package:xterm/theme/terminal_color.dart';
-
 class TerminalTheme {
   const TerminalTheme({
     required this.cursor,
@@ -24,26 +22,26 @@ class TerminalTheme {
     required this.brightWhite,
   });
 
-  final TerminalColor cursor;
-  final TerminalColor selection;
+  final int cursor;
+  final int selection;
 
-  final TerminalColor foreground;
-  final TerminalColor background;
-  final TerminalColor black;
-  final TerminalColor red;
-  final TerminalColor green;
-  final TerminalColor yellow;
-  final TerminalColor blue;
-  final TerminalColor magenta;
-  final TerminalColor cyan;
-  final TerminalColor white;
+  final int foreground;
+  final int background;
+  final int black;
+  final int red;
+  final int green;
+  final int yellow;
+  final int blue;
+  final int magenta;
+  final int cyan;
+  final int white;
 
-  final TerminalColor brightBlack;
-  final TerminalColor brightRed;
-  final TerminalColor brightGreen;
-  final TerminalColor brightYellow;
-  final TerminalColor brightBlue;
-  final TerminalColor brightMagenta;
-  final TerminalColor brightCyan;
-  final TerminalColor brightWhite;
+  final int brightBlack;
+  final int brightRed;
+  final int brightGreen;
+  final int brightYellow;
+  final int brightBlue;
+  final int brightMagenta;
+  final int brightCyan;
+  final int brightWhite;
 }

@@ -3,7 +3,6 @@ import 'dart:math' show max, min;
 
 import 'package:xterm/buffer/buffer.dart';
 import 'package:xterm/buffer/buffer_line.dart';
-import 'package:xterm/buffer/cell_attr.dart';
 import 'package:xterm/mouse/selection.dart';
 import 'package:xterm/input/keys.dart';
 import 'package:xterm/input/keytab/keytab.dart';
@@ -11,6 +10,7 @@ import 'package:xterm/input/keytab/keytab_escape.dart';
 import 'package:xterm/input/keytab/keytab_record.dart';
 import 'package:xterm/mouse/mouse_mode.dart';
 import 'package:xterm/terminal/ansi.dart';
+import 'package:xterm/terminal/cursor.dart';
 import 'package:xterm/terminal/platform.dart';
 import 'package:xterm/terminal/sbc.dart';
 import 'package:xterm/terminal/tabs.dart';
@@ -44,6 +44,12 @@ class Terminal with Observable {
     _mainBuffer = Buffer(this);
     _altBuffer = Buffer(this);
     _buffer = _mainBuffer;
+
+    cursor = Cursor(
+      fg: theme.foreground,
+      bg: 0x00000000, // transparent
+      flags: 0x00, // no flags
+    );
 
     tabs.reset();
   }
@@ -168,7 +174,9 @@ class Terminal with Observable {
   MouseMode get mouseMode => _mouseMode;
 
   final TerminalTheme theme;
-  final cellAttr = CellAttrTemplate();
+
+  // final cellAttr = CellAttrTemplate();
+  late final Cursor cursor;
 
   final keytab = Keytab.defaultKeytab();
   final selection = Selection();
@@ -459,19 +467,17 @@ class Terminal with Observable {
       }
 
       for (var col = xStart; col <= xEnd; col++) {
-        if (col >= line.length) {
-          break;
-        }
+        // if (col >= line.length) {
+        //   break;
+        // }
 
-        final cell = line.getCell(col);
-
-        if (cell.width == 0) {
+        if (line.cellGetWidth(col) == 0) {
           continue;
         }
 
-        var char = line.getCell(col).codePoint;
+        var char = line.cellGetContent(col);
 
-        if (char == null || char == 0x00) {
+        if (char == 0x00) {
           const blank = 32;
           char = blank;
         }
@@ -490,6 +496,8 @@ class Terminal with Observable {
 
     onInput(data);
   }
+
+  void selectWord(int x, int y) {}
 
   int get _tabIndexFromCursor {
     var index = buffer.cursorX;
