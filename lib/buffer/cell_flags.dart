@@ -6,7 +6,4 @@ abstract class CellFlags {
   static const blink = 1 << 4;
   static const inverse = 1 << 5;
   static const invisible = 1 << 6;
-
-  /// whether the cell required two cells.
-  static const wide = 1 << 8;
 }
