@@ -14,6 +14,7 @@ import 'package:xterm/terminal/cursor.dart';
 import 'package:xterm/terminal/platform.dart';
 import 'package:xterm/terminal/sbc.dart';
 import 'package:xterm/terminal/tabs.dart';
+import 'package:xterm/theme/terminal_color.dart';
 import 'package:xterm/theme/terminal_theme.dart';
 import 'package:xterm/theme/terminal_themes.dart';
 import 'package:xterm/utli/debug_handler.dart';
@@ -47,7 +48,7 @@ class Terminal with Observable {
 
     cursor = Cursor(
       fg: theme.foreground,
-      bg: 0x00000000, // transparent
+      bg: TerminalColor.transparent, // transparent
       flags: 0x00, // no flags
     );
 

@@ -4,15 +4,6 @@ import 'package:xterm/terminal/csi.dart';
 import 'package:xterm/terminal/terminal.dart';
 import 'package:xterm/utli/lookup_table.dart';
 
-// reference to color
-// class Cr implements TerminalColor {
-//   Cr(this.getter);
-
-//   final TerminalColor Function() getter;
-
-//   int get value => getter().value;
-// }
-
 /// SGR selects one or more character attributes at the same time.
 /// Multiple params (up to 32) are applied from in order from left to right.
 /// The changed attributes are applied to all new characters received.
