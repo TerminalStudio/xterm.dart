@@ -521,7 +521,7 @@ class TerminalPainter extends CustomPainter {
     }
 
     final width = charSize.cellWidth *
-        terminal.buffer.currentLine.cellGetWidth(terminal.cursorX);
+        terminal.buffer.currentLine.cellGetWidth(terminal.cursorX).clamp(1, 2);
 
     final offsetX = charSize.cellWidth * terminal.cursorX;
     final offsetY = charSize.cellHeight * screenCursorY;
