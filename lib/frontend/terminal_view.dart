@@ -468,7 +468,7 @@ class TerminalPainter extends CustomPainter {
 
     var color = Color(cellColor);
 
-    if (flags & CellFlags.inverse != 0) {
+    if (flags & CellFlags.faint != 0) {
       color = color.withOpacity(0.5);
     }
 
