@@ -53,15 +53,15 @@ class BufferLine {
   }
 
   void insert(int index) {
-    // _cells.insert(index, cell);
+    insertN(index, 1);
   }
 
   void insertN(int index, int count) {
-    // _cells.insert(index, cell);
+    // TODO: implement insertN()
   }
 
   void clear() {
-    // _cells.clear();
+    _cells.buffer.asInt64List().clear();
   }
 
   void erase(Cursor cursor, int start, int end) {
