@@ -172,11 +172,11 @@ void sgrHandler(CSI csi, Terminal terminal) {
         terminal.cursor.bg = terminal.theme.brightWhite;
         break;
       case 38: // set foreground
-        final color = parseAnsiColour(params.sublist(i), terminal);
+        final color = parseAnsiColour(params, i, terminal);
         terminal.cursor.fg = color;
         return;
       case 48: // set background
-        final color = parseAnsiColour(params.sublist(i), terminal);
+        final color = parseAnsiColour(params, i, terminal);
         terminal.cursor.bg = color;
         return;
       default:
@@ -185,12 +185,15 @@ void sgrHandler(CSI csi, Terminal terminal) {
   }
 }
 
-int parseAnsiColour(List<int> params, Terminal terminal) {
-  if (params.length > 2) {
-    switch (params[1]) {
+/// parse a color from [params] starting from [offset].
+int parseAnsiColour(List<int> params, int offset, Terminal terminal) {
+  final length = params.length - offset;
+
+  if (length > 2) {
+    switch (params[offset + 1]) {
       case 5:
         // 8 bit colour
-        final colNum = params[2];
+        final colNum = params[offset + 2];
 
         if (colNum >= 256 || colNum < 0) {
           return TerminalColor.empty();
@@ -199,23 +202,23 @@ int parseAnsiColour(List<int> params, Terminal terminal) {
         return parse8BitSgrColour(colNum, terminal);
 
       case 2:
-        if (params.length < 4) {
+        if (length < 4) {
           return TerminalColor.empty();
         }
 
         // 24 bit colour
-        if (params.length == 5) {
-          final r = params[2];
-          final g = params[3];
-          final b = params[4];
+        if (length == 5) {
+          final r = params[offset + 2];
+          final g = params[offset + 3];
+          final b = params[offset + 4];
           return TerminalColor.fromARGB(0xff, r, g, b);
         }
 
-        if (params.length > 5) {
+        if (length > 5) {
           // ISO/IEC International Standard 8613-6
-          final r = params[3];
-          final g = params[4];
-          final b = params[5];
+          final r = params[offset + 3];
+          final g = params[offset + 4];
+          final b = params[offset + 5];
           return TerminalColor.fromARGB(0xff, r, g, b);
         }
     }
