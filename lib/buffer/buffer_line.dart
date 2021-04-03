@@ -72,9 +72,15 @@ class BufferLine {
     final start = (index * _cellSize).clamp(0, _cells.lengthInBytes);
     final offset = (count * _cellSize).clamp(0, _cells.lengthInBytes - start);
 
+    // move data forward
     final cells = _cells.buffer.asInt8List();
     for (var i = _cells.lengthInBytes - offset - 1; i >= start; i++) {
       cells[i + offset] = cells[i];
+    }
+
+    // set inserted cells to 0
+    for (var i = start; i < start + offset; i++) {
+      cells[i] = 0x00;
     }
   }
 
