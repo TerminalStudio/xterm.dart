@@ -57,7 +57,25 @@ class BufferLine {
   }
 
   void insertN(int index, int count) {
-    // TODO: implement insertN()
+    //                       start
+    // +--------------------------|-----------------------------------+
+    // |                          |                                   |
+    // +--------------------------\--\--------------------------------+
+    //                             \  \
+    //                              \  \
+    //                               v  v
+    // +--------------------------|--|--------------------------------+
+    // |                          |  |                                |
+    // +--------------------------|--|--------------------------------+
+    //                       start   start+offset
+
+    final start = (index * _cellSize).clamp(0, _cells.lengthInBytes);
+    final offset = (count * _cellSize).clamp(0, _cells.lengthInBytes - start);
+
+    final cells = _cells.buffer.asInt8List();
+    for (var i = _cells.lengthInBytes - offset - 1; i >= start; i++) {
+      cells[i + offset] = cells[i];
+    }
   }
 
   void clear() {
