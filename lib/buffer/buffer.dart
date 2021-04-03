@@ -525,8 +525,10 @@ class Buffer {
     _cursorX = _cursorX.clamp(0, newWidth - 1);
     _cursorY = _cursorY.clamp(0, newHeight - 1);
 
-    final rf = BufferReflow(this);
-    rf.doReflow(oldWidth, newWidth);
+    if (!terminal.isUsingAltBuffer()) {
+      final rf = BufferReflow(this);
+      rf.doReflow(oldWidth, newWidth);
+    }
   }
 
   BufferLine _newEmptyLine() {
