@@ -1,19 +1,19 @@
 import 'dart:math' show max, min;
 
 import 'package:xterm/buffer/buffer_line.dart';
-import 'package:xterm/buffer/cell.dart';
-import 'package:xterm/buffer/cell_attr.dart';
 import 'package:xterm/terminal/charset.dart';
 import 'package:xterm/terminal/terminal.dart';
 import 'package:xterm/utli/scroll_range.dart';
 import 'package:xterm/utli/unicode_v11.dart';
 
-import 'buffer_reflow.dart';
-
 class Buffer {
   Buffer(this.terminal) {
     resetVerticalMargins();
-    lines = List.generate(terminal.viewHeight, (_) => BufferLine());
+
+    lines = List.generate(
+      terminal.viewHeight,
+      (_) => _newEmptyLine(),
+    );
   }
 
   final Terminal terminal;
@@ -25,7 +25,9 @@ class Buffer {
 
   int? _savedCursorX;
   int? _savedCursorY;
-  CellAttr? _savedCellAttr;
+  int? _savedCellFgColor;
+  int? _savedCellBgColor;
+  int? _savedCellFlags;
 
   // Indicates how far the bottom of the viewport is from the bottom of the
   // entire buffer. 0 if the viewport overlaps the terminal screen.
@@ -85,14 +87,14 @@ class Buffer {
     }
 
     final line = currentLine;
-    while (line.length <= _cursorX) {
-      line.add(Cell());
-    }
+    line.ensure(_cursorX + 1);
 
-    final cell = line.getCell(_cursorX);
-    cell.setCodePoint(codePoint);
-    cell.setWidth(cellWidth);
-    cell.setAttr(terminal.cellAttr.value);
+    line.cellInitialize(
+      _cursorX,
+      content: codePoint,
+      width: cellWidth,
+      cursor: terminal.cursor,
+    );
 
     if (_cursorX < terminal.viewWidth) {
       _cursorX++;
@@ -103,18 +105,11 @@ class Buffer {
     }
   }
 
+  /// get line in the viewport. [index] starts from 0, must be smaller than
+  /// [Terminal.viewHeight].
   BufferLine getViewLine(int index) {
-    if (index > terminal.viewHeight) {
-      return lines.last;
-    }
-
-    final rawIndex = convertViewLineToRawLine(index);
-
-    if (rawIndex >= lines.length) {
-      return BufferLine();
-    }
-
-    return lines[rawIndex];
+    index = index.clamp(0, terminal.viewHeight - 1);
+    return lines[convertViewLineToRawLine(index)];
   }
 
   BufferLine get currentLine {
@@ -184,8 +179,7 @@ class Buffer {
     eraseLineFromCursor();
 
     for (var i = _cursorY + 1; i < terminal.viewHeight; i++) {
-      getViewLine(i)
-          .erase(terminal.cellAttr.value, 0, terminal.viewWidth, true);
+      getViewLine(i).erase(terminal.cursor, 0, terminal.viewWidth);
     }
   }
 
@@ -193,40 +187,32 @@ class Buffer {
     eraseLineToCursor();
 
     for (var i = 0; i < _cursorY; i++) {
-      getViewLine(i)
-          .erase(terminal.cellAttr.value, 0, terminal.viewWidth, true);
+      getViewLine(i).erase(terminal.cursor, 0, terminal.viewWidth);
     }
   }
 
   void eraseDisplay() {
     for (var i = 0; i < terminal.viewHeight; i++) {
       final line = getViewLine(i);
-      line.erase(terminal.cellAttr.value, 0, terminal.viewWidth, true);
+      line.erase(terminal.cursor, 0, terminal.viewWidth);
     }
   }
 
   void eraseLineFromCursor() {
-    currentLine.erase(
-        terminal.cellAttr.value, _cursorX, terminal.viewWidth, _cursorX == 0);
+    currentLine.erase(terminal.cursor, _cursorX, terminal.viewWidth);
   }
 
   void eraseLineToCursor() {
-    currentLine.erase(terminal.cellAttr.value, 0, _cursorX, _cursorX == 0);
+    currentLine.erase(terminal.cursor, 0, _cursorX);
   }
 
   void eraseLine() {
-    currentLine.erase(terminal.cellAttr.value, 0, terminal.viewWidth, true);
+    currentLine.erase(terminal.cursor, 0, terminal.viewWidth);
   }
 
   void eraseCharacters(int count) {
     final start = _cursorX;
-    for (var i = start; i < start + count; i++) {
-      if (i >= currentLine.length) {
-        currentLine.add(Cell(attr: terminal.cellAttr.value));
-      } else {
-        currentLine.getCell(i).erase(terminal.cellAttr.value);
-      }
-    }
+    currentLine.erase(terminal.cursor, start, start + count);
   }
 
   ScrollRange getAreaScrollRange() {
@@ -246,7 +232,7 @@ class Buffer {
       if (i >= scrollRange.top + lines) {
         this.lines[i] = this.lines[i - lines];
       } else {
-        this.lines[i] = BufferLine();
+        this.lines[i] = _newEmptyLine();
       }
     }
   }
@@ -258,7 +244,7 @@ class Buffer {
       if (i + lines < scrollRange.bottom) {
         this.lines[i] = this.lines[i + lines];
       } else {
-        this.lines[i] = BufferLine();
+        this.lines[i] = _newEmptyLine();
       }
     }
   }
@@ -283,7 +269,7 @@ class Buffer {
     // the cursor is not in the scrollable region
     if (_cursorY >= terminal.viewHeight - 1) {
       // we are at the bottom so a new line is created.
-      lines.add(BufferLine());
+      lines.add(_newEmptyLine());
 
       // keep viewport from moving if user is scrolling.
       if (isUserScrolling) {
@@ -308,28 +294,6 @@ class Buffer {
     } else if (_cursorY > 0) {
       moveCursorY(-1);
     }
-  }
-
-  Cell? getCell(int col, int row) {
-    final rawRow = convertViewLineToRawLine(row);
-    return getRawCell(col, rawRow);
-  }
-
-  Cell? getRawCell(int col, int rawRow) {
-    if (col < 0 || rawRow < 0 || rawRow >= lines.length) {
-      return null;
-    }
-
-    final line = lines[rawRow];
-    if (col >= line.length) {
-      return null;
-    }
-
-    return line.getCell(col);
-  }
-
-  Cell? getCellUnderCursor() {
-    return getCell(cursorX, cursorY);
   }
 
   void cursorGoForward() {
@@ -390,24 +354,25 @@ class Buffer {
   }
 
   void saveCursor() {
-    _savedCellAttr = terminal.cellAttr.value;
+    _savedCellFlags = terminal.cursor.flags;
+    _savedCellFgColor = terminal.cursor.fg;
+    _savedCellBgColor = terminal.cursor.bg;
     _savedCursorX = _cursorX;
     _savedCursorY = _cursorY;
     charset.save();
   }
 
-  void adjustSavedCursor(int diffX, int diffY) {
-    if (_savedCursorX != null) {
-      _savedCursorX = _savedCursorX! + diffX;
-    }
-    if (_savedCursorY != null) {
-      _savedCursorY = _savedCursorY! + diffY;
-    }
-  }
-
   void restoreCursor() {
-    if (_savedCellAttr != null) {
-      terminal.cellAttr.use(_savedCellAttr!);
+    if (_savedCellFlags != null) {
+      terminal.cursor.flags = _savedCellFlags!;
+    }
+
+    if (_savedCellFgColor != null) {
+      terminal.cursor.fg = _savedCellFgColor!;
+    }
+
+    if (_savedCellBgColor != null) {
+      terminal.cursor.bg = _savedCellBgColor!;
     }
 
     if (_savedCursorX != null) {
@@ -444,8 +409,8 @@ class Buffer {
   }
 
   void deleteChars(int count) {
-    final start = _cursorX.clamp(0, currentLine.length);
-    final end = min(_cursorX + count, currentLine.length);
+    final start = _cursorX.clamp(0, terminal.viewWidth);
+    final end = min(_cursorX + count, terminal.viewWidth);
     currentLine.removeRange(start, end);
   }
 
@@ -459,13 +424,17 @@ class Buffer {
 
   void clear() {
     lines.clear();
-    lines.addAll(List.generate(terminal.viewHeight, (_) => BufferLine()));
+
+    lines.addAll(List.generate(
+      terminal.viewHeight,
+      (_) => _newEmptyLine(),
+    ));
   }
 
   void insertBlankCharacters(int count) {
     for (var i = 0; i < count; i++) {
-      final cell = Cell(attr: terminal.cellAttr.value);
-      currentLine.insert(_cursorX + i, cell);
+      currentLine.insert(_cursorX + i);
+      currentLine.cellSetFlags(_cursorX + i, terminal.cursor.flags);
     }
   }
 
@@ -484,7 +453,7 @@ class Buffer {
   void insertLine() {
     if (!isInScrollableRegion) {
       final index = convertViewLineToRawLine(_cursorX);
-      final newLine = BufferLine();
+      final newLine = _newEmptyLine();
       lines.insert(index, newLine);
 
       final maxLines = terminal.maxLines;
@@ -497,7 +466,7 @@ class Buffer {
       final movedLines = lines.getRange(_cursorY, bottom - 1);
       lines.setRange(_cursorY + 1, bottom, movedLines);
 
-      final newLine = BufferLine();
+      final newLine = _newEmptyLine();
       lines[_cursorY] = newLine;
     }
   }
@@ -524,33 +493,41 @@ class Buffer {
     lines.removeAt(index);
   }
 
-  void resize(
-      int width, int height, int oldWidth, int oldHeight, bool doReflow) {
-    if (this.lines.length > 0) {
-      if (oldHeight < height) {
-        for (int y = oldHeight; y < height; y++) {
-          if (_cursorY < terminal.viewHeight - 1) {
-            lines.add(BufferLine());
-          } else {
-            _cursorY++;
-          }
+  void resize(int newWidth, int newHeight) {
+    if (newWidth > terminal.viewWidth) {
+      for (var line in lines) {
+        line.ensure(newWidth);
+      }
+    }
+
+    if (newHeight > terminal.viewHeight) {
+      // Grow larger
+      for (var i = 0; i < newHeight - terminal.viewHeight; i++) {
+        if (_cursorY < terminal.viewHeight - 1) {
+          lines.add(_newEmptyLine());
+        } else {
+          _cursorY++;
         }
-      } else {
-        for (var i = 0; i < oldHeight - height; i++) {
-          if (_cursorY < terminal.viewHeight - 1) {
-            lines.removeLast();
-          } else {
-            _cursorY++;
-          }
+      }
+    } else {
+      // Shrink smaller
+      for (var i = 0; i < terminal.viewHeight - newHeight; i++) {
+        if (_cursorY < terminal.viewHeight - 1) {
+          lines.removeLast();
+        } else {
+          _cursorY++;
         }
       }
     }
 
-    // ScrollBottom = newRows - 1;
+    // Ensure cursor is within the screen.
+    _cursorX = _cursorX.clamp(0, newWidth - 1);
+    _cursorY = _cursorY.clamp(0, newHeight - 1);
+  }
 
-    if (doReflow) {
-      final rf = BufferReflow(this);
-      rf.doReflow(oldWidth, width);
-    }
+  BufferLine _newEmptyLine() {
+    final line = BufferLine();
+    line.ensure(terminal.viewWidth);
+    return line;
   }
 }

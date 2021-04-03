@@ -1,12 +1,14 @@
 import 'dart:collection';
+import 'dart:convert';
 
 import 'package:xterm/terminal/modes.dart';
 import 'package:xterm/terminal/sgr.dart';
 import 'package:xterm/terminal/terminal.dart';
+import 'package:xterm/utli/lookup_table.dart';
 
 typedef CsiSequenceHandler = void Function(CSI, Terminal);
 
-final _csiHandlers = <int, CsiSequenceHandler>{
+final _csiHandlers = FastLookupTable({
   'c'.codeUnitAt(0): csiSendDeviceAttributesHandler,
   'd'.codeUnitAt(0): csiLinePositionAbsolute,
   'f'.codeUnitAt(0): csiCursorPositionHandler,
@@ -34,18 +36,19 @@ final _csiHandlers = <int, CsiSequenceHandler>{
   'T'.codeUnitAt(0): csiScrollDownHandler,
   'X'.codeUnitAt(0): csiEraseCharactersHandler,
   '@'.codeUnitAt(0): csiInsertBlankCharactersHandler,
-};
+});
 
 class CSI {
   CSI({
     required this.params,
     required this.finalByte,
-    required this.intermediates,
+    // required this.intermediates,
   });
 
-  final List<String> params;
-  final int finalByte;
-  final List<int> intermediates;
+  int? prefix;
+  List<int> params;
+  int finalByte;
+  // final List<int> intermediates;
 
   @override
   String toString() {
@@ -53,22 +56,79 @@ class CSI {
   }
 }
 
+/// Keep a singleton of [CSI] to reduce object allocation. This should only be
+/// modified by [_parseCsi].
+final _csi = CSI(
+  finalByte: 0,
+  params: [],
+);
+
+final _semicolon = ';'.codeUnitAt(0);
+
+/// Parse a CSI from the head of the queue. Return null if the CSI isn't
+/// complete.
 CSI? _parseCsi(Queue<int> queue) {
-  final paramBuffer = StringBuffer();
-  final intermediates = <int>[];
+  _csi.params.clear();
 
-  while (queue.isNotEmpty) {
-    // TODO: handle special case when queue is empty as this time.
+  // Keep track of how many characters should be taken from the queue.
+  var readOffset = 0;
 
-    final char = queue.removeFirst();
+  if (queue.isEmpty) {
+    return null;
+  }
 
-    if (char >= 0x30 && char <= 0x3F) {
-      paramBuffer.writeCharCode(char);
+  // ascii  char
+  // 48     '0'
+  // 49     '1'
+  // 50     '2'
+  // 51     '3'
+  // 52     '4'
+  // 53     '5'
+  // 54     '6'
+  // 55     '7'
+  // 56     '8'
+  // 57     '9'
+  // 58     ':'
+  // 59     ';'
+  // 60     '<'
+  // 61     '='
+  // 62     '>'
+  // 63     '?'
+
+  // test whether the csi is a `CSI ? Ps ...` or `CSI Ps ...`
+  final firstChar = queue.first;
+  if (firstChar >= 58 && firstChar <= 63) {
+    _csi.prefix = firstChar;
+    readOffset++;
+  } else {
+    _csi.prefix = null;
+  }
+
+  var param = 0;
+  while (true) {
+    // The sequence isn't completed, just ignore it.
+    if (queue.length <= readOffset) {
+      return null;
+    }
+
+    // final char = queue.removeFirst();
+    final char = queue.elementAt(readOffset++);
+
+    if (char == _semicolon) {
+      _csi.params.add(param);
+      param = 0;
+      continue;
+    }
+
+    // '0' <= char <= '9'
+    if (char >= 48 && char <= 57) {
+      param *= 10;
+      param += char - 48;
       continue;
     }
 
     if (char > 0 && char <= 0x2F) {
-      intermediates.add(char);
+      // intermediates.add(char);
       continue;
     }
 
@@ -76,33 +136,39 @@ CSI? _parseCsi(Queue<int> queue) {
     const csiMax = 0x7e;
 
     if (char >= csiMin && char <= csiMax) {
-      final params = paramBuffer.toString().split(';');
-      return CSI(
-        params: params,
-        finalByte: char,
-        intermediates: intermediates,
-      );
+      // The sequence is complete. So we consume it from the queue.
+      for (var i = 0; i < readOffset; i++) {
+        queue.removeFirst();
+      }
+
+      // final params = paramBuffer.toString().split(';');
+      _csi.params.add(param);
+      _csi.finalByte = char;
+      return _csi;
     }
   }
 }
 
-void csiHandler(Queue<int> queue, Terminal terminal) {
+/// CSI - Control Sequence Introducer: sequence starting with ESC [ (7bit) or
+/// CSI (\x9B, 8bit)
+bool csiHandler(Queue<int> queue, Terminal terminal) {
   final csi = _parseCsi(queue);
 
   if (csi == null) {
-    return;
+    return false;
   }
 
-  terminal.debug.onCsi(csi);
+  // terminal.debug.onCsi(csi);
 
   final handler = _csiHandlers[csi.finalByte];
 
   if (handler != null) {
     handler(csi, terminal);
-    return;
+  } else {
+    terminal.debug.onError('unknown: $csi');
   }
 
-  terminal.debug.onError('unknown: $csi');
+  return true;
 }
 
 /// DECSED - Selective Erase In Display
@@ -117,22 +183,21 @@ void csiHandler(Queue<int> queue, Terminal terminal) {
 /// P s = 2 → Selective Erase All
 /// ```
 void csiEraseInDisplayHandler(CSI csi, Terminal terminal) {
-  var ps = '0';
+  var ps = 0;
 
   if (csi.params.isNotEmpty) {
     ps = csi.params.first;
   }
 
   switch (ps) {
-    case '':
-    case '0':
+    case 0:
       terminal.buffer.eraseDisplayFromCursor();
       break;
-    case '1':
+    case 1:
       terminal.buffer.eraseDisplayToCursor();
       break;
-    case '2':
-    case '3':
+    case 2:
+    case 3:
       terminal.buffer.eraseDisplay();
       break;
     default:
@@ -141,21 +206,20 @@ void csiEraseInDisplayHandler(CSI csi, Terminal terminal) {
 }
 
 void csiEraseInLineHandler(CSI csi, Terminal terminal) {
-  var ps = '0';
+  var ps = 0;
 
   if (csi.params.isNotEmpty) {
     ps = csi.params.first;
   }
 
   switch (ps) {
-    case '':
-    case '0':
+    case 0:
       terminal.buffer.eraseLineFromCursor();
       break;
-    case '1':
+    case 1:
       terminal.buffer.eraseLineToCursor();
       break;
-    case '2':
+    case 2:
       terminal.buffer.eraseLine();
       break;
     default:
@@ -169,8 +233,8 @@ void csiCursorPositionHandler(CSI csi, Terminal terminal) {
   var y = 1;
 
   if (csi.params.length == 2) {
-    y = int.tryParse(csi.params[0]) ?? x;
-    x = int.tryParse(csi.params[1]) ?? y;
+    y = csi.params[0];
+    x = csi.params[1];
   }
 
   terminal.buffer.setPosition(x - 1, y - 1);
@@ -180,7 +244,7 @@ void csiLinePositionAbsolute(CSI csi, Terminal terminal) {
   var row = 1;
 
   if (csi.params.isNotEmpty) {
-    row = int.tryParse(csi.params.first) ?? row;
+    row = csi.params.first;
   }
 
   terminal.buffer.setCursorY(row - 1);
@@ -190,7 +254,7 @@ void csiCursorHorizontalAbsoluteHandler(CSI csi, Terminal terminal) {
   var x = 1;
 
   if (csi.params.isNotEmpty) {
-    x = int.tryParse(csi.params.first) ?? x;
+    x = csi.params.first;
   }
 
   terminal.buffer.setCursorX(x - 1);
@@ -200,7 +264,7 @@ void csiCursorForwardHandler(CSI csi, Terminal terminal) {
   var offset = 1;
 
   if (csi.params.isNotEmpty) {
-    offset = int.tryParse(csi.params.first) ?? offset;
+    offset = csi.params.first;
   }
 
   terminal.buffer.movePosition(offset, 0);
@@ -210,7 +274,7 @@ void csiCursorBackwardHandler(CSI csi, Terminal terminal) {
   var offset = 1;
 
   if (csi.params.isNotEmpty) {
-    offset = int.tryParse(csi.params.first) ?? offset;
+    offset = csi.params.first;
   }
 
   terminal.buffer.movePosition(-offset, 0);
@@ -220,7 +284,7 @@ void csiEraseCharactersHandler(CSI csi, Terminal terminal) {
   var count = 1;
 
   if (csi.params.isNotEmpty) {
-    count = int.tryParse(csi.params.first) ?? count;
+    count = csi.params.first;
   }
 
   terminal.buffer.eraseCharacters(count);
@@ -235,10 +299,10 @@ void csiDeviceStatusReportHandler(CSI csi, Terminal terminal) {
   if (csi.params.isEmpty) return;
 
   switch (csi.params[0]) {
-    case "5":
+    case 5:
       terminal.onInput("\x1b[0n");
       break;
-    case "6": // report cursor position
+    case 6: // report cursor position
       terminal.onInput("\x1b[${terminal.cursorX + 1};${terminal.cursorY + 1}R");
       break;
     default:
@@ -251,7 +315,7 @@ void csiDeviceStatusReportHandler(CSI csi, Terminal terminal) {
 void csiSendDeviceAttributesHandler(CSI csi, Terminal terminal) {
   var response = '?1;2';
 
-  if (csi.params.isNotEmpty && csi.params.first.startsWith('>')) {
+  if (csi.prefix == 62 /* '>' */) {
     response = '>0;0;0';
   }
 
@@ -262,7 +326,7 @@ void csiCursorUpHandler(CSI csi, Terminal terminal) {
   var distance = 1;
 
   if (csi.params.isNotEmpty) {
-    distance = int.tryParse(csi.params.first) ?? distance;
+    distance = csi.params.first;
   }
 
   terminal.buffer.movePosition(0, -distance);
@@ -272,7 +336,7 @@ void csiCursorDownHandler(CSI csi, Terminal terminal) {
   var distance = 1;
 
   if (csi.params.isNotEmpty) {
-    distance = int.tryParse(csi.params.first) ?? distance;
+    distance = csi.params.first;
   }
 
   terminal.buffer.movePosition(0, distance);
@@ -298,10 +362,10 @@ void csiSetMarginsHandler(CSI csi, Terminal terminal) {
   }
 
   if (csi.params.isNotEmpty) {
-    top = int.tryParse(csi.params[0]) ?? top;
+    top = csi.params[0];
 
     if (csi.params.length > 1) {
-      bottom = int.tryParse(csi.params[1]) ?? bottom;
+      bottom = csi.params[1];
     }
   }
 
@@ -313,7 +377,7 @@ void csiDeleteHandler(CSI csi, Terminal terminal) {
   var count = 1;
 
   if (csi.params.isNotEmpty) {
-    count = int.tryParse(csi.params.first) ?? count;
+    count = csi.params.first;
   }
 
   if (count < 1) {
@@ -335,7 +399,7 @@ void csiCursorNextLineHandler(CSI csi, Terminal terminal) {
   var count = 1;
 
   if (csi.params.isNotEmpty) {
-    count = int.tryParse(csi.params.first) ?? count;
+    count = csi.params.first;
   }
 
   if (count < 1) {
@@ -350,7 +414,7 @@ void csiCursorPrecedingLineHandler(CSI csi, Terminal terminal) {
   var count = 1;
 
   if (csi.params.isNotEmpty) {
-    count = int.tryParse(csi.params.first) ?? count;
+    count = csi.params.first;
   }
 
   if (count < 1) {
@@ -365,7 +429,7 @@ void csiInsertLinesHandler(CSI csi, Terminal terminal) {
   var count = 1;
 
   if (csi.params.isNotEmpty) {
-    count = int.tryParse(csi.params.first) ?? count;
+    count = csi.params.first;
   }
 
   if (count < 1) {
@@ -379,7 +443,7 @@ void csiDeleteLinesHandler(CSI csi, Terminal terminal) {
   var count = 1;
 
   if (csi.params.isNotEmpty) {
-    count = int.tryParse(csi.params.first) ?? count;
+    count = csi.params.first;
   }
 
   if (count < 1) {
@@ -393,7 +457,7 @@ void csiScrollUpHandler(CSI csi, Terminal terminal) {
   var count = 1;
 
   if (csi.params.isNotEmpty) {
-    count = int.tryParse(csi.params.first) ?? count;
+    count = csi.params.first;
   }
 
   if (count < 1) {
@@ -407,7 +471,7 @@ void csiScrollDownHandler(CSI csi, Terminal terminal) {
   var count = 1;
 
   if (csi.params.isNotEmpty) {
-    count = int.tryParse(csi.params.first) ?? count;
+    count = csi.params.first;
   }
 
   if (count < 1) {
@@ -421,7 +485,7 @@ void csiInsertBlankCharactersHandler(CSI csi, Terminal terminal) {
   var count = 1;
 
   if (csi.params.isNotEmpty) {
-    count = int.tryParse(csi.params.first) ?? count;
+    count = csi.params.first;
   }
 
   if (count < 1) {

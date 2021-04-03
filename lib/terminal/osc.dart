@@ -8,12 +8,24 @@ import 'package:xterm/terminal/terminal.dart';
 //   return terminator.contains(codePoint);
 // }
 
-List<String> _parseOsc(Queue<int> queue, Set<int> terminators) {
+List<String>? _parseOsc(Queue<int> queue, Set<int> terminators) {
+  // TODO: add tests for cases such as incomplete sequence.
+
   final params = <String>[];
   final param = StringBuffer();
 
-  while (queue.isNotEmpty) {
-    final char = queue.removeFirst();
+  // Keep track of how many characters should be taken from the queue.
+  var readOffset = 0;
+
+  while (true) {
+    // The sequence isn't completed, just ignore it.
+    if (queue.length <= readOffset) {
+      return null;
+    }
+
+    final char = queue.elementAt(readOffset++);
+
+    // final char = queue.removeFirst();
 
     if (terminators.contains(char)) {
       params.add(param.toString());
@@ -30,20 +42,32 @@ List<String> _parseOsc(Queue<int> queue, Set<int> terminators) {
     param.writeCharCode(char);
   }
 
+  // The sequence is complete. So we consume it from the queue.
+  for (var i = 0; i < readOffset; i++) {
+    queue.removeFirst();
+  }
+
   return params;
 }
 
-void oscHandler(Queue<int> queue, Terminal terminal) {
+/// OSC - Operating System Command: sequence starting with ESC ] (7bit) or OSC
+/// (\x9D, 8bit)
+bool oscHandler(Queue<int> queue, Terminal terminal) {
   final params = _parseOsc(queue, terminal.platform.oscTerminators);
+
+  if (params == null) {
+    return false;
+  }
+
   terminal.debug.onOsc(params);
 
   if (params.isEmpty) {
     terminal.debug.onError('osc with no params');
-    return;
+    return true;
   }
 
   if (params.length < 2) {
-    return;
+    return true;
   }
 
   final ps = params[0];
@@ -60,4 +84,6 @@ void oscHandler(Queue<int> queue, Terminal terminal) {
     default:
       terminal.debug.onError('unknown osc ps: $ps');
   }
+
+  return true;
 }

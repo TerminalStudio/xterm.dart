@@ -1,94 +1,187 @@
-import 'package:xterm/buffer/cell.dart';
-import 'package:xterm/buffer/cell_attr.dart';
+import 'dart:typed_data';
+
+import 'package:xterm/terminal/cursor.dart';
+
+/// Line layout:
+///   |  cell  |  cell  |  cell  |  cell  | ...
+///   (16 bytes per cell)
+///
+/// Cell layout:
+///   | code point |  fg color  |  bg color  | attributes |
+///       4bytes       4bytes       4bytes       4bytes
+///
+/// Attributes layout:
+///   |  width  |  flags  | reserved | reserved |
+///      1byte     1byte     1byte      1byte
+
+const _cellSize = 16;
+
+const _cellContent = 0;
+const _cellFgColor = 4;
+const _cellBgColor = 8;
+
+// const _cellAttributes = 12;
+const _cellWidth = 12;
+const _cellFlags = 13;
 
 class BufferLine {
-  final _cells = <Cell>[];
+  BufferLine() {
+    const initLength = 64;
+    _cells = ByteData(initLength * _cellSize);
+  }
+
+  late ByteData _cells;
+
+  bool get isWrapped => _isWrapped;
   bool _isWrapped = false;
 
-  BufferLine({isWrapped = false}) {
-    _isWrapped = isWrapped;
+  void ensure(int length) {
+    final expectedLengthInBytes = length * _cellSize;
+
+    if (expectedLengthInBytes < _cells.lengthInBytes) {
+      return;
+    }
+
+    var newLengthInBytes = _cells.lengthInBytes;
+    while (newLengthInBytes < expectedLengthInBytes) {
+      newLengthInBytes *= 2;
+    }
+
+    final newCells = ByteData(newLengthInBytes);
+    newCells.buffer.asInt64List().setAll(0, _cells.buffer.asInt64List());
+    _cells = newCells;
   }
 
-  bool get isWrapped {
-    return _isWrapped;
+  void insert(int index) {
+    insertN(index, 1);
   }
 
-  int get length {
-    return _cells.length;
-  }
+  void insertN(int index, int count) {
+    //                       start
+    // +--------------------------|-----------------------------------+
+    // |                          |                                   |
+    // +--------------------------\--\--------------------------------+
+    //                             \  \
+    //                              \  \
+    //                               v  v
+    // +--------------------------|--|--------------------------------+
+    // |                          |  |                                |
+    // +--------------------------|--|--------------------------------+
+    //                       start   start+offset
 
-  void add(Cell cell) {
-    _cells.add(cell);
-  }
+    final start = (index * _cellSize).clamp(0, _cells.lengthInBytes);
+    final offset = (count * _cellSize).clamp(0, _cells.lengthInBytes - start);
 
-  void insert(int index, Cell cell) {
-    _cells.insert(index, cell);
+    // move data forward
+    final cells = _cells.buffer.asInt8List();
+    for (var i = _cells.lengthInBytes - offset - 1; i >= start; i++) {
+      cells[i + offset] = cells[i];
+    }
+
+    // set inserted cells to 0
+    for (var i = start; i < start + offset; i++) {
+      cells[i] = 0x00;
+    }
   }
 
   void clear() {
-    _cells.clear();
+    _cells.buffer.asInt64List().clear();
   }
 
-  int getTrimmedLength() {
-    int width = 0;
-    for (int i = 0; i < _cells.length; i++)
-      if (_cells[i].codePoint != null && _cells[i].codePoint != 0) {
-        width += _cells[i].width;
-      } else {
-        return width;
-      }
-    return width;
-  }
-
-  void erase(CellAttr attr, int start, int end, bool clearWrap) {
+  void erase(Cursor cursor, int start, int end) {
+    ensure(end);
     for (var i = start; i < end; i++) {
-      if (i >= length) {
-        add(Cell(attr: attr));
-      } else {
-        getCell(i).erase(attr);
-      }
-    }
-    if (_isWrapped && clearWrap) {
-      _isWrapped = false;
+      cellErase(i, cursor);
     }
   }
 
-  Cell getCell(int index) {
-    return _cells[index];
+  void cellInitialize(
+    int index, {
+    required int content,
+    required int width,
+    required Cursor cursor,
+  }) {
+    final cell = index * _cellSize;
+    _cells.setInt32(cell + _cellContent, content);
+    _cells.setInt32(cell + _cellFgColor, cursor.fg);
+    _cells.setInt32(cell + _cellBgColor, cursor.bg);
+    _cells.setInt8(cell + _cellWidth, width);
+    _cells.setInt8(cell + _cellFlags, cursor.flags);
   }
 
-  void removeRange(int start, [int? end]) {
-    start = start.clamp(0, _cells.length);
-    end ??= _cells.length;
-    end = end.clamp(start, _cells.length);
-    _cells.removeRange(start, end);
+  int cellGetContent(int index) {
+    return _cells.getInt32(index * _cellSize + _cellContent);
   }
 
-  void copyCellsFrom(BufferLine src, int srcCol, int dstCol, int len) {
-    final requiredCells = dstCol + len;
-    if (_cells.length < requiredCells) {
-      _cells.addAll(List<Cell>.generate(
-          requiredCells - _cells.length, (index) => Cell()));
-    }
-    //we have to make a copy first as src and dst might be the same line
-    List<Cell> sourceCells =
-        List<Cell>.generate(len, (index) => src._cells[srcCol + index].clone());
-    for (var i = 0; i < len; i++) {
-      _cells[dstCol + i] = sourceCells[i];
-    }
+  void cellSetContent(int index, int content) {
+    return _cells.setInt32(index * _cellSize + _cellContent, content);
   }
 
-  int getWidthAt(int col) {
-    if (col >= _cells.length) {
-      return 1;
-    }
-    return _cells[col].width;
+  int cellGetFgColor(int index) {
+    return _cells.getInt32(index * _cellSize + _cellFgColor);
   }
 
-  bool hasContentAt(int col) {
-    if (col >= _cells.length) {
-      return false;
+  void cellSetFgColor(int index, int color) {
+    _cells.setInt32(index * _cellSize + _cellFgColor, color);
+  }
+
+  int cellGetBgColor(int index) {
+    return _cells.getInt32(index * _cellSize + _cellBgColor);
+  }
+
+  void cellSetBgColor(int index, int color) {
+    _cells.setInt32(index * _cellSize + _cellBgColor, color);
+  }
+
+  int cellGetFlags(int index) {
+    return _cells.getInt8(index * _cellSize + _cellFlags);
+  }
+
+  void cellSetFlags(int index, int flags) {
+    _cells.setInt8(index * _cellSize + _cellFlags, flags);
+  }
+
+  int cellGetWidth(int index) {
+    return _cells.getInt8(index * _cellSize + _cellWidth);
+  }
+
+  void cellSetWidth(int index, int width) {
+    _cells.setInt8(index * _cellSize + _cellWidth, width);
+  }
+
+  void cellClearFlags(int index) {
+    cellSetFlags(index, 0);
+  }
+
+  bool cellHasFlag(int index, int flag) {
+    return cellGetFlags(index) & flag != 0;
+  }
+
+  void cellSetFlag(int index, int flag) {
+    cellSetFlags(index, cellGetFlags(index) | flag);
+  }
+
+  void cellErase(int index, Cursor cursor) {
+    cellSetContent(index, 0x00);
+    cellSetFgColor(index, cursor.fg);
+    cellSetBgColor(index, cursor.bg);
+    cellSetFlags(index, cursor.flags);
+  }
+
+  // int cellGetHash(int index) {
+  //   final cell = index * _cellSize;
+  //   final a = _cells.getInt64(cell);
+  //   final b = _cells.getInt64(cell + 8);
+  //   return a ^ b;
+  // }
+
+  void removeRange(int start, int end) {
+    // start = start.clamp(0, _cells.length);
+    // end ??= _cells.length;
+    // end = end.clamp(start, _cells.length);
+    // _cells.removeRange(start, end);
+    for (var index = start; index < end; index++) {
+      cellSetContent(index, 0x00);
     }
-    return _cells[col].codePoint != 0;
   }
 }
