@@ -60,7 +60,7 @@ class BufferReflow {
     for (int y = _buffer.lines.length - 1; y >= 0; y--) {
       // Check whether this line is a problem or not, if not skip it
       BufferLine nextLine = _buffer.lines[y];
-      int lineLength = nextLine.getTrimmedLength();
+      int lineLength = nextLine.getTrimmedLength(colsBefore);
       if (!nextLine.isWrapped && lineLength <= colsAfter) {
         continue;
       }
@@ -81,7 +81,7 @@ class BufferReflow {
         continue;
       }
 
-      int lastLineLength = wrappedLines.last.getTrimmedLength();
+      int lastLineLength = wrappedLines.last.getTrimmedLength(colsBefore);
       List<int> destLineLengths =
           _getNewLineLengths(wrappedLines, colsBefore, colsAfter);
       int linesToAdd = destLineLengths.length - wrappedLines.length;
@@ -135,7 +135,7 @@ class BufferReflow {
       // Null out the end of the line ends if a wide character wrapped to the following line
       for (int i = 0; i < wrappedLines.length; i++) {
         if (destLineLengths[i] < colsAfter) {
-          wrappedLines[i].removeRange(destLineLengths[i]);
+          wrappedLines[i].removeRange(destLineLengths[i], colsBefore);
         }
       }
 
@@ -236,7 +236,7 @@ class BufferReflow {
         srcLine++;
       }
 
-      bool endsWithWide = wrappedLines[srcLine].getWidthAt(srcCol - 1) == 2;
+      bool endsWithWide = wrappedLines[srcLine].cellGetWidth(srcCol - 1) == 2;
       if (endsWithWide) {
         srcCol--;
       }
@@ -369,27 +369,26 @@ class BufferReflow {
 
         // Make sure the last cell isn't wide, if it is copy it to the current dest
         if (destCol == 0 && destLineIndex != 0) {
-          if (wrappedLines[destLineIndex - 1].getWidthAt(colsAfter - 1) == 2) {
+          if (wrappedLines[destLineIndex - 1].cellGetWidth(colsAfter - 1) ==
+              2) {
             wrappedLines[destLineIndex].copyCellsFrom(
                 wrappedLines[destLineIndex - 1], colsAfter - 1, destCol++, 1);
             // Null out the end of the last row
             wrappedLines[destLineIndex - 1].erase(
-                _buffer.terminal.cellAttr.value,
-                colsAfter - 1,
-                colsAfter,
-                false);
+                _buffer.terminal.cursor, colsAfter - 1, colsAfter, false);
           }
         }
       }
 
       // Clear out remaining cells or fragments could remain;
       wrappedLines[destLineIndex]
-          .erase(_buffer.terminal.cellAttr.value, destCol, colsAfter, false);
+          .erase(_buffer.terminal.cursor, destCol, colsAfter, false);
 
       // Work backwards and remove any rows at the end that only contain null cells
       int countToRemove = 0;
       for (int ix = wrappedLines.length - 1; ix > 0; ix--) {
-        if (ix > destLineIndex || wrappedLines[ix].getTrimmedLength() == 0) {
+        if (ix > destLineIndex ||
+            wrappedLines[ix].getTrimmedLength(colsBefore) == 0) {
           countToRemove++;
         } else {
           break;
@@ -417,15 +416,15 @@ class BufferReflow {
       BufferLine line, BufferLine? nextLine, int cols) {
     // If this is the last row in the wrapped line, get the actual trimmed length
     if (nextLine == null) {
-      return line.getTrimmedLength();
+      return line.getTrimmedLength(cols);
     }
 
     // Detect whether the following line starts with a wide character and the end of the current line
     // is null, if so then we can be pretty sure the null character should be excluded from the line
     // length]
     bool endsInNull =
-        !(line.hasContentAt(cols - 1)) && line.getWidthAt(cols - 1) == 1;
-    bool followingLineStartsWithWide = nextLine.getWidthAt(0) == 2;
+        !(line.cellHasContent(cols - 1)) && line.cellGetWidth(cols - 1) == 1;
+    bool followingLineStartsWithWide = nextLine.cellGetWidth(0) == 2;
 
     if (endsInNull && followingLineStartsWithWide) {
       return cols - 1;

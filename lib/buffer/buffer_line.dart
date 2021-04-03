@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:xterm/terminal/cursor.dart';
@@ -25,15 +26,16 @@ const _cellWidth = 12;
 const _cellFlags = 13;
 
 class BufferLine {
-  BufferLine() {
-    const initLength = 64;
-    _cells = ByteData(initLength * _cellSize);
+  BufferLine({bool isWrapped = false}) : _isWrapped = isWrapped {
+    _cells = ByteData(_maxCols * _cellSize);
   }
 
   late ByteData _cells;
 
   bool get isWrapped => _isWrapped;
   bool _isWrapped = false;
+
+  int _maxCols = 64;
 
   void ensure(int length) {
     final expectedLengthInBytes = length * _cellSize;
@@ -50,6 +52,7 @@ class BufferLine {
     final newCells = ByteData(newLengthInBytes);
     newCells.buffer.asInt64List().setAll(0, _cells.buffer.asInt64List());
     _cells = newCells;
+    _maxCols = (newLengthInBytes / _cellSize).floor();
   }
 
   void insert(int index) {
@@ -88,10 +91,13 @@ class BufferLine {
     _cells.buffer.asInt64List().clear();
   }
 
-  void erase(Cursor cursor, int start, int end) {
+  void erase(Cursor cursor, int start, int end, [bool resetIsWrapped = false]) {
     ensure(end);
     for (var i = start; i < end; i++) {
       cellErase(i, cursor);
+    }
+    if (resetIsWrapped) {
+      _isWrapped = false;
     }
   }
 
@@ -109,7 +115,14 @@ class BufferLine {
     _cells.setInt8(cell + _cellFlags, cursor.flags);
   }
 
+  bool cellHasContent(int index) {
+    return cellGetContent(index) != 0;
+  }
+
   int cellGetContent(int index) {
+    if (index >= _maxCols) {
+      return 0;
+    }
     return _cells.getInt32(index * _cellSize + _cellContent);
   }
 
@@ -118,6 +131,9 @@ class BufferLine {
   }
 
   int cellGetFgColor(int index) {
+    if (index >= _maxCols) {
+      return 0;
+    }
     return _cells.getInt32(index * _cellSize + _cellFgColor);
   }
 
@@ -126,6 +142,9 @@ class BufferLine {
   }
 
   int cellGetBgColor(int index) {
+    if (index >= _maxCols) {
+      return 0;
+    }
     return _cells.getInt32(index * _cellSize + _cellBgColor);
   }
 
@@ -134,6 +153,9 @@ class BufferLine {
   }
 
   int cellGetFlags(int index) {
+    if (index >= _maxCols) {
+      return 0;
+    }
     return _cells.getInt8(index * _cellSize + _cellFlags);
   }
 
@@ -142,6 +164,9 @@ class BufferLine {
   }
 
   int cellGetWidth(int index) {
+    if (index >= _maxCols) {
+      return 1;
+    }
     return _cells.getInt8(index * _cellSize + _cellWidth);
   }
 
@@ -154,6 +179,9 @@ class BufferLine {
   }
 
   bool cellHasFlag(int index, int flag) {
+    if (index >= _maxCols) {
+      return false;
+    }
     return cellGetFlags(index) & flag != 0;
   }
 
@@ -168,6 +196,29 @@ class BufferLine {
     cellSetFlags(index, cursor.flags);
   }
 
+  int getTrimmedLength(int cols) {
+    for (int i = cols; i >= 0; i--) {
+      if (cellGetContent(i) != 0) {
+        int length = 0;
+        for (int j = 0; j <= i; j++) {
+          length += cellGetWidth(j);
+        }
+        return length;
+      }
+    }
+    return 0;
+  }
+
+  copyCellsFrom(BufferLine src, int srcCol, int dstCol, int len) {
+    final dstOffset = dstCol * _cellSize;
+    final srcOffset = srcCol * _cellSize;
+    final byteLen = len * _cellSize;
+
+    final srcCopyView = src._cells.buffer.asUint8List(srcOffset, byteLen);
+
+    _cells.buffer.asUint8List().setAll(dstOffset, srcCopyView);
+  }
+
   // int cellGetHash(int index) {
   //   final cell = index * _cellSize;
   //   final a = _cells.getInt64(cell);
@@ -176,6 +227,7 @@ class BufferLine {
   // }
 
   void removeRange(int start, int end) {
+    end = min(end, _maxCols);
     // start = start.clamp(0, _cells.length);
     // end ??= _cells.length;
     // end = end.clamp(start, _cells.length);

@@ -1,6 +1,7 @@
 import 'dart:math' show max, min;
 
 import 'package:xterm/buffer/buffer_line.dart';
+import 'package:xterm/buffer/buffer_reflow.dart';
 import 'package:xterm/terminal/charset.dart';
 import 'package:xterm/terminal/terminal.dart';
 import 'package:xterm/utli/scroll_range.dart';
@@ -493,17 +494,17 @@ class Buffer {
     lines.removeAt(index);
   }
 
-  void resize(int newWidth, int newHeight) {
-    if (newWidth > terminal.viewWidth) {
+  void resize(int oldWidth, int oldHeight, int newWidth, int newHeight) {
+    if (newWidth > oldWidth) {
       for (var line in lines) {
         line.ensure(newWidth);
       }
     }
 
-    if (newHeight > terminal.viewHeight) {
+    if (newHeight > oldHeight) {
       // Grow larger
-      for (var i = 0; i < newHeight - terminal.viewHeight; i++) {
-        if (_cursorY < terminal.viewHeight - 1) {
+      for (var i = 0; i < newHeight - oldHeight; i++) {
+        if (_cursorY < oldHeight - 1) {
           lines.add(_newEmptyLine());
         } else {
           _cursorY++;
@@ -511,8 +512,8 @@ class Buffer {
       }
     } else {
       // Shrink smaller
-      for (var i = 0; i < terminal.viewHeight - newHeight; i++) {
-        if (_cursorY < terminal.viewHeight - 1) {
+      for (var i = 0; i < oldHeight - newHeight; i++) {
+        if (_cursorY < oldHeight - 1) {
           lines.removeLast();
         } else {
           _cursorY++;
@@ -523,11 +524,23 @@ class Buffer {
     // Ensure cursor is within the screen.
     _cursorX = _cursorX.clamp(0, newWidth - 1);
     _cursorY = _cursorY.clamp(0, newHeight - 1);
+
+    final rf = BufferReflow(this);
+    rf.doReflow(oldWidth, newWidth);
   }
 
   BufferLine _newEmptyLine() {
     final line = BufferLine();
     line.ensure(terminal.viewWidth);
     return line;
+  }
+
+  adjustSavedCursor(int dx, int dy) {
+    if (_savedCursorX != null) {
+      _savedCursorX = _savedCursorX! + dx;
+    }
+    if (_savedCursorY != null) {
+      _savedCursorY = _savedCursorY! + dy;
+    }
   }
 }
