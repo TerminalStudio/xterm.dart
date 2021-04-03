@@ -26,38 +26,43 @@ void csiSetModes(CSI csi, Terminal terminal) {
 
   final enabled = _isEnabled(csi.finalByte);
 
-  if (csi.params.length == 1) {
-    return csiSetMode(csi.params.first, enabled, terminal);
-  }
-
-  const decPrefix = '?';
-  final isDec = csi.params.first.startsWith(decPrefix);
+  const decPrefix = 63; // '?'
+  final isDec = csi.prefix == decPrefix;
 
   for (var mode in csi.params) {
-    if (isDec && !mode.startsWith(decPrefix)) {
-      mode = decPrefix + mode;
+    if (isDec) {
+      csiDecSetMode(mode, enabled, terminal);
+    } else {
+      csiSetMode(mode, enabled, terminal);
     }
-    csiSetMode(csi.params.first, enabled, terminal);
   }
 }
 
-void csiSetMode(String mode, bool enabled, Terminal terminal) {
+void csiSetMode(int mode, bool enabled, Terminal terminal) {
   switch (mode) {
-    case "4":
+    case 4:
       if (enabled) {
         terminal.setInsertMode();
       } else {
         terminal.setReplaceMode();
       }
       break;
-    case "20":
+    case 20:
       if (enabled) {
         terminal.setNewLineMode();
       } else {
         terminal.setLineFeedMode();
       }
       break;
-    case "?1":
+    default:
+      terminal.debug.onError('unsupported mode: $mode');
+      return;
+  }
+}
+
+void csiDecSetMode(int mode, bool enabled, Terminal terminal) {
+  switch (mode) {
+    case 1:
       terminal.setApplicationCursorKeys(enabled);
       break;
     // case "?3":
@@ -71,42 +76,42 @@ void csiSetMode(String mode, bool enabled, Terminal terminal) {
     // 	terminal.clear();
     // case "?4":
     // 	// DECSCLM
-    case "?5":
+    case 5:
       // DECSCNM
       terminal.setScreenMode(enabled);
       break;
-    case "?6":
+    case 6:
       // DECOM
       terminal.setOriginMode(enabled);
       break;
-    case "?7":
+    case 7:
       //DECAWM
       terminal.setAutoWrapMode(enabled);
       break;
-    case "?9":
+    case 9:
       if (enabled) {
         // terminal.setMouseMode(MouseMode.x10);
       } else {
         terminal.setMouseMode(MouseMode.none);
       }
       break;
-    case "?12":
-    case "?13":
+    case 12:
+    case 13:
       terminal.setBlinkingCursor(enabled);
       break;
-    case "?25":
+    case 25:
       terminal.setShowCursor(enabled);
       break;
-    case "?47":
-    case "?1047":
+    case 47:
+    case 1047:
       if (enabled) {
         terminal.useAltBuffer();
       } else {
         terminal.useMainBuffer();
       }
       break;
-    case "?1000":
-    case "?10061000":
+    case 1000:
+    case 10061000:
       // enable mouse tracking
       // 1000 refers to ext mode for extended mouse click area - otherwise only x <= 255-31
       if (enabled) {
@@ -115,7 +120,7 @@ void csiSetMode(String mode, bool enabled, Terminal terminal) {
         terminal.setMouseMode(MouseMode.none);
       }
       break;
-    case "?1002":
+    case 1002:
       // enable mouse tracking
       // 1000 refers to ext mode for extended mouse click area - otherwise only x <= 255-31
       if (enabled) {
@@ -124,35 +129,35 @@ void csiSetMode(String mode, bool enabled, Terminal terminal) {
         terminal.setMouseMode(MouseMode.none);
       }
       break;
-    case "?1003":
+    case 1003:
       if (enabled) {
         // terminal.setMouseMode(MouseMode.anyEvent);
       } else {
         terminal.setMouseMode(MouseMode.none);
       }
       break;
-    case "?1005":
+    case 1005:
       if (enabled) {
         // terminal.setMouseExtMode(MouseExt.utf);
       } else {
         // terminal.setMouseExtMode(MouseExt.none);
       }
       break;
-    case "?1006":
+    case 1006:
       if (enabled) {
         // terminal.setMouseExtMode(MouseExt.sgr);
       } else {
         // terminal.setMouseExtMode(MouseExt.none);
       }
       break;
-    case "?1048":
+    case 1048:
       if (enabled) {
         terminal.buffer.saveCursor();
       } else {
         terminal.buffer.restoreCursor();
       }
       break;
-    case "?1049":
+    case 1049:
       if (enabled) {
         terminal.useAltBuffer();
         terminal.buffer.clear();
@@ -160,7 +165,7 @@ void csiSetMode(String mode, bool enabled, Terminal terminal) {
         terminal.useMainBuffer();
       }
       break;
-    case "?2004":
+    case 2004:
       terminal.setBracketedPasteMode(enabled);
       break;
     default:

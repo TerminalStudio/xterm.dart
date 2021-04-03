@@ -20,9 +20,9 @@ bool ansiHandler(Queue<int> queue, Terminal terminal) {
 
   final handler = _ansiHandlers[charAfterEsc];
   if (handler != null) {
-    if (handler != csiHandler && handler != oscHandler) {
-      terminal.debug.onEsc(charAfterEsc);
-    }
+    // if (handler != csiHandler && handler != oscHandler) {
+    //   terminal.debug.onEsc(charAfterEsc);
+    // }
 
     final finished = handler(queue, terminal);
     if (!finished) {
