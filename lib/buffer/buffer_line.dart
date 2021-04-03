@@ -26,14 +26,13 @@ const _cellWidth = 12;
 const _cellFlags = 13;
 
 class BufferLine {
-  BufferLine({bool isWrapped = false}) : _isWrapped = isWrapped {
+  BufferLine({this.isWrapped = false}) {
     _cells = ByteData(_maxCols * _cellSize);
   }
 
   late ByteData _cells;
 
-  bool get isWrapped => _isWrapped;
-  bool _isWrapped = false;
+  bool isWrapped;
 
   int _maxCols = 64;
 
@@ -97,7 +96,7 @@ class BufferLine {
       cellErase(i, cursor);
     }
     if (resetIsWrapped) {
-      _isWrapped = false;
+      isWrapped = false;
     }
   }
 

@@ -93,6 +93,7 @@ class Terminal with Observable {
 
   bool _screenMode = false; // DECSCNM (black on white background)
   bool _autoWrapMode = true;
+  bool get autoWrapMode => _autoWrapMode;
 
   /// ### DECOM – Origin Mode (DEC Private)
   ///

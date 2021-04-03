@@ -85,6 +85,9 @@ class Buffer {
     if (_cursorX >= terminal.viewWidth) {
       newLine();
       setCursorX(0);
+      if (terminal.autoWrapMode) {
+        currentLine.isWrapped = true;
+      }
     }
 
     final line = currentLine;
