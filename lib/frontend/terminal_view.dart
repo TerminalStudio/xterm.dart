@@ -439,6 +439,47 @@ class TerminalPainter extends CustomPainter {
     }
   }
 
+  TextPainter _createAndStoreTextPainter(String char, Color color,
+      {bool bold = false,
+      bool italic = false,
+      bool underline = false,
+      int? cellHash = null}) {
+    TextPainter? result;
+    final style = (view.style.textStyleProvider != null)
+        ? view.style.textStyleProvider!(
+            color: color,
+            fontSize: view.style.fontSize,
+            fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+            fontStyle: italic ? FontStyle.italic : FontStyle.normal,
+            decoration:
+                underline ? TextDecoration.underline : TextDecoration.none,
+          )
+        : TextStyle(
+            color: color,
+            fontSize: view.style.fontSize,
+            fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+            fontStyle: italic ? FontStyle.italic : FontStyle.normal,
+            decoration:
+                underline ? TextDecoration.underline : TextDecoration.none,
+            fontFamily: 'monospace',
+            fontFamilyFallback: view.style.fontFamily,
+          );
+
+    final span = TextSpan(
+      text: char,
+      style: style,
+    );
+
+    if (cellHash != null) {
+      result = textLayoutCache.performAndCacheLayout(span, cellHash);
+    } else {
+      result = TextPainter(text: span, textDirection: TextDirection.ltr);
+      result.layout();
+    }
+
+    return result;
+  }
+
   void _paintCell(
     Canvas canvas,
     BufferLine line,
@@ -472,45 +513,11 @@ class TerminalPainter extends CustomPainter {
       color = color.withOpacity(0.5);
     }
 
-    final style = (view.style.textStyleProvider != null)
-        ? view.style.textStyleProvider!(
-            color: color,
-            fontSize: view.style.fontSize,
-            fontWeight: flags.hasFlag(CellFlags.bold)
-                ? FontWeight.bold
-                : FontWeight.normal,
-            fontStyle: flags.hasFlag(CellFlags.italic)
-                ? FontStyle.italic
-                : FontStyle.normal,
-            decoration: flags.hasFlag(CellFlags.underline)
-                ? TextDecoration.underline
-                : TextDecoration.none,
-          )
-        : TextStyle(
-            color: color,
-            fontSize: view.style.fontSize,
-            fontWeight: flags.hasFlag(CellFlags.bold)
-                ? FontWeight.bold
-                : FontWeight.normal,
-            fontStyle: flags.hasFlag(CellFlags.italic)
-                ? FontStyle.italic
-                : FontStyle.normal,
-            decoration: flags.hasFlag(CellFlags.underline)
-                ? TextDecoration.underline
-                : TextDecoration.none,
-            fontFamily: 'monospace',
-            fontFamilyFallback: view.style.fontFamily,
-          );
-
-    final span = TextSpan(
-      text: String.fromCharCode(codePoint),
-      // text: codePointCache.getOrConstruct(cell.codePoint),
-      style: style,
-    );
-
-    // final tp = textLayoutCache.getOrPerformLayout(span);
-    tp = textLayoutCache.performAndCacheLayout(span, cellHash);
-
+    tp = _createAndStoreTextPainter(String.fromCharCode(codePoint), color,
+        bold: flags.hasFlag(CellFlags.bold),
+        italic: flags.hasFlag(CellFlags.italic),
+        underline: flags.hasFlag(CellFlags.underline),
+        cellHash: cellHash);
     tp.paint(canvas, Offset(offsetX, offsetY));
   }
 
@@ -532,6 +539,11 @@ class TerminalPainter extends CustomPainter {
 
     canvas.drawRect(
         Rect.fromLTWH(offsetX, offsetY, width, charSize.cellHeight), paint);
+    if (terminal.composingString != '') {
+      final tp = _createAndStoreTextPainter(
+          terminal.composingString, Color(terminal.theme.background));
+      tp.paint(canvas, Offset(offsetX, offsetY));
+    }
   }
 
   @override

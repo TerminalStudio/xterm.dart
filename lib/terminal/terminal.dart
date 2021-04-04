@@ -198,6 +198,14 @@ class Terminal with Observable {
   int get cursorY => buffer.cursorY;
   int get scrollOffset => buffer.scrollOffsetFromBottom;
 
+  String _composingString = '';
+  String get composingString => _composingString;
+
+  void updateComposingString(bool isActive, String value) {
+    _composingString = value;
+    notifyListeners();
+  }
+
   /// Writes data to the terminal. Terminal sequences and special characters are
   /// interpreted.
   ///

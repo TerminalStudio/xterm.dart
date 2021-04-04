@@ -5,7 +5,7 @@ import 'package:xterm/input/keys.dart';
 import 'package:xterm/xterm.dart';
 
 class InputBehaviorMobile extends InputBehaviorDefault {
-  const InputBehaviorMobile();
+  InputBehaviorMobile();
 
   final acceptKeyStroke = false;
 
