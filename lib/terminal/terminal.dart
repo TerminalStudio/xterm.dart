@@ -201,7 +201,7 @@ class Terminal with Observable {
   String _composingString = '';
   String get composingString => _composingString;
 
-  void updateComposingString(bool isActive, String value) {
+  void updateComposingString(String value) {
     _composingString = value;
     notifyListeners();
   }

@@ -39,12 +39,12 @@ class InputBehaviorDefault extends InputBehavior {
     // about it
     if (value.composing.start != value.composing.end) {
       _composingString = (_composingString ?? '') + value.text;
-      terminal.updateComposingString(true, _composingString!);
+      terminal.updateComposingString(_composingString!);
       return null;
     }
     if (_composingString != null) {
       _composingString = null;
-      terminal.updateComposingString(false, '');
+      terminal.updateComposingString('');
     }
     terminal.onInput(value.text);
     if (value == TextEditingValue.empty || value.text == '') {
