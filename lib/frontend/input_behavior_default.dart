@@ -47,9 +47,7 @@ class InputBehaviorDefault extends InputBehavior {
       terminal.updateComposingString(false, '');
     }
     terminal.onInput(value.text);
-    if (value == TextEditingValue.empty ||
-        value.text == null ||
-        value.text == '') {
+    if (value == TextEditingValue.empty || value.text == '') {
       return null;
     } else {
       return TextEditingValue.empty;
