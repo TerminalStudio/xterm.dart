@@ -91,6 +91,7 @@ class KeytabParser {
     bool? appCursorKeys;
     bool? appKeyPad;
     bool? newLine;
+    bool? mac;
 
     while (reader.peek()!.type == KeytabTokenType.modeStatus) {
       bool modeStatus;
@@ -141,6 +142,9 @@ class KeytabParser {
         case 'NewLine':
           newLine = modeStatus;
           break;
+        case 'Mac':
+          mac = modeStatus;
+          break;
         default:
           throw ParseError();
       }
@@ -161,20 +165,20 @@ class KeytabParser {
     }
 
     final record = KeytabRecord(
-      qtKeyName: keyName.value,
-      key: key,
-      action: action,
-      alt: alt,
-      ctrl: ctrl,
-      shift: shift,
-      anyModifier: anyModifier,
-      ansi: ansi,
-      appScreen: appScreen,
-      keyPad: keyPad,
-      appCursorKeys: appCursorKeys,
-      appKeyPad: appKeyPad,
-      newLine: newLine,
-    );
+        qtKeyName: keyName.value,
+        key: key,
+        action: action,
+        alt: alt,
+        ctrl: ctrl,
+        shift: shift,
+        anyModifier: anyModifier,
+        ansi: ansi,
+        appScreen: appScreen,
+        keyPad: keyPad,
+        appCursorKeys: appCursorKeys,
+        appKeyPad: appKeyPad,
+        newLine: newLine,
+        mac: mac);
 
     _records.add(record);
   }
