@@ -38,7 +38,7 @@ class Terminal with Observable {
     this.onIconChange = _defaultIconHandler,
     this.platform = PlatformBehaviors.unix,
     this.theme = TerminalThemes.defaultTheme,
-    int? maxLines,
+    int maxLines = 10000,
   }) {
     _maxLines = maxLines;
 
