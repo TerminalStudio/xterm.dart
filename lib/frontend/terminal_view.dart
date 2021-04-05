@@ -612,7 +612,7 @@ class _CursorViewState extends State<CursorView> {
     }
     setState(() {
       _blinkVisible = true;
-      if (widget.terminal.blinkingCursor && focused) {
+      if (_isCursorVisible() /*&& widget.terminal.blinkingCursor*/ && focused) {
         _oscillator.start();
       } else {
         _oscillator.stop();
