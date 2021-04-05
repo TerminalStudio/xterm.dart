@@ -1,7 +1,8 @@
 import 'dart:math' show max, min;
 
 import 'package:xterm/buffer/buffer_line.dart';
-import 'package:xterm/buffer/buffer_reflow.dart';
+import 'package:xterm/buffer/reflow_strategy_narrower.dart';
+import 'package:xterm/buffer/reflow_strategy_wider.dart';
 import 'package:xterm/terminal/charset.dart';
 import 'package:xterm/terminal/terminal.dart';
 import 'package:xterm/utli/circular_list.dart';
@@ -486,10 +487,13 @@ class Buffer {
     if (newWidth > oldWidth) {
       lines.forEach((item, index) {
         item?.ensure(newWidth);
-      }, true);
+      });
     }
 
     if (newHeight > oldHeight) {
+      while (lines.length < newHeight) {
+        lines.push(_newEmptyLine());
+      }
       // Grow larger
       for (var i = 0; i < newHeight - oldHeight; i++) {
         if (_cursorY < oldHeight - 1) {
@@ -514,8 +518,10 @@ class Buffer {
     _cursorY = _cursorY.clamp(0, newHeight - 1);
 
     if (!terminal.isUsingAltBuffer()) {
-      final rf = BufferReflow(this);
-      rf.doReflow(oldWidth, newWidth);
+      final reflowStrategy = newWidth > oldWidth
+          ? ReflowStrategyWider(this)
+          : ReflowStrategyNarrower(this);
+      reflowStrategy.reflow(newWidth, newHeight, oldWidth, oldHeight);
     }
   }
 

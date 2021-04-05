@@ -47,9 +47,8 @@ class CircularList<T> {
     _length = value;
   }
 
-  void forEach(void Function(T? item, int index) callback,
-      [bool includeBuffer = false]) {
-    final len = includeBuffer ? _array.length : _length;
+  void forEach(void Function(T? item, int index) callback) {
+    final len = _length;
     for (int i = 0; i < len; i++) {
       callback(_array[_getCyclicIndex(i)], i);
     }
@@ -66,6 +65,12 @@ class CircularList<T> {
   void clear() {
     _startIndex = 0;
     _length = 0;
+  }
+
+  void pushAll(Iterable<T> items) {
+    items.forEach((element) {
+      push(element);
+    });
   }
 
   void push(T value) {

@@ -213,6 +213,8 @@ class BufferLine {
     final srcOffset = srcCol * _cellSize;
     final byteLen = len * _cellSize;
 
+    ensure(dstCol + len);
+
     final srcCopyView = src._cells.buffer.asUint8List(srcOffset, byteLen);
 
     _cells.buffer.asUint8List().setAll(dstOffset, srcCopyView);
