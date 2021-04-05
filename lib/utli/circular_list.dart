@@ -1,19 +1,11 @@
-import 'package:quiver/iterables.dart';
-
 class CircularList<T> {
   List<T?> _array;
   int _length = 0;
   int _startIndex = 0;
 
   Function(int num)? onTrimmed;
-  Function(T? item) _prepareItem;
 
-  CircularList(int maxLength, Function(T? item) prepareItem,
-      [T? Function(int index)? initialValueGenerator])
-      : _array = (initialValueGenerator == null)
-            ? List<T?>.filled(maxLength, null)
-            : List<T?>.generate(maxLength, initialValueGenerator),
-        _prepareItem = prepareItem;
+  CircularList(int maxLength) : _array = List<T?>.filled(maxLength, null);
 
   // Gets the cyclic index for the specified regular index. The cyclic index can then be used on the
   // backing array to get the element associated with the regular index.
@@ -76,8 +68,8 @@ class CircularList<T> {
     _length = 0;
   }
 
-  void addNew() {
-    _prepareItem(_array[_getCyclicIndex(_length)]);
+  void push(T value) {
+    _array[_getCyclicIndex(_length)] = value;
     if (_length == _array.length) {
       _startIndex++;
       if (_startIndex == _array.length) {
@@ -87,15 +79,6 @@ class CircularList<T> {
     } else {
       _length++;
     }
-  }
-
-  T? recycle() {
-    if (length != maxLength) {
-      throw Exception('Can only recycle when the buffer is full');
-    }
-    _startIndex = ++_startIndex & maxLength;
-
-    return _array[_getCyclicIndex(length - 1)];
   }
 
   /// Removes and returns the last value on the list

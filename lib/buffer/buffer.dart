@@ -13,12 +13,10 @@ class Buffer {
 
     lines = CircularList(
       terminal.maxLines,
-      (BufferLine? line) {
-        line?.clear();
-        line?.ensure(terminal.viewWidth);
-      },
-      (int) => _newEmptyLine(),
     );
+    for (int i = 0; i < terminal.viewHeight; i++) {
+      lines.push(_newEmptyLine());
+    }
   }
 
   final Terminal terminal;
@@ -274,7 +272,7 @@ class Buffer {
     // the cursor is not in the scrollable region
     if (_cursorY >= terminal.viewHeight - 1) {
       // we are at the bottom so a new line is created.
-      lines.addNew();
+      lines.push(_newEmptyLine());
 
       // keep viewport from moving if user is scrolling.
       if (isUserScrolling) {
@@ -424,7 +422,7 @@ class Buffer {
   void clear() {
     lines.clear();
     for (int i = 0; i < terminal.viewHeight; i++) {
-      lines.addNew();
+      lines.push(_newEmptyLine());
     }
   }
 
@@ -453,8 +451,6 @@ class Buffer {
       final newLine = _newEmptyLine();
       lines.splice(index, 0, [newLine]);
     } else {
-      final bottom = convertViewLineToRawLine(marginBottom);
-
       final newLine = _newEmptyLine();
       lines.splice(_cursorY, 0, [newLine]);
     }
@@ -493,7 +489,7 @@ class Buffer {
       // Grow larger
       for (var i = 0; i < newHeight - terminal.viewHeight; i++) {
         if (_cursorY < terminal.viewHeight - 1) {
-          lines.addNew();
+          lines.push(_newEmptyLine());
         } else {
           _cursorY++;
         }
