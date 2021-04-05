@@ -38,10 +38,8 @@ class Terminal with Observable {
     this.onIconChange = _defaultIconHandler,
     this.platform = PlatformBehaviors.unix,
     this.theme = TerminalThemes.defaultTheme,
-    int? maxLines,
-  }) {
-    _maxLines = maxLines;
-
+    required int maxLines,
+  }) : _maxLines = maxLines {
     _mainBuffer = Buffer(this);
     _altBuffer = Buffer(this);
     _buffer = _mainBuffer;
@@ -65,10 +63,9 @@ class Terminal with Observable {
     }
   }
 
-  int? _maxLines;
-  int? get maxLines {
-    if (_maxLines == null) return null;
-    return max(viewHeight, _maxLines!);
+  int _maxLines;
+  int get maxLines {
+    return max(viewHeight, _maxLines);
   }
 
   int _viewWidth = 80;
@@ -452,7 +449,7 @@ class Terminal with Observable {
         break;
       }
 
-      final line = buffer.lines[row];
+      final line = buffer.lines[row]!;
 
       var xStart = 0;
       var xEnd = viewWidth - 1;
