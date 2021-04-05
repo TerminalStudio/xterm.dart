@@ -4,6 +4,7 @@ import 'package:xterm/buffer/buffer_line.dart';
 import 'package:xterm/buffer/buffer_reflow.dart';
 import 'package:xterm/terminal/charset.dart';
 import 'package:xterm/terminal/terminal.dart';
+import 'package:xterm/utli/circular_list.dart';
 import 'package:xterm/utli/scroll_range.dart';
 import 'package:xterm/utli/unicode_v11.dart';
 
@@ -11,10 +12,12 @@ class Buffer {
   Buffer(this.terminal) {
     resetVerticalMargins();
 
-    lines = List.generate(
-      terminal.viewHeight,
-      (_) => _newEmptyLine(),
+    lines = CircularList(
+      terminal.maxLines,
     );
+    for (int i = 0; i < terminal.viewHeight; i++) {
+      lines.push(_newEmptyLine());
+    }
   }
 
   final Terminal terminal;
@@ -22,7 +25,7 @@ class Buffer {
 
   /// lines of the buffer. the length of [lines] should always be equal or
   /// greater than [Terminal.viewHeight].
-  late final List<BufferLine> lines;
+  late final CircularList<BufferLine> lines;
 
   int? _savedCursorX;
   int? _savedCursorY;
@@ -113,7 +116,7 @@ class Buffer {
   /// [Terminal.viewHeight].
   BufferLine getViewLine(int index) {
     index = index.clamp(0, terminal.viewHeight - 1);
-    return lines[convertViewLineToRawLine(index)];
+    return lines[convertViewLineToRawLine(index)]!;
   }
 
   BufferLine get currentLine {
@@ -172,7 +175,7 @@ class Buffer {
     for (var i = height - terminal.viewHeight; i < height; i++) {
       final y = i - scrollOffsetFromBottom;
       if (y >= 0 && y < height) {
-        result.add(lines[y]);
+        result.add(lines[y]!);
       }
     }
 
@@ -273,17 +276,11 @@ class Buffer {
     // the cursor is not in the scrollable region
     if (_cursorY >= terminal.viewHeight - 1) {
       // we are at the bottom so a new line is created.
-      lines.add(_newEmptyLine());
+      lines.push(_newEmptyLine());
 
       // keep viewport from moving if user is scrolling.
       if (isUserScrolling) {
         _scrollOffsetFromBottom++;
-      }
-
-      // clean extra lines if needed.
-      final maxLines = terminal.maxLines;
-      if (maxLines != null && lines.length > maxLines) {
-        lines.removeRange(0, lines.length - maxLines);
       }
     } else {
       // there're still lines so we simply move cursor down.
@@ -423,16 +420,14 @@ class Buffer {
       return;
     }
 
-    lines.removeRange(0, lines.length - terminal.viewHeight);
+    lines.trimStart(lines.length - terminal.viewHeight);
   }
 
   void clear() {
     lines.clear();
-
-    lines.addAll(List.generate(
-      terminal.viewHeight,
-      (_) => _newEmptyLine(),
-    ));
+    for (int i = 0; i < terminal.viewHeight; i++) {
+      lines.push(_newEmptyLine());
+    }
   }
 
   void insertBlankCharacters(int count) {
@@ -458,20 +453,10 @@ class Buffer {
     if (!isInScrollableRegion) {
       final index = convertViewLineToRawLine(_cursorX);
       final newLine = _newEmptyLine();
-      lines.insert(index, newLine);
-
-      final maxLines = terminal.maxLines;
-      if (maxLines != null && lines.length > maxLines) {
-        lines.removeRange(0, lines.length - maxLines);
-      }
+      lines.splice(index, 0, [newLine]);
     } else {
-      final bottom = convertViewLineToRawLine(marginBottom);
-
-      final movedLines = lines.getRange(_cursorY, bottom - 1);
-      lines.setRange(_cursorY + 1, bottom, movedLines);
-
       final newLine = _newEmptyLine();
-      lines[_cursorY] = newLine;
+      lines.splice(_cursorY, 0, [newLine]);
     }
   }
 
@@ -494,21 +479,21 @@ class Buffer {
       return;
     }
 
-    lines.removeAt(index);
+    lines.splice(index, 1, []);
   }
 
   void resize(int oldWidth, int oldHeight, int newWidth, int newHeight) {
     if (newWidth > oldWidth) {
-      for (var line in lines) {
-        line.ensure(newWidth);
-      }
+      lines.forEach((item, index) {
+        item?.ensure(newWidth);
+      }, true);
     }
 
     if (newHeight > oldHeight) {
       // Grow larger
       for (var i = 0; i < newHeight - oldHeight; i++) {
         if (_cursorY < oldHeight - 1) {
-          lines.add(_newEmptyLine());
+          lines.push(_newEmptyLine());
         } else {
           _cursorY++;
         }
@@ -517,7 +502,7 @@ class Buffer {
       // Shrink smaller
       for (var i = 0; i < oldHeight - newHeight; i++) {
         if (_cursorY < oldHeight - 1) {
-          lines.removeLast();
+          lines.pop();
         } else {
           _cursorY++;
         }

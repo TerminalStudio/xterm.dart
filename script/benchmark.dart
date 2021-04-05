@@ -35,7 +35,7 @@ class BenchmarkWrite extends Benchmark {
   }
 
   void benchmark() {
-    final terminal = Terminal();
+    final terminal = Terminal(maxLines: 40000);
     for (var i = 0; i < cycle; i++) {
       terminal.write(data);
     }
@@ -51,7 +51,7 @@ class BenchmarkWrite2 extends Benchmark {
   }
 
   void benchmark() {
-    final terminal = Terminal();
+    final terminal = Terminal(maxLines: 40000);
     for (var i = 0; i < cycle; i++) {
       terminal.write(data);
     }
@@ -71,7 +71,7 @@ class BenchmarkWriteCMatrix extends Benchmark {
   }
 
   void benchmark() {
-    final terminal = Terminal();
+    final terminal = Terminal(maxLines: 40000);
     for (var i = 0; i < cycle; i++) {
       terminal.write(data);
     }
