@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -238,14 +239,22 @@ class _TerminalViewState extends State<TerminalView> {
       },
       child: Container(
         constraints: BoxConstraints.expand(),
-        child: CustomPaint(
-          painter: TerminalPainter(
-            terminal: widget.terminal,
-            view: widget,
-            oscillator: oscillator,
-            focused: focused,
-            charSize: _cellSize,
-          ),
+        child: Stack(
+          children: <Widget>[
+            CustomPaint(
+              painter: TerminalPainter(
+                terminal: widget.terminal,
+                view: widget,
+                oscillator: oscillator,
+                charSize: _cellSize,
+              ),
+            ),
+            CustomPaint(
+                painter: CursorPainter(
+                    terminal: widget.terminal,
+                    focused: focused,
+                    charSize: _cellSize))
+          ],
         ),
         color:
             Color(widget.terminal.theme.background).withOpacity(widget.opacity),
@@ -325,14 +334,12 @@ class TerminalPainter extends CustomPainter {
     required this.terminal,
     required this.view,
     required this.oscillator,
-    required this.focused,
     required this.charSize,
   });
 
   final Terminal terminal;
   final TerminalView view;
   final Oscillator oscillator;
-  final bool focused;
   final CellSize charSize;
 
   @override
@@ -341,10 +348,6 @@ class TerminalPainter extends CustomPainter {
 
     // if (oscillator.value) {
     // }
-
-    if (terminal.showCursor) {
-      _paintCursor(canvas);
-    }
 
     _paintText(canvas);
 
@@ -529,6 +532,36 @@ class TerminalPainter extends CustomPainter {
     tp.paint(canvas, Offset(offsetX, offsetY));
   }
 
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    /// paint only when the terminal has changed since last paint.
+    return terminal.dirty;
+  }
+}
+
+class CursorPainter extends CustomPainter {
+  final Terminal terminal;
+  final CellSize charSize;
+  final bool focused;
+
+  CursorPainter({
+    required this.terminal,
+    required this.charSize,
+    required this.focused,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (terminal.showCursor) {
+      _paintCursor(canvas);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return terminal.dirty;
+  }
+
   void _paintCursor(Canvas canvas) {
     final screenCursorY = terminal.cursorY + terminal.scrollOffset;
     if (screenCursorY < 0 || screenCursorY >= terminal.viewHeight) {
@@ -547,11 +580,5 @@ class TerminalPainter extends CustomPainter {
 
     canvas.drawRect(
         Rect.fromLTWH(offsetX, offsetY, width, charSize.cellHeight), paint);
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) {
-    /// paint only when the terminal has changed since last paint.
-    return terminal.dirty;
   }
 }
