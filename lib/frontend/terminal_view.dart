@@ -97,20 +97,32 @@ class _TerminalViewState extends State<TerminalView> {
     return widget.focusNode.hasFocus;
   }
 
-  int? _lastTerminalWidth;
-  int? _lastTerminalHeight;
-
   late CellSize _cellSize;
 
   void onTerminalChange() {
+    if (!mounted) {
+      return;
+    }
+
     final currentScrollExtent =
         _cellSize.cellHeight * widget.terminal.buffer.scrollOffsetFromTop;
 
-    widget.scrollController.jumpTo(currentScrollExtent);
+    final maxScrollExtent = widget.scrollController.position.maxScrollExtent;
 
-    if (mounted) {
-      setState(() {});
+    if (currentScrollExtent > maxScrollExtent) {
+      /// Ensure [maxScrollExtent] is larger than [currentScrollExtent] so
+      /// [currentScrollExtent] won't be limited.
+      ///
+      /// Calling [applyContentDimensions] has unnecessary cost, and the most
+      /// ideal way is to set [scrollController.position._maxScrollExtend]
+      /// directly, however this requires modifying flutter code.
+      widget.scrollController.position
+          .applyContentDimensions(0.0, currentScrollExtent);
     }
+
+    widget.scrollController.position.correctPixels(currentScrollExtent);
+
+    setState(() {});
   }
 
   // listen to oscillator to update mouse blink etc.
@@ -252,6 +264,9 @@ class _TerminalViewState extends State<TerminalView> {
 
     return Position(x, y);
   }
+
+  int? _lastTerminalWidth;
+  int? _lastTerminalHeight;
 
   void onResize(double width, double height) {
     final termWidth = (width / _cellSize.cellWidth).floor();
