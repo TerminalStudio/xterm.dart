@@ -422,6 +422,7 @@ class Buffer {
   }
 
   void clear() {
+    lines.clear();
     for (int i = 0; i < terminal.viewHeight; i++) {
       lines.addNew();
     }

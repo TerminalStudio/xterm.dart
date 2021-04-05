@@ -71,6 +71,11 @@ class CircularList<T> {
     _array[_getCyclicIndex(index)] = value;
   }
 
+  void clear() {
+    _startIndex = 0;
+    _length = 0;
+  }
+
   void addNew() {
     _prepareItem(_array[_getCyclicIndex(_length)]);
     if (_length == _array.length) {
