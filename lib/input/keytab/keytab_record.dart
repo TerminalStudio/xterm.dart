@@ -39,7 +39,6 @@ class KeytabRecord {
     required this.appCursorKeys,
     required this.appKeyPad,
     required this.newLine,
-    required this.mac,
   });
 
   String qtKeyName;
@@ -56,7 +55,6 @@ class KeytabRecord {
   bool? appCursorKeys;
   bool? appKeyPad;
   bool? newLine;
-  bool? mac;
 
   @override
   String toString() {
@@ -101,10 +99,6 @@ class KeytabRecord {
 
     if (newLine != null) {
       buffer.write(modeStatus(newLine!, 'NewLine'));
-    }
-
-    if (mac != null) {
-      buffer.write(modeStatus(mac!, 'Mac'));
     }
 
     buffer.write(' : $action');
