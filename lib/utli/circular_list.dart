@@ -59,7 +59,7 @@ class CircularList<T> {
   }
 
   T operator [](int index) {
-    if (index > length - 1) {
+    if (index >= length) {
       throw RangeError.range(index, 0, length - 1);
     }
 
@@ -67,7 +67,7 @@ class CircularList<T> {
   }
 
   operator []=(int index, T value) {
-    if (index > length - 1) {
+    if (index >= length) {
       throw RangeError.range(index, 0, length - 1);
     }
 
