@@ -32,22 +32,35 @@ class InputBehaviorDefault extends InputBehavior {
   }
 
   String? _composingString = null;
+  String? _ignoreChar;
 
   @override
   TextEditingValue? onTextEdit(TextEditingValue value, Terminal terminal) {
+    var inputText = value.text;
+    print('INPUT: "${value.text}" ${value.composing} | ${value.selection}');
     // we just want to detect if a composing is going on and notify the terminal
     // about it
     if (value.composing.start != value.composing.end) {
-      _composingString = (_composingString ?? '') + value.text;
+      _composingString = inputText;
       terminal.updateComposingString(_composingString!);
       return null;
     }
+    if (_ignoreChar != null && inputText != '') {
+      if (inputText.startsWith(_ignoreChar!)) {
+        inputText = inputText.substring(_ignoreChar!.length);
+      }
+      _ignoreChar = null;
+    }
     if (_composingString != null) {
+      // we ignore the just commited string the next time
+      // as the input system sends it again together with
+      // the next character
+      _ignoreChar = _composingString;
       _composingString = null;
       terminal.updateComposingString('');
     }
-    terminal.onInput(value.text);
-    if (value == TextEditingValue.empty || value.text == '') {
+    terminal.onInput(inputText);
+    if (value == TextEditingValue.empty || inputText == '') {
       return null;
     } else {
       return TextEditingValue.empty;
