@@ -58,11 +58,19 @@ class CircularList<T> {
     }
   }
 
-  T? operator [](int index) {
-    return _array[_getCyclicIndex(index)];
+  T operator [](int index) {
+    if (index > length - 1) {
+      throw RangeError.range(index, 0, length - 1);
+    }
+
+    return _array[_getCyclicIndex(index)]!;
   }
 
-  operator []=(int index, T? value) {
+  operator []=(int index, T value) {
+    if (index > length - 1) {
+      throw RangeError.range(index, 0, length - 1);
+    }
+
     _array[_getCyclicIndex(index)] = value;
   }
 

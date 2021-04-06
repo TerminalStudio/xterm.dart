@@ -112,7 +112,7 @@ class Buffer {
   /// [Terminal.viewHeight].
   BufferLine getViewLine(int index) {
     index = index.clamp(0, terminal.viewHeight - 1);
-    return lines[convertViewLineToRawLine(index)]!;
+    return lines[convertViewLineToRawLine(index)];
   }
 
   BufferLine get currentLine {
@@ -171,7 +171,7 @@ class Buffer {
     for (var i = height - terminal.viewHeight; i < height; i++) {
       final y = i - scrollOffsetFromBottom;
       if (y >= 0 && y < height) {
-        result.add(lines[y]!);
+        result.add(lines[y]);
       }
     }
 
