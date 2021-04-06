@@ -27,9 +27,10 @@ class CircularList<T> {
     // Reconstruct array, starting at index 0. Only transfer values from the
     // indexes 0 to length.
     final newArray = List<T?>.generate(
-        value,
-        (index) =>
-            index < _array.length ? _array[_getCyclicIndex(index)] : null);
+      value,
+      (index) => index < _array.length ? _array[_getCyclicIndex(index)] : null,
+    );
+
     _startIndex = 0;
     _array = newArray;
   }
@@ -47,8 +48,10 @@ class CircularList<T> {
     _length = value;
   }
 
-  void forEach(void Function(T? item, int index) callback,
-      [bool includeBuffer = false]) {
+  void forEach(
+    void Function(T? item, int index) callback, [
+    bool includeBuffer = false,
+  ]) {
     final len = includeBuffer ? _array.length : _length;
     for (int i = 0; i < len; i++) {
       callback(_array[_getCyclicIndex(i)], i);
