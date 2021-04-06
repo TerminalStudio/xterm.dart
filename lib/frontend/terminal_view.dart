@@ -97,20 +97,21 @@ class _TerminalViewState extends State<TerminalView> {
     return widget.focusNode.hasFocus;
   }
 
-  int? _lastTerminalWidth;
-  int? _lastTerminalHeight;
-
   late CellSize _cellSize;
 
+  /// Scroll position from the terminal. Not null if terminal scroll extent has
+  /// been updated and needs to be syncronized to flutter side.
+  double? _terminalScrollExtent;
+
   void onTerminalChange() {
-    final currentScrollExtent =
+    if (!mounted) {
+      return;
+    }
+
+    _terminalScrollExtent =
         _cellSize.cellHeight * widget.terminal.buffer.scrollOffsetFromTop;
 
-    widget.scrollController.jumpTo(currentScrollExtent);
-
-    if (mounted) {
-      setState(() {});
-    }
+    setState(() {});
   }
 
   // listen to oscillator to update mouse blink etc.
@@ -161,7 +162,7 @@ class _TerminalViewState extends State<TerminalView> {
       child: MouseRegion(
         cursor: SystemMouseCursors.text,
         child: LayoutBuilder(builder: (context, constraints) {
-          onResize(constraints.maxWidth, constraints.maxHeight);
+          onSize(constraints.maxWidth, constraints.maxHeight);
           // use flutter's Scrollable to manage scrolling to better integrate
           // with widgets such as Scrollbar.
           return NotificationListener<UserScrollNotification>(
@@ -184,6 +185,14 @@ class _TerminalViewState extends State<TerminalView> {
 
                 // set how much the terminal can scroll
                 offset.applyContentDimensions(minScrollExtent, maxScrollExtent);
+
+                // syncronize terminal scroll extent to ScrollController
+                if (_terminalScrollExtent != null) {
+                  widget.scrollController.position.correctPixels(
+                    _terminalScrollExtent!,
+                  );
+                  _terminalScrollExtent = null;
+                }
 
                 return buildTerminal(context);
               },
@@ -253,7 +262,10 @@ class _TerminalViewState extends State<TerminalView> {
     return Position(x, y);
   }
 
-  void onResize(double width, double height) {
+  int? _lastTerminalWidth;
+  int? _lastTerminalHeight;
+
+  void onSize(double width, double height) {
     final termWidth = (width / _cellSize.cellWidth).floor();
     final termHeight = (height / _cellSize.cellHeight).floor();
 
