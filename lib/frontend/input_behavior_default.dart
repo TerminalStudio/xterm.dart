@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:xterm/frontend/input_behavior.dart';
@@ -24,11 +22,12 @@ class InputBehaviorDefault extends InputBehavior {
     final key = inputMap(event.logicalKey);
 
     if (key != null) {
-      terminal.keyInput(key,
-          ctrl: event.isControlPressed,
-          alt: event.isAltPressed,
-          shift: event.isShiftPressed,
-          mac: Platform.isMacOS);
+      terminal.keyInput(
+        key,
+        ctrl: event.isControlPressed,
+        alt: event.isAltPressed,
+        shift: event.isShiftPressed,
+      );
     }
   }
 
