@@ -1,5 +1,6 @@
 import 'dart:collection';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:xterm/terminal/modes.dart';
 import 'package:xterm/terminal/sgr.dart';
@@ -329,7 +330,7 @@ void csiCursorUpHandler(CSI csi, Terminal terminal) {
     distance = csi.params.first;
   }
 
-  terminal.buffer.movePosition(0, -distance);
+  terminal.buffer.movePosition(0, -max(distance, 1));
 }
 
 void csiCursorDownHandler(CSI csi, Terminal terminal) {
@@ -339,7 +340,7 @@ void csiCursorDownHandler(CSI csi, Terminal terminal) {
     distance = csi.params.first;
   }
 
-  terminal.buffer.movePosition(0, distance);
+  terminal.buffer.movePosition(0, max(distance, 1));
 }
 
 /// DECSTBM – Set Top and Bottom Margins (DEC Private)
