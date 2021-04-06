@@ -449,7 +449,7 @@ class Terminal with Observable {
         break;
       }
 
-      final line = buffer.lines[row]!;
+      final line = buffer.lines[row];
 
       var xStart = 0;
       var xEnd = viewWidth - 1;
