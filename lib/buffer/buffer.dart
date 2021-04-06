@@ -449,10 +449,10 @@ class Buffer {
     if (!isInScrollableRegion) {
       final index = convertViewLineToRawLine(_cursorX);
       final newLine = _newEmptyLine();
-      lines.splice(index, 0, [newLine]);
+      lines.insert(index, newLine);
     } else {
       final newLine = _newEmptyLine();
-      lines.splice(_cursorY, 0, [newLine]);
+      lines.insert(_cursorY, newLine);
     }
   }
 
@@ -475,7 +475,7 @@ class Buffer {
       return;
     }
 
-    lines.splice(index, 1, []);
+    lines.remove(index);
   }
 
   void resize(int newWidth, int newHeight) {
