@@ -128,9 +128,8 @@ class CircularList<T> with ListMixin<T> {
 
   void trimStart(int count) {
     if (count > _length) count = _length;
-
-    // TODO: perhaps bug in original code, this does not clamp the value of startIndex
     _startIndex += count;
+    _startIndex %= _array.length;
     _length -= count;
     onTrimmed?.call(count);
   }
