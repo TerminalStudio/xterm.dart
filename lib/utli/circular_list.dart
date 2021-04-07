@@ -46,13 +46,10 @@ class CircularList<T> {
     _length = value;
   }
 
-  void forEach(
-    void Function(T? item, int index) callback, [
-    bool includeBuffer = false,
-  ]) {
+  void forEach(void Function(T item) callback) {
     final length = _length;
     for (int i = 0; i < length; i++) {
-      callback(_array[_getCyclicIndex(i)], i);
+      callback(_array[_getCyclicIndex(i)]!);
     }
   }
 

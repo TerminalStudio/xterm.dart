@@ -480,9 +480,9 @@ class Buffer {
 
   void resize(int newWidth, int newHeight) {
     if (newWidth > terminal.viewWidth) {
-      for (var line in lines) {
+      lines.forEach((line) {
         line.ensure(newWidth);
-      }
+      });
     }
 
     if (newHeight > terminal.viewHeight) {
