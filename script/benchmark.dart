@@ -6,7 +6,8 @@ void main() {
   // BenchmarkWrite().run();
   // BenchmarkWrite2().run();
   // BenchmarkWriteBuffer().run();
-  BenchmarkWriteCMatrix().run();
+  // BenchmarkWriteCMatrix().run();
+  BenchmarkWriteLines().run();
 }
 
 abstract class Benchmark {
@@ -63,11 +64,31 @@ class BenchmarkWriteCMatrix extends Benchmark {
     data = File('script/cmatrix.txt').readAsStringSync();
   }
 
-  static const cycle = 10;
+  static const cycle = 12;
   late final String data;
 
   String explain() {
     return 'write ${data.length / 1024} kb CMatrix -r output to Terminal for $cycle time(s)';
+  }
+
+  void benchmark() {
+    final terminal = Terminal(maxLines: 40000);
+    for (var i = 0; i < cycle; i++) {
+      terminal.write(data);
+    }
+  }
+}
+
+class BenchmarkWriteLines extends Benchmark {
+  BenchmarkWriteLines() {
+    data = File('script/lines.txt').readAsStringSync();
+  }
+
+  static const cycle = 10;
+  late final String data;
+
+  String explain() {
+    return 'write ${data.length / 1024} kb `find .` output to Terminal for $cycle time(s)';
   }
 
   void benchmark() {
@@ -93,3 +114,4 @@ class BenchmarkWriteBuffer extends Benchmark {
     }
   }
 }
+

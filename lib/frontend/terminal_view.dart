@@ -99,28 +99,17 @@ class _TerminalViewState extends State<TerminalView> {
 
   late CellSize _cellSize;
 
+  /// Scroll position from the terminal. Not null if terminal scroll extent has
+  /// been updated and needs to be syncronized to flutter side.
+  double? _terminalScrollExtent;
+
   void onTerminalChange() {
     if (!mounted) {
       return;
     }
 
-    final currentScrollExtent =
+    _terminalScrollExtent =
         _cellSize.cellHeight * widget.terminal.buffer.scrollOffsetFromTop;
-
-    final maxScrollExtent = widget.scrollController.position.maxScrollExtent;
-
-    if (currentScrollExtent > maxScrollExtent) {
-      /// Ensure [maxScrollExtent] is larger than [currentScrollExtent] so
-      /// [currentScrollExtent] won't be limited.
-      ///
-      /// Calling [applyContentDimensions] has unnecessary cost, and the most
-      /// ideal way is to set [scrollController.position._maxScrollExtend]
-      /// directly, however this requires modifying flutter code.
-      widget.scrollController.position
-          .applyContentDimensions(0.0, currentScrollExtent);
-    }
-
-    widget.scrollController.position.correctPixels(currentScrollExtent);
 
     setState(() {});
   }
@@ -173,7 +162,7 @@ class _TerminalViewState extends State<TerminalView> {
       child: MouseRegion(
         cursor: SystemMouseCursors.text,
         child: LayoutBuilder(builder: (context, constraints) {
-          onResize(constraints.maxWidth, constraints.maxHeight);
+          onSize(constraints.maxWidth, constraints.maxHeight);
           // use flutter's Scrollable to manage scrolling to better integrate
           // with widgets such as Scrollbar.
           return NotificationListener<UserScrollNotification>(
@@ -196,6 +185,14 @@ class _TerminalViewState extends State<TerminalView> {
 
                 // set how much the terminal can scroll
                 offset.applyContentDimensions(minScrollExtent, maxScrollExtent);
+
+                // syncronize terminal scroll extent to ScrollController
+                if (_terminalScrollExtent != null) {
+                  widget.scrollController.position.correctPixels(
+                    _terminalScrollExtent!,
+                  );
+                  _terminalScrollExtent = null;
+                }
 
                 return buildTerminal(context);
               },
@@ -268,7 +265,7 @@ class _TerminalViewState extends State<TerminalView> {
   int? _lastTerminalWidth;
   int? _lastTerminalHeight;
 
-  void onResize(double width, double height) {
+  void onSize(double width, double height) {
     final termWidth = (width / _cellSize.cellWidth).floor();
     final termHeight = (height / _cellSize.cellHeight).floor();
 
