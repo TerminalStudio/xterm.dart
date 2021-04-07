@@ -165,20 +165,21 @@ class KeytabParser {
     }
 
     final record = KeytabRecord(
-        qtKeyName: keyName.value,
-        key: key,
-        action: action,
-        alt: alt,
-        ctrl: ctrl,
-        shift: shift,
-        anyModifier: anyModifier,
-        ansi: ansi,
-        appScreen: appScreen,
-        keyPad: keyPad,
-        appCursorKeys: appCursorKeys,
-        appKeyPad: appKeyPad,
-        newLine: newLine,
-        mac: mac);
+      qtKeyName: keyName.value,
+      key: key,
+      action: action,
+      alt: alt,
+      ctrl: ctrl,
+      shift: shift,
+      anyModifier: anyModifier,
+      ansi: ansi,
+      appScreen: appScreen,
+      keyPad: keyPad,
+      appCursorKeys: appCursorKeys,
+      appKeyPad: appKeyPad,
+      newLine: newLine,
+      mac: mac,
+    );
 
     _records.add(record);
   }

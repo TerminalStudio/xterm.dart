@@ -22,11 +22,13 @@ class InputBehaviorDefault extends InputBehavior {
     final key = inputMap(event.logicalKey);
 
     if (key != null) {
-      terminal.keyInput(key,
-          ctrl: event.isControlPressed,
-          alt: event.isAltPressed,
-          shift: event.isShiftPressed,
-          mac: terminal.platform.useMacInputBehavior);
+      terminal.keyInput(
+        key,
+        ctrl: event.isControlPressed,
+        alt: event.isAltPressed,
+        shift: event.isShiftPressed,
+        mac: terminal.platform.useMacInputBehavior,
+      );
     }
   }
 
