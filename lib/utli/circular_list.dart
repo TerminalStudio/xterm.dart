@@ -170,6 +170,6 @@ class CircularList<T> {
   bool get isFull => length == maxLength;
 
   List<T> toList() {
-    return List.generate(length, (index) => this[index]);
+    return List<T>.generate(length, (index) => this[index]);
   }
 }
