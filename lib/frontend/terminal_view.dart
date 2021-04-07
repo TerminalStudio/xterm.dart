@@ -7,20 +7,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
-import 'package:xterm/buffer/buffer_line.dart';
-import 'package:xterm/buffer/cell_flags.dart';
 import 'package:xterm/frontend/char_size.dart';
 import 'package:xterm/frontend/helpers.dart';
 import 'package:xterm/frontend/input_behavior.dart';
 import 'package:xterm/frontend/input_behaviors.dart';
 import 'package:xterm/frontend/input_listener.dart';
 import 'package:xterm/frontend/oscillator.dart';
-import 'package:xterm/frontend/cache.dart';
+import 'package:xterm/frontend/terminal_painters.dart';
 import 'package:xterm/mouse/position.dart';
 import 'package:xterm/terminal/terminal.dart';
 import 'package:xterm/theme/terminal_style.dart';
-import 'package:xterm/utli/bit_flags.dart';
-import 'package:xterm/utli/hash_values.dart';
 
 typedef TerminalResizeHandler = void Function(int width, int height);
 
@@ -92,7 +88,7 @@ class TerminalView extends StatefulWidget {
 
 class _TerminalViewState extends State<TerminalView> {
   /// blinking cursor and blinking character
-  final oscillator = Oscillator.ms(600);
+  final blinkOscillator = Oscillator.ms(600);
 
   bool get focused {
     return widget.focusNode.hasFocus;
@@ -122,7 +118,7 @@ class _TerminalViewState extends State<TerminalView> {
 
   @override
   void initState() {
-    // oscillator.start();
+    blinkOscillator.start();
     // oscillator.addListener(onTick);
 
     // measureCellSize is expensive so we cache the result.
@@ -142,7 +138,7 @@ class _TerminalViewState extends State<TerminalView> {
 
   @override
   void dispose() {
-    // oscillator.stop();
+    blinkOscillator.stop();
     // oscillator.removeListener(onTick);
 
     widget.terminal.removeListener(onTerminalChange);
@@ -241,17 +237,23 @@ class _TerminalViewState extends State<TerminalView> {
             CustomPaint(
               painter: TerminalPainter(
                 terminal: widget.terminal,
-                view: widget,
-                oscillator: oscillator,
+                style: widget.style,
+                blinkOscillator: blinkOscillator,
                 charSize: _cellSize,
               ),
             ),
             Positioned(
-                child: CursorView(widget.terminal, _cellSize, widget.focusNode),
-                width: _cellSize.cellWidth,
-                height: _cellSize.cellHeight,
-                left: _getCursorOffset().dx,
-                top: _getCursorOffset().dy),
+              child: CursorView(
+                terminal: widget.terminal,
+                cellSize: _cellSize,
+                focusNode: widget.focusNode,
+                blinkOscillator: blinkOscillator,
+              ),
+              width: _cellSize.cellWidth,
+              height: _cellSize.cellHeight,
+              left: _getCursorOffset().dx,
+              top: _getCursorOffset().dy,
+            ),
           ],
         ),
         color:
@@ -336,238 +338,32 @@ class _TerminalViewState extends State<TerminalView> {
   }
 }
 
-class TerminalPainter extends CustomPainter {
-  TerminalPainter({
-    required this.terminal,
-    required this.view,
-    required this.oscillator,
-    required this.charSize,
-  });
-
-  final Terminal terminal;
-  final TerminalView view;
-  final Oscillator oscillator;
-  final CellSize charSize;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    _paintBackground(canvas);
-
-    // if (oscillator.value) {
-    // }
-
-    _paintText(canvas);
-
-    _paintSelection(canvas);
-  }
-
-  void _paintBackground(Canvas canvas) {
-    final lines = terminal.getVisibleLines();
-
-    for (var row = 0; row < lines.length; row++) {
-      final line = lines[row];
-      final offsetY = row * charSize.cellHeight;
-      // final cellCount = math.min(terminal.viewWidth, line.length);
-      final cellCount = terminal.viewWidth;
-
-      for (var col = 0; col < cellCount; col++) {
-        final cellWidth = line.cellGetWidth(col);
-        if (cellWidth == 0) {
-          continue;
-        }
-
-        final cellFgColor = line.cellGetFgColor(col);
-        final cellBgColor = line.cellGetBgColor(col);
-        final effectBgColor = line.cellHasFlag(col, CellFlags.inverse)
-            ? cellFgColor
-            : cellBgColor;
-
-        if (effectBgColor == 0x00) {
-          continue;
-        }
-
-        // final cellFlags = line.cellGetFlags(i);
-        // final cell = line.getCell(i);
-        // final attr = cell.attr;
-
-        final offsetX = col * charSize.cellWidth;
-        final effectWidth = charSize.cellWidth * cellWidth + 1;
-        final effectHeight = charSize.cellHeight + 1;
-
-        // background color is already painted with opacity by the Container of
-        // TerminalPainter so wo don't need to fallback to
-        // terminal.theme.background here.
-
-        final paint = Paint()..color = Color(effectBgColor);
-        canvas.drawRect(
-          Rect.fromLTWH(offsetX, offsetY, effectWidth, effectHeight),
-          paint,
-        );
-      }
-    }
-  }
-
-  void _paintSelection(Canvas canvas) {
-    final paint = Paint()..color = Colors.white.withOpacity(0.3);
-
-    for (var y = 0; y < terminal.viewHeight; y++) {
-      final offsetY = y * charSize.cellHeight;
-      final absoluteY = terminal.buffer.convertViewLineToRawLine(y) -
-          terminal.buffer.scrollOffsetFromBottom;
-
-      for (var x = 0; x < terminal.viewWidth; x++) {
-        var cellCount = 0;
-
-        while (
-            terminal.selection.contains(Position(x + cellCount, absoluteY)) &&
-                x + cellCount < terminal.viewWidth) {
-          cellCount++;
-        }
-
-        if (cellCount == 0) {
-          continue;
-        }
-
-        final offsetX = x * charSize.cellWidth;
-        final effectWidth = cellCount * charSize.cellWidth;
-        final effectHeight = charSize.cellHeight;
-
-        canvas.drawRect(
-          Rect.fromLTWH(offsetX, offsetY, effectWidth, effectHeight),
-          paint,
-        );
-
-        x += cellCount;
-      }
-    }
-  }
-
-  void _paintText(Canvas canvas) {
-    final lines = terminal.getVisibleLines();
-
-    for (var row = 0; row < lines.length; row++) {
-      final line = lines[row];
-      final offsetY = row * charSize.cellHeight;
-      // final cellCount = math.min(terminal.viewWidth, line.length);
-      final cellCount = terminal.viewWidth;
-
-      for (var col = 0; col < cellCount; col++) {
-        final width = line.cellGetWidth(col);
-
-        if (width == 0) {
-          continue;
-        }
-
-        final offsetX = col * charSize.cellWidth;
-        _paintCell(canvas, line, col, offsetX, offsetY);
-      }
-    }
-  }
-
-  void _paintCell(
-    Canvas canvas,
-    BufferLine line,
-    int cell,
-    double offsetX,
-    double offsetY,
-  ) {
-    final codePoint = line.cellGetContent(cell);
-    final fgColor = line.cellGetFgColor(cell);
-    final bgColor = line.cellGetBgColor(cell);
-    final flags = line.cellGetFlags(cell);
-
-    if (codePoint == 0 || flags.hasFlag(CellFlags.invisible)) {
-      return;
-    }
-
-    // final cellHash = line.cellGetHash(cell);
-    final cellHash = hashValues(codePoint, fgColor, bgColor, flags);
-
-    var tp = textLayoutCache.getLayoutFromCache(cellHash);
-    if (tp != null) {
-      tp.paint(canvas, Offset(offsetX, offsetY));
-      return;
-    }
-
-    final cellColor = flags.hasFlag(CellFlags.inverse) ? bgColor : fgColor;
-
-    var color = Color(cellColor);
-
-    if (flags & CellFlags.faint != 0) {
-      color = color.withOpacity(0.5);
-    }
-
-    final style = (view.style.textStyleProvider != null)
-        ? view.style.textStyleProvider!(
-            color: color,
-            fontSize: view.style.fontSize,
-            fontWeight: flags.hasFlag(CellFlags.bold)
-                ? FontWeight.bold
-                : FontWeight.normal,
-            fontStyle: flags.hasFlag(CellFlags.italic)
-                ? FontStyle.italic
-                : FontStyle.normal,
-            decoration: flags.hasFlag(CellFlags.underline)
-                ? TextDecoration.underline
-                : TextDecoration.none,
-          )
-        : TextStyle(
-            color: color,
-            fontSize: view.style.fontSize,
-            fontWeight: flags.hasFlag(CellFlags.bold)
-                ? FontWeight.bold
-                : FontWeight.normal,
-            fontStyle: flags.hasFlag(CellFlags.italic)
-                ? FontStyle.italic
-                : FontStyle.normal,
-            decoration: flags.hasFlag(CellFlags.underline)
-                ? TextDecoration.underline
-                : TextDecoration.none,
-            fontFamily: 'monospace',
-            fontFamilyFallback: view.style.fontFamily,
-          );
-
-    final span = TextSpan(
-      text: String.fromCharCode(codePoint),
-      // text: codePointCache.getOrConstruct(cell.codePoint),
-      style: style,
-    );
-
-    // final tp = textLayoutCache.getOrPerformLayout(span);
-    tp = textLayoutCache.performAndCacheLayout(span, cellHash);
-
-    tp.paint(canvas, Offset(offsetX, offsetY));
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) {
-    /// paint only when the terminal has changed since last paint.
-    return terminal.dirty;
-  }
-}
-
 class CursorView extends StatefulWidget {
   final CellSize cellSize;
   final Terminal terminal;
   final FocusNode? focusNode;
-
-  CursorView(this.terminal, this.cellSize, this.focusNode);
+  final Oscillator blinkOscillator;
+  CursorView({
+    required this.terminal,
+    required this.cellSize,
+    required this.focusNode,
+    required this.blinkOscillator,
+  });
 
   @override
   State<StatefulWidget> createState() => _CursorViewState();
 }
 
 class _CursorViewState extends State<CursorView> {
-  final _oscillator = Oscillator.ms(500);
-  bool _blinkVisible = true;
-
   bool get focused {
     return widget.focusNode?.hasFocus ?? false;
   }
 
+  var _isOscillatorCallbackRegistered = false;
+
   @override
   void initState() {
-    _oscillator.addListener(onOscillatorTick);
+    widget.blinkOscillator.addListener(onOscillatorTick);
 
     widget.terminal.addListener(onTerminalChange);
 
@@ -578,11 +374,12 @@ class _CursorViewState extends State<CursorView> {
   Widget build(BuildContext context) {
     return CustomPaint(
       painter: CursorPainter(
-          visible: _isCursorVisible(),
-          focused: focused,
-          charSize: widget.cellSize,
-          blinkVisible: _blinkVisible,
-          cursorColor: widget.terminal.theme.cursor),
+        visible: _isCursorVisible(),
+        focused: focused,
+        charSize: widget.cellSize,
+        blinkVisible: widget.blinkOscillator.value,
+        cursorColor: widget.terminal.theme.cursor,
+      ),
     );
   }
 
@@ -597,8 +394,8 @@ class _CursorViewState extends State<CursorView> {
 
   @override
   void dispose() {
-    _oscillator.removeListener(onOscillatorTick);
     widget.terminal.removeListener(onTerminalChange);
+    widget.blinkOscillator.removeListener(onOscillatorTick);
 
     super.dispose();
   }
@@ -608,63 +405,21 @@ class _CursorViewState extends State<CursorView> {
       return;
     }
     setState(() {
-      _blinkVisible = true;
       if (_isCursorVisible() /*&& widget.terminal.blinkingCursor*/ && focused) {
-        _oscillator.start();
+        if (!_isOscillatorCallbackRegistered) {
+          _isOscillatorCallbackRegistered = true;
+          widget.blinkOscillator.addListener(onOscillatorTick);
+        }
       } else {
-        _oscillator.stop();
+        if (_isOscillatorCallbackRegistered) {
+          _isOscillatorCallbackRegistered = false;
+          widget.blinkOscillator.removeListener(onOscillatorTick);
+        }
       }
     });
   }
 
   void onOscillatorTick() {
-    setState(() {
-      _blinkVisible = !_blinkVisible;
-    });
-  }
-}
-
-class CursorPainter extends CustomPainter {
-  final bool visible;
-  final CellSize charSize;
-  final bool focused;
-  final bool blinkVisible;
-  final int cursorColor;
-
-  CursorPainter({
-    required this.visible,
-    required this.charSize,
-    required this.focused,
-    required this.blinkVisible,
-    required this.cursorColor,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (blinkVisible && visible) {
-      _paintCursor(canvas);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    if (oldDelegate is CursorPainter) {
-      return blinkVisible != oldDelegate.blinkVisible ||
-          focused != oldDelegate.focused ||
-          visible != oldDelegate.visible ||
-          charSize.cellWidth != oldDelegate.charSize.cellWidth ||
-          charSize.cellHeight != oldDelegate.charSize.cellHeight;
-    }
-    return true;
-  }
-
-  void _paintCursor(Canvas canvas) {
-    final paint = Paint()
-      ..color = Color(cursorColor)
-      ..strokeWidth = focused ? 0.0 : 1.0
-      ..style = focused ? PaintingStyle.fill : PaintingStyle.stroke;
-
-    canvas.drawRect(
-        Rect.fromLTWH(0, 0, charSize.cellWidth, charSize.cellHeight), paint);
+    setState(() {});
   }
 }
