@@ -105,6 +105,7 @@ CSI? _parseCsi(Queue<int> queue) {
   }
 
   var param = 0;
+  var hasParam = false;
   while (true) {
     // The sequence isn't completed, just ignore it.
     if (queue.length <= readOffset) {
@@ -115,13 +116,16 @@ CSI? _parseCsi(Queue<int> queue) {
     final char = queue.elementAt(readOffset++);
 
     if (char == _semicolon) {
-      _csi.params.add(param);
+      if (hasParam) {
+        _csi.params.add(param);
+      }
       param = 0;
       continue;
     }
 
     // '0' <= char <= '9'
     if (char >= 48 && char <= 57) {
+      hasParam = true;
       param *= 10;
       param += char - 48;
       continue;
@@ -141,8 +145,10 @@ CSI? _parseCsi(Queue<int> queue) {
         queue.removeFirst();
       }
 
-      // final params = paramBuffer.toString().split(';');
-      _csi.params.add(param);
+      if (hasParam) {
+        _csi.params.add(param);
+      }
+
       _csi.finalByte = char;
       return _csi;
     }
