@@ -85,7 +85,7 @@ class BufferLine {
   }
 
   void clear() {
-    _cells.buffer.asInt64List().clear();
+    removeRange(0, _cells.lengthInBytes ~/ _cellSize);
   }
 
   void erase(Cursor cursor, int start, int end) {

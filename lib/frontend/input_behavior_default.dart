@@ -27,6 +27,7 @@ class InputBehaviorDefault extends InputBehavior {
         ctrl: event.isControlPressed,
         alt: event.isAltPressed,
         shift: event.isShiftPressed,
+        mac: terminal.platform.useMacInputBehavior,
       );
     }
   }

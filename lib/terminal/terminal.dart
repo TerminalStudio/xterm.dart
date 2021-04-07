@@ -38,10 +38,8 @@ class Terminal with Observable {
     this.onIconChange = _defaultIconHandler,
     this.platform = PlatformBehaviors.unix,
     this.theme = TerminalThemes.defaultTheme,
-    int? maxLines,
-  }) {
-    _maxLines = maxLines;
-
+    required int maxLines,
+  }) : _maxLines = maxLines {
     _mainBuffer = Buffer(this);
     _altBuffer = Buffer(this);
     _buffer = _mainBuffer;
@@ -65,10 +63,9 @@ class Terminal with Observable {
     }
   }
 
-  int? _maxLines;
-  int? get maxLines {
-    if (_maxLines == null) return null;
-    return max(viewHeight, _maxLines!);
+  int _maxLines;
+  int get maxLines {
+    return max(viewHeight, _maxLines);
   }
 
   int _viewWidth = 80;
@@ -166,7 +163,7 @@ class Terminal with Observable {
   late Buffer _altBuffer;
 
   /// Queue of input characters. addLast() to add, removeFirst() to consume.
-  final _queue = Queue<int>();
+  final _queue = ListQueue<int>(81920);
 
   bool _slowMotion = false;
   bool get slowMotion => _slowMotion;
@@ -364,6 +361,7 @@ class Terminal with Observable {
     bool ctrl = false,
     bool alt = false,
     bool shift = false,
+    bool mac = false,
     // bool meta,
   }) {
     debug.onMsg(key);
@@ -405,6 +403,10 @@ class Terminal with Observable {
 
       if (record.appCursorKeys != null &&
           record.appCursorKeys != applicationCursorKeys) {
+        continue;
+      }
+
+      if (record.mac != null && record.mac != mac) {
         continue;
       }
 
