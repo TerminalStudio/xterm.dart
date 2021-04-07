@@ -1,6 +1,6 @@
 import 'dart:collection';
 
-class CircularList<T> with ListMixin<T> {
+class CircularList<T> {
   CircularList(int maxLength) : _array = List<T?>.filled(maxLength, null);
 
   late List<T?> _array;
@@ -48,15 +48,15 @@ class CircularList<T> with ListMixin<T> {
     _length = value;
   }
 
-  // void forEach(
-  //   void Function(T? item, int index) callback, [
-  //   bool includeBuffer = false,
-  // ]) {
-  //   final len = includeBuffer ? _array.length : _length;
-  //   for (int i = 0; i < len; i++) {
-  //     callback(_array[_getCyclicIndex(i)], i);
-  //   }
-  // }
+  void forEach(
+    void Function(T? item, int index) callback, [
+    bool includeBuffer = false,
+  ]) {
+    final length = _length;
+    for (int i = 0; i < length; i++) {
+      callback(_array[_getCyclicIndex(i)], i);
+    }
+  }
 
   T operator [](int index) {
     if (index >= length) {
@@ -116,7 +116,6 @@ class CircularList<T> with ListMixin<T> {
 
     if (_length + 1 > _array.length) {
       _startIndex += 1;
-      onTrimmed?.call(1);
     } else {
       _length++;
     }
