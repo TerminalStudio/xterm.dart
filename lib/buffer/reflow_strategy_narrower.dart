@@ -18,7 +18,7 @@ class ReflowStrategyNarrower extends ReflowStrategy {
     // Go backwards as many lines may be trimmed and this will avoid considering them
     for (int y = buffer.lines.length - 1; y >= 0; y--) {
       // Check whether this line is a problem or not, if not skip it
-      BufferLine nextLine = buffer.lines[y]!;
+      BufferLine nextLine = buffer.lines[y];
       int lineLength = nextLine.getTrimmedLength(oldCols);
       if (!nextLine.isWrapped && lineLength <= newCols) {
         continue;
@@ -28,7 +28,7 @@ class ReflowStrategyNarrower extends ReflowStrategy {
       final wrappedLines = List<BufferLine>.empty(growable: true);
       wrappedLines.add(nextLine);
       while (nextLine.isWrapped && y > 0) {
-        nextLine = buffer.lines[--y]!;
+        nextLine = buffer.lines[--y];
         wrappedLines.insert(0, nextLine);
       }
 
@@ -110,15 +110,11 @@ class ReflowStrategyNarrower extends ReflowStrategy {
     // than earlier so that it's a single O(n) pass through the buffer, instead of O(n^2) from many
     // costly calls to CircularList.splice.
     if (toInsert.length > 0) {
-      // Record buffer insert events and then play them back backwards so that the indexes are
-      // correct
-      List<int> insertEvents = List<int>.empty(growable: true);
-
       // Record original lines so they don't get overridden when we rearrange the list
       CircularList<BufferLine> originalLines =
           new CircularList<BufferLine>(buffer.lines.maxLength);
       for (int i = 0; i < buffer.lines.length; i++) {
-        originalLines.push(buffer.lines[i]!);
+        originalLines.push(buffer.lines[i]);
       }
 
       int originalLinesLength = buffer.lines.length;
@@ -151,12 +147,6 @@ class ReflowStrategyNarrower extends ReflowStrategy {
 
           i++;
 
-          // Create insert events for later
-          //insertEvents.Add ({
-          //	index: originalLineIndex + 1,
-          //	amount: nextToInsert.newLines.length
-          //});
-
           countInsertedSoFar += nextToInsert.lines!.length;
           if (nextToInsertIndex < toInsert.length - 1) {
             nextToInsert = toInsert[++nextToInsertIndex];
@@ -167,20 +157,6 @@ class ReflowStrategyNarrower extends ReflowStrategy {
           buffer.lines[i] = originalLines[originalLineIndex--];
         }
       }
-
-      /*
-				// Update markers
-				let insertCountEmitted = 0;
-				for (let i = insertEvents.length - 1; i >= 0; i--) {
-					insertEvents [i].index += insertCountEmitted;
-					this.lines.onInsertEmitter.fire (insertEvents [i]);
-					insertCountEmitted += insertEvents [i].amount;
-				}
-				const amountToTrim = Math.max (0, originalLinesLength + countToInsert - this.lines.maxLength);
-				if (amountToTrim > 0) {
-					this.lines.onTrimEmitter.fire (amountToTrim);
-				}
-				*/
     }
   }
 

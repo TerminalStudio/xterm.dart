@@ -485,9 +485,7 @@ class Buffer {
 
   void resize(int oldWidth, int oldHeight, int newWidth, int newHeight) {
     if (newWidth > oldWidth) {
-      lines.forEach((item, index) {
-        item?.ensure(newWidth);
-      });
+      lines.forEach((item) => item.ensure(newWidth));
     }
 
     if (newHeight > oldHeight) {

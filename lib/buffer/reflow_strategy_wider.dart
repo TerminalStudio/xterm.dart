@@ -36,17 +36,17 @@ class ReflowStrategyWider extends ReflowStrategy {
     for (int y = 0; y < lines.length - 1; y++) {
       // Check if this row is wrapped
       int i = y;
-      BufferLine nextLine = lines[++i]!;
+      BufferLine nextLine = lines[++i];
       if (!nextLine.isWrapped) {
         continue;
       }
 
       // Check how many lines it's wrapped for
       final wrappedLines = List<BufferLine>.empty(growable: true);
-      wrappedLines.add(lines[y]!);
+      wrappedLines.add(lines[y]);
       while (i < lines.length && nextLine.isWrapped) {
         wrappedLines.add(nextLine);
-        nextLine = lines[++i]!;
+        nextLine = lines[++i];
       }
 
       final bufferAbsoluteY = buffer.cursorY + buffer.scrollOffsetFromTop;
@@ -163,7 +163,7 @@ class ReflowStrategyWider extends ReflowStrategy {
     var newLayoutLines = new CircularList<BufferLine>(lines.length);
 
     for (int i = 0; i < newLayout.length; i++) {
-      newLayoutLines.push(lines[newLayout[i]!]!);
+      newLayoutLines.push(lines[newLayout[i]]);
     }
 
     // Rearrange the list
