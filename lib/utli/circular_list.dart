@@ -7,8 +7,6 @@ class CircularList<T> with ListMixin<T> {
   var _length = 0;
   var _startIndex = 0;
 
-  Function(int num)? onTrimmed;
-
   // Gets the cyclic index for the specified regular index. The cyclic index can then be used on the
   // backing array to get the element associated with the regular index.
   int _getCyclicIndex(int index) {
@@ -88,7 +86,6 @@ class CircularList<T> with ListMixin<T> {
       if (_startIndex == _array.length) {
         _startIndex = 0;
       }
-      onTrimmed?.call(1);
     } else {
       _length++;
     }
@@ -120,7 +117,6 @@ class CircularList<T> with ListMixin<T> {
       int countToTrim = _length + items.length - _array.length;
       _startIndex += countToTrim;
       length = _array.length;
-      onTrimmed?.call(countToTrim);
     } else {
       _length += items.length;
     }
@@ -131,7 +127,6 @@ class CircularList<T> with ListMixin<T> {
     _startIndex += count;
     _startIndex %= _array.length;
     _length -= count;
-    onTrimmed?.call(count);
   }
 
   void shiftElements(int start, int count, int offset) {
@@ -150,7 +145,6 @@ class CircularList<T> with ListMixin<T> {
         while (_length > _array.length) {
           length--;
           _startIndex++;
-          onTrimmed?.call(1);
         }
       }
     } else {
