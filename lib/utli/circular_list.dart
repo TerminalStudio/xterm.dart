@@ -1,11 +1,11 @@
-class CircularList<T> {
-  List<T?> _array;
-  int _length = 0;
-  int _startIndex = 0;
+import 'dart:collection';
 
-  Function(int num)? onTrimmed;
-
+class CircularList<T> with ListMixin<T> {
   CircularList(int maxLength) : _array = List<T?>.filled(maxLength, null);
+
+  late List<T?> _array;
+  var _length = 0;
+  var _startIndex = 0;
 
   // Gets the cyclic index for the specified regular index. The cyclic index can then be used on the
   // backing array to get the element associated with the regular index.
@@ -48,15 +48,15 @@ class CircularList<T> {
     _length = value;
   }
 
-  void forEach(
-    void Function(T? item, int index) callback, [
-    bool includeBuffer = false,
-  ]) {
-    final len = includeBuffer ? _array.length : _length;
-    for (int i = 0; i < len; i++) {
-      callback(_array[_getCyclicIndex(i)], i);
-    }
-  }
+  // void forEach(
+  //   void Function(T? item, int index) callback, [
+  //   bool includeBuffer = false,
+  // ]) {
+  //   final len = includeBuffer ? _array.length : _length;
+  //   for (int i = 0; i < len; i++) {
+  //     callback(_array[_getCyclicIndex(i)], i);
+  //   }
+  // }
 
   T operator [](int index) {
     if (index >= length) {
@@ -86,7 +86,6 @@ class CircularList<T> {
       if (_startIndex == _array.length) {
         _startIndex = 0;
       }
-      onTrimmed?.call(1);
     } else {
       _length++;
     }
@@ -137,7 +136,6 @@ class CircularList<T> {
       final countToTrim = _length + items.length - _array.length;
       _startIndex += countToTrim;
       length = _array.length;
-      onTrimmed?.call(countToTrim);
     } else {
       _length += items.length;
     }
@@ -145,11 +143,9 @@ class CircularList<T> {
 
   void trimStart(int count) {
     if (count > _length) count = _length;
-
-    // TODO: perhaps bug in original code, this does not clamp the value of startIndex
     _startIndex += count;
+    _startIndex %= _array.length;
     _length -= count;
-    onTrimmed?.call(count);
   }
 
   void shiftElements(int start, int count, int offset) {
@@ -168,7 +164,6 @@ class CircularList<T> {
         while (_length > _array.length) {
           length--;
           _startIndex++;
-          onTrimmed?.call(1);
         }
       }
     } else {
@@ -179,8 +174,4 @@ class CircularList<T> {
   }
 
   bool get isFull => length == maxLength;
-
-  List<T> toList() {
-    return List<T>.generate(length, (index) => this[index]!);
-  }
 }
