@@ -363,6 +363,7 @@ class _CursorViewState extends State<CursorView> {
 
   @override
   void initState() {
+    _isOscillatorCallbackRegistered = true;
     widget.blinkOscillator.addListener(onOscillatorTick);
 
     widget.terminal.addListener(onTerminalChange);
