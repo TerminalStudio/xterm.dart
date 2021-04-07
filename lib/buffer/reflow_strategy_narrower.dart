@@ -19,7 +19,7 @@ class ReflowStrategyNarrower extends ReflowStrategy {
     for (int y = buffer.lines.length - 1; y >= 0; y--) {
       // Check whether this line is a problem or not, if not skip it
       BufferLine nextLine = buffer.lines[y];
-      int lineLength = nextLine.getTrimmedLength(oldCols);
+      final lineLength = nextLine.getTrimmedLength(oldCols);
       if (!nextLine.isWrapped && lineLength <= newCols) {
         continue;
       }
@@ -40,10 +40,10 @@ class ReflowStrategyNarrower extends ReflowStrategy {
         continue;
       }
 
-      int lastLineLength = wrappedLines.last.getTrimmedLength(oldCols);
+      final lastLineLength = wrappedLines.last.getTrimmedLength(oldCols);
       final destLineLengths =
           _getNewLineLengths(wrappedLines, oldCols, newCols);
-      int linesToAdd = destLineLengths.length - wrappedLines.length;
+      final linesToAdd = destLineLengths.length - wrappedLines.length;
 
       // Add the new lines
       final newLines = List<BufferLine>.empty(growable: true);
@@ -63,30 +63,32 @@ class ReflowStrategyNarrower extends ReflowStrategy {
       newLines.forEach((l) => wrappedLines.add(l));
 
       // Copy buffer data to new locations, this needs to happen backwards to do in-place
-      int destLineIndex =
+      var destLineIndex =
           destLineLengths.length - 1; // Math.floor(cellsNeeded / newCols);
-      int destCol = destLineLengths[destLineIndex]; // cellsNeeded % newCols;
+      var destCol = destLineLengths[destLineIndex]; // cellsNeeded % newCols;
       if (destCol == 0) {
         destLineIndex--;
         destCol = destLineLengths[destLineIndex];
       }
 
-      int srcLineIndex = wrappedLines.length - linesToAdd - 1;
-      int srcCol = lastLineLength;
+      var srcLineIndex = wrappedLines.length - linesToAdd - 1;
+      var srcCol = lastLineLength;
       while (srcLineIndex >= 0) {
-        int cellsToCopy = min(srcCol, destCol);
+        final cellsToCopy = min(srcCol, destCol);
         wrappedLines[destLineIndex].copyCellsFrom(wrappedLines[srcLineIndex],
             srcCol - cellsToCopy, destCol - cellsToCopy, cellsToCopy);
         destCol -= cellsToCopy;
         if (destCol == 0) {
           destLineIndex--;
-          if (destLineIndex >= 0) destCol = destLineLengths[destLineIndex];
+          if (destLineIndex >= 0) {
+            destCol = destLineLengths[destLineIndex];
+          }
         }
 
         srcCol -= cellsToCopy;
         if (srcCol == 0) {
           srcLineIndex--;
-          int wrappedLinesIndex = max(srcLineIndex, 0);
+          final wrappedLinesIndex = max(srcLineIndex, 0);
           srcCol = ReflowStrategy.getWrappedLineTrimmedLengthFromLines(
               wrappedLines, wrappedLinesIndex, oldCols);
         }
@@ -111,29 +113,28 @@ class ReflowStrategyNarrower extends ReflowStrategy {
     // costly calls to CircularList.splice.
     if (toInsert.length > 0) {
       // Record original lines so they don't get overridden when we rearrange the list
-      CircularList<BufferLine> originalLines =
-          new CircularList<BufferLine>(buffer.lines.maxLength);
+      final originalLines = CircularList<BufferLine>(buffer.lines.maxLength);
       for (int i = 0; i < buffer.lines.length; i++) {
         originalLines.push(buffer.lines[i]);
       }
 
-      int originalLinesLength = buffer.lines.length;
+      final originalLinesLength = buffer.lines.length;
 
-      int originalLineIndex = originalLinesLength - 1;
-      int nextToInsertIndex = 0;
+      var originalLineIndex = originalLinesLength - 1;
+      var nextToInsertIndex = 0;
       var nextToInsert = toInsert[nextToInsertIndex];
       buffer.lines.length =
           min(buffer.lines.maxLength, buffer.lines.length + countToInsert);
 
-      int countInsertedSoFar = 0;
-      for (int i = min(buffer.lines.maxLength - 1,
+      var countInsertedSoFar = 0;
+      for (var i = min(buffer.lines.maxLength - 1,
               originalLinesLength + countToInsert - 1);
           i >= 0;
           i--) {
         if (!nextToInsert.isNull &&
             nextToInsert.start > originalLineIndex + countInsertedSoFar) {
           // Insert extra lines here, adjusting i as needed
-          for (int nextI = nextToInsert.lines!.length - 1;
+          for (var nextI = nextToInsert.lines!.length - 1;
               nextI >= 0;
               nextI--) {
             if (i < 0) {
@@ -173,7 +174,7 @@ class ReflowStrategyNarrower extends ReflowStrategy {
       List<BufferLine> wrappedLines, int oldCols, int newCols) {
     final newLineLengths = List<int>.empty(growable: true);
 
-    int cellsNeeded = 0;
+    var cellsNeeded = 0;
     for (int i = 0; i < wrappedLines.length; i++) {
       cellsNeeded += ReflowStrategy.getWrappedLineTrimmedLengthFromLines(
           wrappedLines, i, oldCols);
@@ -181,9 +182,9 @@ class ReflowStrategyNarrower extends ReflowStrategy {
 
     // Use srcCol and srcLine to find the new wrapping point, use that to get the cellsAvailable and
     // linesNeeded
-    int srcCol = 0;
-    int srcLine = 0;
-    int cellsAvailable = 0;
+    var srcCol = 0;
+    var srcLine = 0;
+    var cellsAvailable = 0;
     while (cellsAvailable < cellsNeeded) {
       if (cellsNeeded - cellsAvailable < newCols) {
         // Add the final line and exit the loop
@@ -192,7 +193,7 @@ class ReflowStrategyNarrower extends ReflowStrategy {
       }
 
       srcCol += newCols;
-      int oldTrimmedLength =
+      final oldTrimmedLength =
           ReflowStrategy.getWrappedLineTrimmedLengthFromLines(
               wrappedLines, srcLine, oldCols);
       if (srcCol > oldTrimmedLength) {

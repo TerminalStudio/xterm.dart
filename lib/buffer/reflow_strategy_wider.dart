@@ -33,9 +33,9 @@ class ReflowStrategyWider extends ReflowStrategy {
     // batched up and only committed once
     final toRemove = List<int>.empty(growable: true);
 
-    for (int y = 0; y < lines.length - 1; y++) {
+    for (var y = 0; y < lines.length - 1; y++) {
       // Check if this row is wrapped
-      int i = y;
+      var i = y;
       BufferLine nextLine = lines[++i];
       if (!nextLine.isWrapped) {
         continue;
@@ -59,18 +59,18 @@ class ReflowStrategyWider extends ReflowStrategy {
       }
 
       // Copy buffer data to new locations
-      int destLineIndex = 0;
-      int destCol = ReflowStrategy.getWrappedLineTrimmedLengthFromCircularList(
+      var destLineIndex = 0;
+      var destCol = ReflowStrategy.getWrappedLineTrimmedLengthFromCircularList(
           buffer.lines, destLineIndex, oldCols);
-      int srcLineIndex = 1;
-      int srcCol = 0;
+      var srcLineIndex = 1;
+      var srcCol = 0;
       while (srcLineIndex < wrappedLines.length) {
-        int srcTrimmedTineLength =
+        final srcTrimmedTineLength =
             ReflowStrategy.getWrappedLineTrimmedLengthFromLines(
                 wrappedLines, srcLineIndex, oldCols);
-        int srcRemainingCells = srcTrimmedTineLength - srcCol;
-        int destRemainingCells = newCols - destCol;
-        int cellsToCopy = min(srcRemainingCells, destRemainingCells);
+        final srcRemainingCells = srcTrimmedTineLength - srcCol;
+        final destRemainingCells = newCols - destCol;
+        final cellsToCopy = min(srcRemainingCells, destRemainingCells);
 
         wrappedLines[destLineIndex].copyCellsFrom(
             wrappedLines[srcLineIndex], srcCol, destCol, cellsToCopy);
@@ -104,7 +104,7 @@ class ReflowStrategyWider extends ReflowStrategy {
           .erase(buffer.terminal.cursor, destCol, newCols);
 
       // Work backwards and remove any rows at the end that only contain null cells
-      int countToRemove = 0;
+      var countToRemove = 0;
       for (int ix = wrappedLines.length - 1; ix > 0; ix--) {
         if (ix > destLineIndex ||
             wrappedLines[ix].getTrimmedLength(oldCols) == 0) {
@@ -130,9 +130,9 @@ class ReflowStrategyWider extends ReflowStrategy {
     var layout = new CircularList<int>(lines.length);
 
     // First iterate through the list and get the actual indexes to use for rows
-    int nextToRemoveIndex = 0;
-    int nextToRemoveStart = toRemove[nextToRemoveIndex];
-    int countRemovedSoFar = 0;
+    var nextToRemoveIndex = 0;
+    var nextToRemoveStart = toRemove[nextToRemoveIndex];
+    var countRemovedSoFar = 0;
 
     for (int i = 0; i < lines.length; i++) {
       if (nextToRemoveStart == i) {
@@ -160,7 +160,7 @@ class ReflowStrategyWider extends ReflowStrategy {
 
   void _applyNewLayout(
       CircularList<BufferLine> lines, CircularList<int> newLayout) {
-    var newLayoutLines = new CircularList<BufferLine>(lines.length);
+    var newLayoutLines = CircularList<BufferLine>(lines.length);
 
     for (int i = 0; i < newLayout.length; i++) {
       newLayoutLines.push(lines[newLayout[i]]);
@@ -175,7 +175,7 @@ class ReflowStrategyWider extends ReflowStrategy {
   }
 
   void _adjustViewport(int newCols, int newRows, int countRemoved) {
-    int viewportAdjustments = countRemoved;
+    var viewportAdjustments = countRemoved;
     while (viewportAdjustments-- > 0) {
       if (buffer.lines.length <= buffer.terminal.viewHeight) {
         //cursor is not at the top
