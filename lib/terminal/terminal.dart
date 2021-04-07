@@ -166,7 +166,7 @@ class Terminal with Observable {
   late Buffer _altBuffer;
 
   /// Queue of input characters. addLast() to add, removeFirst() to consume.
-  final _queue = Queue<int>();
+  final _queue = ListQueue<int>(81920);
 
   bool _slowMotion = false;
   bool get slowMotion => _slowMotion;
