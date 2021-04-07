@@ -361,6 +361,7 @@ class Terminal with Observable {
     bool ctrl = false,
     bool alt = false,
     bool shift = false,
+    bool mac = false,
     // bool meta,
   }) {
     debug.onMsg(key);
@@ -402,6 +403,10 @@ class Terminal with Observable {
 
       if (record.appCursorKeys != null &&
           record.appCursorKeys != applicationCursorKeys) {
+        continue;
+      }
+
+      if (record.mac != null && record.mac != mac) {
         continue;
       }
 
