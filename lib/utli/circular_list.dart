@@ -1,11 +1,13 @@
-class CircularList<T> {
-  List<T?> _array;
-  int _length = 0;
-  int _startIndex = 0;
+import 'dart:collection';
+
+class CircularList<T> with ListMixin<T> {
+  CircularList(int maxLength) : _array = List<T?>.filled(maxLength, null);
+
+  late List<T?> _array;
+  var _length = 0;
+  var _startIndex = 0;
 
   Function(int num)? onTrimmed;
-
-  CircularList(int maxLength) : _array = List<T?>.filled(maxLength, null);
 
   // Gets the cyclic index for the specified regular index. The cyclic index can then be used on the
   // backing array to get the element associated with the regular index.
@@ -48,15 +50,15 @@ class CircularList<T> {
     _length = value;
   }
 
-  void forEach(
-    void Function(T? item, int index) callback, [
-    bool includeBuffer = false,
-  ]) {
-    final len = includeBuffer ? _array.length : _length;
-    for (int i = 0; i < len; i++) {
-      callback(_array[_getCyclicIndex(i)], i);
-    }
-  }
+  // void forEach(
+  //   void Function(T? item, int index) callback, [
+  //   bool includeBuffer = false,
+  // ]) {
+  //   final len = includeBuffer ? _array.length : _length;
+  //   for (int i = 0; i < len; i++) {
+  //     callback(_array[_getCyclicIndex(i)], i);
+  //   }
+  // }
 
   T operator [](int index) {
     if (index > length - 1) {
@@ -160,8 +162,4 @@ class CircularList<T> {
   }
 
   bool get isFull => length == maxLength;
-
-  List<T> toList() {
-    return List<T>.generate(length, (index) => this[index]!);
-  }
 }
