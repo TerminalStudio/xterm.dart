@@ -117,7 +117,7 @@ class Buffer {
   /// [Terminal.viewHeight].
   BufferLine getViewLine(int index) {
     index = index.clamp(0, terminal.viewHeight - 1);
-    return lines[convertViewLineToRawLine(index)]!;
+    return lines[convertViewLineToRawLine(index)];
   }
 
   BufferLine get currentLine {
@@ -176,7 +176,7 @@ class Buffer {
     for (var i = height - terminal.viewHeight; i < height; i++) {
       final y = i - scrollOffsetFromBottom;
       if (y >= 0 && y < height) {
-        result.add(lines[y]!);
+        result.add(lines[y]);
       }
     }
 
@@ -454,10 +454,10 @@ class Buffer {
     if (!isInScrollableRegion) {
       final index = convertViewLineToRawLine(_cursorX);
       final newLine = _newEmptyLine();
-      lines.splice(index, 0, [newLine]);
+      lines.insert(index, newLine);
     } else {
       final newLine = _newEmptyLine();
-      lines.splice(_cursorY, 0, [newLine]);
+      lines.insert(_cursorY, newLine);
     }
   }
 
@@ -480,7 +480,7 @@ class Buffer {
       return;
     }
 
-    lines.splice(index, 1, []);
+    lines.remove(index);
   }
 
   void resize(int oldWidth, int oldHeight, int newWidth, int newHeight) {

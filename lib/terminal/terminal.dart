@@ -164,7 +164,7 @@ class Terminal with Observable {
   late Buffer _altBuffer;
 
   /// Queue of input characters. addLast() to add, removeFirst() to consume.
-  final _queue = Queue<int>();
+  final _queue = ListQueue<int>(81920);
 
   bool _slowMotion = false;
   bool get slowMotion => _slowMotion;
@@ -363,6 +363,7 @@ class Terminal with Observable {
     bool ctrl = false,
     bool alt = false,
     bool shift = false,
+    bool mac = false,
     // bool meta,
   }) {
     debug.onMsg(key);
@@ -404,6 +405,10 @@ class Terminal with Observable {
 
       if (record.appCursorKeys != null &&
           record.appCursorKeys != applicationCursorKeys) {
+        continue;
+      }
+
+      if (record.mac != null && record.mac != mac) {
         continue;
       }
 
@@ -451,7 +456,7 @@ class Terminal with Observable {
         break;
       }
 
-      final line = buffer.lines[row]!;
+      final line = buffer.lines[row];
 
       var xStart = 0;
       var xEnd = viewWidth - 1;

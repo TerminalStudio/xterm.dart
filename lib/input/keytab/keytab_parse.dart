@@ -91,6 +91,7 @@ class KeytabParser {
     bool? appCursorKeys;
     bool? appKeyPad;
     bool? newLine;
+    bool? mac;
 
     while (reader.peek()!.type == KeytabTokenType.modeStatus) {
       bool modeStatus;
@@ -141,6 +142,9 @@ class KeytabParser {
         case 'NewLine':
           newLine = modeStatus;
           break;
+        case 'Mac':
+          mac = modeStatus;
+          break;
         default:
           throw ParseError();
       }
@@ -174,6 +178,7 @@ class KeytabParser {
       appCursorKeys: appCursorKeys,
       appKeyPad: appKeyPad,
       newLine: newLine,
+      mac: mac,
     );
 
     _records.add(record);

@@ -1,11 +1,9 @@
 class CircularList<T> {
-  List<T?> _array;
-  int _length = 0;
-  int _startIndex = 0;
-
-  Function(int num)? onTrimmed;
-
   CircularList(int maxLength) : _array = List<T?>.filled(maxLength, null);
+
+  late List<T?> _array;
+  var _length = 0;
+  var _startIndex = 0;
 
   // Gets the cyclic index for the specified regular index. The cyclic index can then be used on the
   // backing array to get the element associated with the regular index.
@@ -27,9 +25,10 @@ class CircularList<T> {
     // Reconstruct array, starting at index 0. Only transfer values from the
     // indexes 0 to length.
     final newArray = List<T?>.generate(
-        value,
-        (index) =>
-            index < _array.length ? _array[_getCyclicIndex(index)] : null);
+      value,
+      (index) => index < _array.length ? _array[_getCyclicIndex(index)] : null,
+    );
+
     _startIndex = 0;
     _array = newArray;
   }
@@ -47,18 +46,26 @@ class CircularList<T> {
     _length = value;
   }
 
-  void forEach(void Function(T? item, int index) callback) {
-    final len = _length;
-    for (int i = 0; i < len; i++) {
-      callback(_array[_getCyclicIndex(i)], i);
+  void forEach(void Function(T item) callback) {
+    final length = _length;
+    for (int i = 0; i < length; i++) {
+      callback(_array[_getCyclicIndex(i)]!);
     }
   }
 
-  T? operator [](int index) {
-    return _array[_getCyclicIndex(index)];
+  T operator [](int index) {
+    if (index >= length) {
+      throw RangeError.range(index, 0, length - 1);
+    }
+
+    return _array[_getCyclicIndex(index)]!;
   }
 
-  operator []=(int index, T? value) {
+  operator []=(int index, T value) {
+    if (index >= length) {
+      throw RangeError.range(index, 0, length - 1);
+    }
+
     _array[_getCyclicIndex(index)] = value;
   }
 
@@ -80,7 +87,6 @@ class CircularList<T> {
       if (_startIndex == _array.length) {
         _startIndex = 0;
       }
-      onTrimmed?.call(1);
     } else {
       _length++;
     }
@@ -91,28 +97,45 @@ class CircularList<T> {
     return _array[_getCyclicIndex(_length-- - 1)]!;
   }
 
-  /// Deletes and/or inserts items at a particular index (in that order).
-  void splice(int start, int deleteCount, List<T> items) {
-    // delete items
-    if (deleteCount > 0) {
-      for (int i = start; i < _length - deleteCount; i++)
-        _array[_getCyclicIndex(i)] = _array[_getCyclicIndex(i + deleteCount)];
-      length -= deleteCount;
+  /// Deletes item at [index].
+  void remove(int index, [int count = 1]) {
+    if (count > 0) {
+      for (var i = index; i < _length - count; i++) {
+        _array[_getCyclicIndex(i)] = _array[_getCyclicIndex(i + count)];
+      }
+      length -= count;
     }
-    if (items.length != 0) {
-      // add items
-      for (int i = _length - 1; i >= start; i--)
-        _array[_getCyclicIndex(i + items.length)] = _array[_getCyclicIndex(i)];
-      for (int i = 0; i < items.length; i++)
-        _array[_getCyclicIndex(start + i)] = items[i];
+  }
+
+  /// Inserts [item] at [index].
+  void insert(int index, T item) {
+    for (var i = _length - 1; i >= index; i--) {
+      _array[_getCyclicIndex(i + 1)] = _array[_getCyclicIndex(i)];
     }
 
-    // Adjust length as needed
+    _array[_getCyclicIndex(index)] = item;
+
+    if (_length + 1 > _array.length) {
+      _startIndex += 1;
+    } else {
+      _length++;
+    }
+  }
+
+  /// Inserts [items] at [index] in order.
+  void insertAll(int index, List<T> items) {
+    for (var i = _length - 1; i >= index; i--) {
+      _array[_getCyclicIndex(i + 1)] = _array[_getCyclicIndex(i)];
+    }
+
+    for (var i = 0; i < items.length; i++) {
+      _array[_getCyclicIndex(index + i)] = items[i];
+    }
+
     if (_length + items.length > _array.length) {
-      int countToTrim = _length + items.length - _array.length;
+      final countToTrim = _length + items.length - _array.length;
       _startIndex += countToTrim;
       length = _array.length;
-      onTrimmed?.call(countToTrim);
     } else {
       _length += items.length;
     }
@@ -120,11 +143,9 @@ class CircularList<T> {
 
   void trimStart(int count) {
     if (count > _length) count = _length;
-
-    // TODO: perhaps bug in original code, this does not clamp the value of startIndex
     _startIndex += count;
+    _startIndex %= _array.length;
     _length -= count;
-    onTrimmed?.call(count);
   }
 
   void shiftElements(int start, int count, int offset) {
@@ -143,7 +164,6 @@ class CircularList<T> {
         while (_length > _array.length) {
           length--;
           _startIndex++;
-          onTrimmed?.call(1);
         }
       }
     } else {
@@ -156,6 +176,6 @@ class CircularList<T> {
   bool get isFull => length == maxLength;
 
   List<T> toList() {
-    return List<T>.generate(length, (index) => this[index]!);
+    return List<T>.generate(length, (index) => this[index]);
   }
 }
