@@ -1,5 +1,3 @@
-import 'dart:collection';
-
 class CircularList<T> {
   CircularList(int maxLength) : _array = List<T?>.filled(maxLength, null);
 
@@ -173,4 +171,8 @@ class CircularList<T> {
   }
 
   bool get isFull => length == maxLength;
+
+  List<T> toList() {
+    return List.generate(length, (index) => this[index]);
+  }
 }
