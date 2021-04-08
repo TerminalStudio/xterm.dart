@@ -158,6 +158,7 @@ class Buffer {
 
   void backspace() {
     if (_cursorX == 0 && currentLine.isWrapped) {
+      currentLine.isWrapped = false;
       movePosition(terminal.viewWidth - 1, -1);
     } else if (_cursorX == terminal.viewWidth) {
       movePosition(-2, 0);
@@ -187,7 +188,9 @@ class Buffer {
     eraseLineFromCursor();
 
     for (var i = _cursorY + 1; i < terminal.viewHeight; i++) {
-      getViewLine(i).erase(terminal.cursor, 0, terminal.viewWidth);
+      final line = getViewLine(i);
+      line.isWrapped = false;
+      line.erase(terminal.cursor, 0, terminal.viewWidth);
     }
   }
 
@@ -195,26 +198,32 @@ class Buffer {
     eraseLineToCursor();
 
     for (var i = 0; i < _cursorY; i++) {
-      getViewLine(i).erase(terminal.cursor, 0, terminal.viewWidth);
+      final line = getViewLine(i);
+      line.isWrapped = false;
+      line.erase(terminal.cursor, 0, terminal.viewWidth);
     }
   }
 
   void eraseDisplay() {
     for (var i = 0; i < terminal.viewHeight; i++) {
       final line = getViewLine(i);
+      line.isWrapped = false;
       line.erase(terminal.cursor, 0, terminal.viewWidth);
     }
   }
 
   void eraseLineFromCursor() {
+    currentLine.isWrapped = false;
     currentLine.erase(terminal.cursor, _cursorX, terminal.viewWidth);
   }
 
   void eraseLineToCursor() {
+    currentLine.isWrapped = false;
     currentLine.erase(terminal.cursor, 0, _cursorX);
   }
 
   void eraseLine() {
+    currentLine.isWrapped = false;
     currentLine.erase(terminal.cursor, 0, terminal.viewWidth);
   }
 
