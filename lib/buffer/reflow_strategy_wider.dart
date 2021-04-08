@@ -10,193 +10,40 @@ class ReflowStrategyWider extends ReflowStrategy {
 
   @override
   void reflow(int newCols, int newRows, int oldCols, int oldRows) {
-    final toRemove = _getLinesToRemove(buffer.lines, oldCols, newCols);
-    if (toRemove.length > 0) {
-      final newLayoutResult = _createNewLayout(buffer.lines, toRemove);
-      _applyNewLayout(buffer.lines, newLayoutResult.layout);
-      _adjustViewport(newCols, newRows, newLayoutResult.removedCount);
-    }
-  }
-
-  /// <summary>
-  /// Evaluates and returns indexes to be removed after a reflow larger occurs. Lines will be removed
-  /// when a wrapped line unwraps.
-  /// </summary>
-  /// <param name="lines">The buffer lines</param>
-  /// <param name="oldCols">The columns before resize</param>
-  /// <param name="newCols">The columns after resize</param>
-  /// <param name="bufferAbsoluteY"></param>
-  /// <param name="nullCharacter"></param>
-  List<int> _getLinesToRemove(
-      CircularList<BufferLine> lines, int oldCols, int newCols) {
-    // Gather all BufferLines that need to be removed from the Buffer here so that they can be
-    // batched up and only committed once
-    final toRemove = List<int>.empty(growable: true);
-
-    for (var y = 0; y < lines.length - 1; y++) {
-      // Check if this row is wrapped
-      var i = y;
-      BufferLine nextLine = lines[++i];
-      if (!nextLine.isWrapped) {
-        continue;
-      }
-
-      // Check how many lines it's wrapped for
-      final wrappedLines = List<BufferLine>.empty(growable: true);
-      wrappedLines.add(lines[y]);
-      while (i < lines.length && nextLine.isWrapped) {
-        wrappedLines.add(nextLine);
-        nextLine = lines[++i];
-      }
-
-      final bufferAbsoluteY = buffer.cursorY + buffer.scrollOffsetFromTop;
-
-      // If these lines contain the cursor don't touch them, the program will handle fixing up wrapped
-      // lines with the cursor
-      if (bufferAbsoluteY >= y && bufferAbsoluteY < i) {
-        y += wrappedLines.length - 1;
-        continue;
-      }
-
-      // Copy buffer data to new locations
-      var destLineIndex = 0;
-      var destCol = ReflowStrategy.getWrappedLineTrimmedLengthFromCircularList(
-          buffer.lines, destLineIndex, oldCols);
-      var srcLineIndex = 1;
-      var srcCol = 0;
-      while (srcLineIndex < wrappedLines.length) {
-        final srcTrimmedTineLength =
-            ReflowStrategy.getWrappedLineTrimmedLengthFromLines(
-                wrappedLines, srcLineIndex, oldCols);
-        final srcRemainingCells = srcTrimmedTineLength - srcCol;
-        final destRemainingCells = newCols - destCol;
-        final cellsToCopy = min(srcRemainingCells, destRemainingCells);
-
-        wrappedLines[destLineIndex].copyCellsFrom(
-            wrappedLines[srcLineIndex], srcCol, destCol, cellsToCopy);
-
-        destCol += cellsToCopy;
-        if (destCol == newCols) {
-          destLineIndex++;
-          destCol = 0;
-        }
-
-        srcCol += cellsToCopy;
-        if (srcCol == srcTrimmedTineLength) {
-          srcLineIndex++;
-          srcCol = 0;
-        }
-
-        // Make sure the last cell isn't wide, if it is copy it to the current dest
-        if (destCol == 0 && destLineIndex != 0) {
-          if (wrappedLines[destLineIndex - 1].cellGetWidth(newCols - 1) == 2) {
-            wrappedLines[destLineIndex].copyCellsFrom(
-                wrappedLines[destLineIndex - 1], newCols - 1, destCol++, 1);
-            // Null out the end of the last row
-            wrappedLines[destLineIndex - 1]
-                .erase(buffer.terminal.cursor, newCols - 1, newCols, false);
-          }
-        }
-      }
-
-      // Clear out remaining cells or fragments could remain;
-      wrappedLines[destLineIndex]
-          .erase(buffer.terminal.cursor, destCol, newCols);
-
-      // Work backwards and remove any rows at the end that only contain null cells
-      var countToRemove = 0;
-      for (int ix = wrappedLines.length - 1; ix > 0; ix--) {
-        if (ix > destLineIndex ||
-            wrappedLines[ix].getTrimmedLength(oldCols) == 0) {
-          countToRemove++;
-        } else {
+    for (var i = 0; i < buffer.lines.length; i++) {
+      final line = buffer.lines[i];
+      for (var offset = 1; i + offset < buffer.lines.length; offset++) {
+        final nextLine = buffer.lines[i + offset];
+        if (!nextLine.isWrapped) {
           break;
         }
-      }
-
-      if (countToRemove > 0) {
-        toRemove.add(y + wrappedLines.length - countToRemove); // index
-        toRemove.add(countToRemove);
-      }
-
-      y += wrappedLines.length - 1;
-    }
-
-    return toRemove;
-  }
-
-  LayoutResult _createNewLayout(
-      CircularList<BufferLine> lines, List<int> toRemove) {
-    var layout = new CircularList<int>(lines.length);
-
-    // First iterate through the list and get the actual indexes to use for rows
-    var nextToRemoveIndex = 0;
-    var nextToRemoveStart = toRemove[nextToRemoveIndex];
-    var countRemovedSoFar = 0;
-
-    for (int i = 0; i < lines.length; i++) {
-      if (nextToRemoveStart == i) {
-        int countToRemove = toRemove[++nextToRemoveIndex];
-
-        // Tell markers that there was a deletion
-        //lines.onDeleteEmitter.fire ({
-        //	index: i - countRemovedSoFar,
-        //	amount: countToRemove
-        //});
-
-        i += countToRemove - 1;
-        countRemovedSoFar += countToRemove;
-
-        nextToRemoveStart = lines.length + 1; //was: int.max
-        if (nextToRemoveIndex < toRemove.length - 1)
-          nextToRemoveStart = toRemove[++nextToRemoveIndex];
-      } else {
-        layout.push(i);
-      }
-    }
-
-    return new LayoutResult(layout, countRemovedSoFar);
-  }
-
-  void _applyNewLayout(
-      CircularList<BufferLine> lines, CircularList<int> newLayout) {
-    var newLayoutLines = CircularList<BufferLine>(lines.length);
-
-    for (int i = 0; i < newLayout.length; i++) {
-      newLayoutLines.push(lines[newLayout[i]]);
-    }
-
-    // Rearrange the list
-    for (int i = 0; i < newLayoutLines.length; i++) {
-      lines[i] = newLayoutLines[i];
-    }
-
-    lines.length = newLayout.length;
-  }
-
-  void _adjustViewport(int newCols, int newRows, int countRemoved) {
-    var viewportAdjustments = countRemoved;
-    while (viewportAdjustments-- > 0) {
-      if (buffer.lines.length <= buffer.terminal.viewHeight) {
-        //cursor is not at the top
-        if (buffer.cursorY > 0) {
-          buffer.moveCursorY(-1);
+        final lineLength = line.getTrimmedLength(oldCols);
+        final spaceOnLine = newCols - lineLength;
+        if (spaceOnLine <= 0) {
+          // no more space to unwrap
+          break;
         }
-        //buffer doesn't have enough lines
-        if (buffer.lines.length < buffer.terminal.viewHeight) {
-          // Add an extra row at the bottom of the viewport
-          buffer.lines.push(BufferLine());
+        final nextLineLength = nextLine.getTrimmedLength(oldCols);
+        final moveCount = min(spaceOnLine, nextLineLength);
+        line.copyCellsFrom(nextLine, 0, lineLength, moveCount);
+        if (moveCount == nextLineLength) {
+          if (i + offset <= buffer.cursorY) {
+            //TODO: adapt scrolling
+            buffer.moveCursorY(-1);
+          }
+          // if we unwrapped all cells off the next line, delete it
+          buffer.lines.remove(i + offset);
+          offset--;
+        } else {
+          // otherwise just remove the characters we moved up a line
+          nextLine.removeN(0, moveCount);
         }
       }
     }
-
-    buffer.adjustSavedCursor(0, -countRemoved);
+    //buffer doesn't have enough lines
+    if (buffer.lines.length < buffer.terminal.viewHeight) {
+      // Add an extra row at the bottom of the viewport
+      buffer.lines.push(BufferLine());
+    }
   }
-}
-
-class LayoutResult {
-  CircularList<int> layout;
-  int removedCount;
-
-  LayoutResult(this.layout, this.removedCount);
 }

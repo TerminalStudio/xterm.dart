@@ -58,6 +58,14 @@ class BufferLine {
     insertN(index, 1);
   }
 
+  void removeN(int index, int count) {
+    final moveView = _cells.buffer.asInt8List((index + count) * _cellSize);
+    _cells.buffer.asInt8List().setAll(index * _cellSize, moveView);
+    final removedView =
+        _cells.buffer.asInt8List((index * _cellSize) + moveView.length);
+    removedView.fillRange(0, removedView.length, 0);
+  }
+
   void insertN(int index, int count) {
     //                       start
     // +--------------------------|-----------------------------------+
@@ -76,7 +84,7 @@ class BufferLine {
 
     // move data forward
     final cells = _cells.buffer.asInt8List();
-    for (var i = _cells.lengthInBytes - offset - 1; i >= start; i++) {
+    for (var i = _cells.lengthInBytes - offset - 1; i >= start; i--) {
       cells[i + offset] = cells[i];
     }
 
