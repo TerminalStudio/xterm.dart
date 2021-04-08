@@ -201,9 +201,13 @@ class BufferLine {
     cellSetFgColor(index, cursor.fg);
     cellSetBgColor(index, cursor.bg);
     cellSetFlags(index, cursor.flags);
+    cellSetWidth(index, 0);
   }
 
-  int getTrimmedLength(int cols) {
+  int getTrimmedLength([int? cols]) {
+    if (cols == null) {
+      cols = _maxCols;
+    }
     for (int i = cols; i >= 0; i--) {
       if (cellGetContent(i) != 0) {
         int length = 0;
@@ -244,5 +248,35 @@ class BufferLine {
     for (var index = start; index < end; index++) {
       cellSetContent(index, 0x00);
     }
+  }
+
+  @override
+  String toString() {
+    final result = StringBuffer();
+    for (int i = 0; i < _maxCols; i++) {
+      final code = cellGetContent(i);
+      if (code == 0) {
+        continue;
+      }
+      result.writeCharCode(code);
+    }
+    return result.toString();
+  }
+
+  String toDebugString(int cols) {
+    final result = StringBuffer();
+    final length = getTrimmedLength();
+    for (int i = 0; i < max(cols, length); i++) {
+      var code = cellGetContent(i);
+      if (code == 0) {
+        if (cellGetWidth(i) == 0) {
+          code = '_'.runes.first;
+        } else {
+          code = cellGetWidth(i).toString().runes.first;
+        }
+      }
+      result.writeCharCode(code);
+    }
+    return result.toString();
   }
 }

@@ -17,14 +17,25 @@ class ReflowStrategyWider extends ReflowStrategy {
         if (!nextLine.isWrapped) {
           break;
         }
-        final lineLength = line.getTrimmedLength(oldCols);
-        final spaceOnLine = newCols - lineLength;
+        final lineLength = line.getTrimmedLength();
+
+        var copyDestIndex = lineLength;
+        if (line.cellGetWidth(copyDestIndex - 1) == 2 &&
+            line.cellGetContent(copyDestIndex) == 0) {
+          //we would override a wide char placeholder => move index one to the right
+          copyDestIndex += 1;
+        }
+
+        final spaceOnLine = newCols - copyDestIndex;
         if (spaceOnLine <= 0) {
           // no more space to unwrap
           break;
         }
-        final nextLineLength = nextLine.getTrimmedLength(oldCols);
+        final nextLineLength = nextLine.getTrimmedLength();
         var moveCount = min(spaceOnLine, nextLineLength);
+        if (moveCount <= 0) {
+          break;
+        }
 
         // when we are about to copy a double width character
         // to the end of the line then we can include the 0 width placeholder
@@ -33,7 +44,7 @@ class ReflowStrategyWider extends ReflowStrategy {
             nextLine.cellGetContent(moveCount) == 0) {
           moveCount += 1;
         }
-        line.copyCellsFrom(nextLine, 0, lineLength, moveCount);
+        line.copyCellsFrom(nextLine, 0, copyDestIndex, moveCount);
         if (moveCount >= nextLineLength) {
           // if we unwrapped all cells off the next line, delete it
           buffer.lines.remove(i + offset);
