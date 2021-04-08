@@ -24,13 +24,17 @@ class ReflowStrategyWider extends ReflowStrategy {
           break;
         }
         final nextLineLength = nextLine.getTrimmedLength(oldCols);
-        final moveCount = min(spaceOnLine, nextLineLength);
+        var moveCount = min(spaceOnLine, nextLineLength);
+
+        // when we are about to copy a double width character
+        // to the end of the line then we can include the 0 width placeholder
+        // after it
+        if (nextLine.cellGetWidth(moveCount - 1) == 2 &&
+            nextLine.cellGetContent(moveCount) == 0) {
+          moveCount += 1;
+        }
         line.copyCellsFrom(nextLine, 0, lineLength, moveCount);
-        if (moveCount == nextLineLength) {
-          if (i + offset <= buffer.cursorY) {
-            //TODO: adapt scrolling
-            buffer.moveCursorY(-1);
-          }
+        if (moveCount >= nextLineLength) {
           // if we unwrapped all cells off the next line, delete it
           buffer.lines.remove(i + offset);
           offset--;
@@ -41,8 +45,7 @@ class ReflowStrategyWider extends ReflowStrategy {
       }
     }
     //buffer doesn't have enough lines
-    if (buffer.lines.length < buffer.terminal.viewHeight) {
-      // Add an extra row at the bottom of the viewport
+    while (buffer.lines.length < buffer.terminal.viewHeight) {
       buffer.lines.push(BufferLine());
     }
   }
