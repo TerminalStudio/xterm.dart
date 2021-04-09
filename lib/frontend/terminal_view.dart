@@ -165,9 +165,9 @@ class _TerminalViewState extends State<TerminalView> {
           onSize(constraints.maxWidth, constraints.maxHeight);
           // use flutter's Scrollable to manage scrolling to better integrate
           // with widgets such as Scrollbar.
-          return NotificationListener<UserScrollNotification>(
-            onNotification: (_) {
-              onScroll(_.metrics.pixels);
+          return NotificationListener<ScrollNotification>(
+            onNotification: (notification) {
+              onScroll(notification.metrics.pixels);
               return false;
             },
             child: Scrollable(
