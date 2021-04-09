@@ -103,6 +103,12 @@ class _TerminalViewState extends State<TerminalView> {
   /// been updated and needs to be syncronized to flutter side.
   double? _terminalScrollExtent;
 
+  /// Keep track of view port building to avoid calling `setState()` during
+  /// layout. During layout `ScrollNotification`s are sometimes dispatched, may
+  /// lead to unexpected calling of `setState()`. This is a temporary patch and
+  /// should be replaced when better approachs are discovered.
+  var _isDuringViewportBuilding = false;
+
   void onTerminalChange() {
     if (!mounted) {
       return;
@@ -173,6 +179,8 @@ class _TerminalViewState extends State<TerminalView> {
             child: Scrollable(
               controller: widget.scrollController,
               viewportBuilder: (context, offset) {
+                _isDuringViewportBuilding = true;
+
                 // set viewport height.
                 offset.applyViewportDimension(constraints.maxHeight);
 
@@ -193,6 +201,8 @@ class _TerminalViewState extends State<TerminalView> {
                   );
                   _terminalScrollExtent = null;
                 }
+
+                _isDuringViewportBuilding = false;
 
                 return buildTerminal(context);
               },
@@ -310,6 +320,10 @@ class _TerminalViewState extends State<TerminalView> {
   void onScroll(double offset) {
     final topOffset = (offset / _cellSize.cellHeight).ceil();
     final bottomOffset = widget.terminal.invisibleHeight - topOffset;
+
+    if (_isDuringViewportBuilding) {
+      return;
+    }
 
     setState(() {
       widget.terminal.buffer.setScrollOffsetFromBottom(bottomOffset);
