@@ -59,37 +59,52 @@ class BufferLine {
   }
 
   void removeN(int index, int count) {
-    final moveView = _cells.buffer.asInt8List((index + count) * _cellSize);
-    _cells.buffer.asInt8List().setAll(index * _cellSize, moveView);
-    final removedView =
-        _cells.buffer.asInt8List((index * _cellSize) + moveView.length);
-    removedView.fillRange(0, removedView.length, 0);
+    const int64PerCell = 2;
+
+    final moveStart = index * int64PerCell;
+    final moveOffset = count * int64PerCell;
+    final moveEnd = (_maxCols - count) * int64PerCell;
+    final bufferEnd = _maxCols * int64PerCell;
+
+    // move data backward
+    final cells = _cells.buffer.asInt64List();
+    for (var i = moveStart; i < moveEnd; i++) {
+      cells[i] = cells[i + moveOffset];
+    }
+
+    // set empty cells to 0
+    for (var i = moveEnd; i < bufferEnd; i++) {
+      cells[i] = 0x00;
+    }
   }
 
   void insertN(int index, int count) {
     //                       start
     // +--------------------------|-----------------------------------+
     // |                          |                                   |
-    // +--------------------------\--\--------------------------------+
+    // +--------------------------\--\--------------------------------+ end
     //                             \  \
     //                              \  \
     //                               v  v
     // +--------------------------|--|--------------------------------+
     // |                          |  |                                |
-    // +--------------------------|--|--------------------------------+
+    // +--------------------------|--|--------------------------------+ end
     //                       start   start+offset
 
-    final start = (index * _cellSize).clamp(0, _cells.lengthInBytes);
-    final offset = (count * _cellSize).clamp(0, _cells.lengthInBytes - start);
+    const int64PerCell = 2;
+
+    final moveStart = index * int64PerCell;
+    final moveOffset = count * int64PerCell;
+    final bufferEnd = _maxCols * int64PerCell;
 
     // move data forward
-    final cells = _cells.buffer.asInt8List();
-    for (var i = _cells.lengthInBytes - offset - 1; i >= start; i--) {
-      cells[i + offset] = cells[i];
+    final cells = _cells.buffer.asInt64List();
+    for (var i = bufferEnd - moveOffset - 1; i >= moveStart; i--) {
+      cells[i + moveOffset] = cells[i];
     }
 
     // set inserted cells to 0
-    for (var i = start; i < start + offset; i++) {
+    for (var i = moveStart; i < moveStart + moveOffset; i++) {
       cells[i] = 0x00;
     }
   }
@@ -226,15 +241,19 @@ class BufferLine {
   }
 
   void copyCellsFrom(BufferLine src, int srcCol, int dstCol, int len) {
-    final dstOffset = dstCol * _cellSize;
-    final srcOffset = srcCol * _cellSize;
-    final byteLen = len * _cellSize;
-
     ensure(dstCol + len);
 
-    final srcCopyView = src._cells.buffer.asUint8List(srcOffset, byteLen);
+    const int64PerCell = 2;
+    final intsToCopy = len * int64PerCell;
 
-    _cells.buffer.asUint8List().setAll(dstOffset, srcCopyView);
+    final srcStart = srcCol * int64PerCell;
+    final dstStart = dstCol * int64PerCell;
+
+    final cells = _cells.buffer.asInt64List();
+    final srcCells = src._cells.buffer.asInt64List();
+    for (var i = 0; i < intsToCopy; i++) {
+      cells[dstStart + i] = srcCells[srcStart + i];
+    }
   }
 
   // int cellGetHash(int index) {
