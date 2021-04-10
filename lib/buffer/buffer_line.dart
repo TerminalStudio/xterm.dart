@@ -16,6 +16,7 @@ import 'package:xterm/terminal/cursor.dart';
 ///      1byte     1byte     1byte      1byte
 
 const _cellSize = 16;
+const _cellSize64Bit = _cellSize >> 3;
 
 const _cellContent = 0;
 const _cellFgColor = 4;
@@ -59,12 +60,10 @@ class BufferLine {
   }
 
   void removeN(int index, int count) {
-    const int64PerCell = 2;
-
-    final moveStart = index * int64PerCell;
-    final moveOffset = count * int64PerCell;
-    final moveEnd = (_maxCols - count) * int64PerCell;
-    final bufferEnd = _maxCols * int64PerCell;
+    final moveStart = index * _cellSize64Bit;
+    final moveOffset = count * _cellSize64Bit;
+    final moveEnd = (_maxCols - count) * _cellSize64Bit;
+    final bufferEnd = _maxCols * _cellSize64Bit;
 
     // move data backward
     final cells = _cells.buffer.asInt64List();
@@ -91,11 +90,9 @@ class BufferLine {
     // +--------------------------|--|--------------------------------+ end
     //                       start   start+offset
 
-    const int64PerCell = 2;
-
-    final moveStart = index * int64PerCell;
-    final moveOffset = count * int64PerCell;
-    final bufferEnd = _maxCols * int64PerCell;
+    final moveStart = index * _cellSize64Bit;
+    final moveOffset = count * _cellSize64Bit;
+    final bufferEnd = _maxCols * _cellSize64Bit;
 
     // move data forward
     final cells = _cells.buffer.asInt64List();
@@ -243,11 +240,10 @@ class BufferLine {
   void copyCellsFrom(BufferLine src, int srcCol, int dstCol, int len) {
     ensure(dstCol + len);
 
-    const int64PerCell = 2;
-    final intsToCopy = len * int64PerCell;
+    final intsToCopy = len * _cellSize64Bit;
 
-    final srcStart = srcCol * int64PerCell;
-    final dstStart = dstCol * int64PerCell;
+    final srcStart = srcCol * _cellSize64Bit;
+    final dstStart = dstCol * _cellSize64Bit;
 
     final cells = _cells.buffer.asInt64List();
     final srcCells = src._cells.buffer.asInt64List();
