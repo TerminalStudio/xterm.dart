@@ -1,10 +1,8 @@
 import 'dart:math';
 
-import 'package:flutter/material.dart';
 import 'package:xterm/buffer/buffer.dart';
 import 'package:xterm/buffer/buffer_line.dart';
 import 'package:xterm/buffer/reflow_strategy.dart';
-import 'package:xterm/utli/circular_list.dart';
 
 class ReflowStrategyNarrower extends ReflowStrategy {
   ReflowStrategyNarrower(Buffer buffer) : super(buffer);
@@ -33,19 +31,37 @@ class ReflowStrategyNarrower extends ReflowStrategy {
           addZero = true;
         }
 
+        var alreadyInserted = 0;
+
+        //when we have aggregated a whole new line then insert it now
+        while (cellsToCopy > newCols) {
+          final newLine = BufferLine(isWrapped: true);
+          newLine.ensure(newCols);
+          newLine.copyCellsFrom(line, moveIndexStart, 0, newCols);
+          // line.clearRange(moveIndexStart, moveIndexStart + newCols);
+          line.removeN(moveIndexStart, newCols);
+
+          buffer.lines.insert(i + 1, newLine);
+
+          cellsToCopy -= newCols;
+          alreadyInserted++;
+        }
+
         // we need to move cut cells to the next line
         // if the next line is wrapped anyway, we can push them onto the beginning of that line
         // otherwise, we need add a new wrapped line
-        if (i + 1 < buffer.lines.length) {
-          final nextLine = buffer.lines[i + 1];
+        final nextLineIndex = i + alreadyInserted + 1;
+        if (nextLineIndex < buffer.lines.length) {
+          final nextLine = buffer.lines[nextLineIndex];
           if (nextLine.isWrapped) {
             final nextLineLength = nextLine.getTrimmedLength();
             nextLine.ensure(nextLineLength + cellsToCopy + (addZero ? 1 : 0));
             nextLine.insertN(0, cellsToCopy + (addZero ? 1 : 0));
             nextLine.copyCellsFrom(line, moveIndexStart, 0, cellsToCopy);
             // clean the cells that we moved
-            line.erase(buffer.terminal.cursor, moveIndexStart,
-                moveIndexStart + cellsToCopy);
+            line.removeN(moveIndexStart, cellsToCopy);
+            // line.erase(buffer.terminal.cursor, moveIndexStart,
+            //     moveIndexStart + cellsToCopy);
             //print('M: ${i < 10 ? '0' : ''}$i: ${line.toDebugString(oldCols)}');
             //print(
             //    'N: ${i + 1 < 10 ? '0' : ''}${i + 1}: ${nextLine.toDebugString(oldCols)}');
@@ -54,12 +70,12 @@ class ReflowStrategyNarrower extends ReflowStrategy {
         }
 
         final newLine = BufferLine(isWrapped: true);
-        newLine.ensure(max(newCols, cellsToCopy));
+        newLine.ensure(newCols);
         newLine.copyCellsFrom(line, moveIndexStart, 0, cellsToCopy);
         // clean the cells that we moved
-        line.erase(buffer.terminal.cursor, moveIndexStart, lineLength);
+        line.removeN(moveIndexStart, cellsToCopy);
 
-        buffer.lines.insert(i + 1, newLine);
+        buffer.lines.insert(nextLineIndex, newLine);
 
         //TODO: scrolling is a bit weird afterwards
 

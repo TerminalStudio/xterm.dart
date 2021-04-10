@@ -51,7 +51,7 @@ class BufferLine {
     final newCells = ByteData(newLengthInBytes);
     newCells.buffer.asInt64List().setAll(0, _cells.buffer.asInt64List());
     _cells = newCells;
-    _maxCols = (newLengthInBytes / _cellSize).floor();
+    _maxCols = newLengthInBytes ~/ _cellSize;
   }
 
   void insert(int index) {
@@ -95,7 +95,7 @@ class BufferLine {
   }
 
   void clear() {
-    removeRange(0, _cells.lengthInBytes ~/ _cellSize);
+    clearRange(0, _cells.lengthInBytes ~/ _cellSize);
   }
 
   void erase(Cursor cursor, int start, int end, [bool resetIsWrapped = false]) {
@@ -106,6 +106,11 @@ class BufferLine {
     if (resetIsWrapped) {
       isWrapped = false;
     }
+  }
+
+  void cellClear(int index) {
+    _cells.setInt64(index * _cellSize, 0x00);
+    _cells.setInt64(index * _cellSize + 8, 0x00);
   }
 
   void cellInitialize(
@@ -134,7 +139,7 @@ class BufferLine {
   }
 
   void cellSetContent(int index, int content) {
-    return _cells.setInt32(index * _cellSize + _cellContent, content);
+    _cells.setInt32(index * _cellSize + _cellContent, content);
   }
 
   int cellGetFgColor(int index) {
@@ -220,7 +225,7 @@ class BufferLine {
     return 0;
   }
 
-  copyCellsFrom(BufferLine src, int srcCol, int dstCol, int len) {
+  void copyCellsFrom(BufferLine src, int srcCol, int dstCol, int len) {
     final dstOffset = dstCol * _cellSize;
     final srcOffset = srcCol * _cellSize;
     final byteLen = len * _cellSize;
@@ -239,14 +244,14 @@ class BufferLine {
   //   return a ^ b;
   // }
 
-  void removeRange(int start, int end) {
+  void clearRange(int start, int end) {
     end = min(end, _maxCols);
     // start = start.clamp(0, _cells.length);
     // end ??= _cells.length;
     // end = end.clamp(start, _cells.length);
     // _cells.removeRange(start, end);
     for (var index = start; index < end; index++) {
-      cellSetContent(index, 0x00);
+      cellClear(index);
     }
   }
 
