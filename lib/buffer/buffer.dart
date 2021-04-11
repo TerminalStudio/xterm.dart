@@ -533,8 +533,7 @@ class Buffer {
   }
 
   BufferLine _newEmptyLine() {
-    final line = BufferLine();
-    line.ensure(terminal.viewWidth);
+    final line = BufferLine(length: terminal.viewWidth);
     return line;
   }
 

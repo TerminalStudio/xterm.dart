@@ -39,8 +39,7 @@ class ReflowStrategyNarrower extends ReflowStrategy {
 
         //when we have aggregated a whole new line then insert it now
         while (cellsToCopy > newCols) {
-          final newLine = BufferLine(isWrapped: true);
-          newLine.ensure(newCols);
+          final newLine = BufferLine(length: newCols, isWrapped: true);
           newLine.copyCellsFrom(line, moveIndexStart, 0, newCols);
           // line.clearRange(moveIndexStart, moveIndexStart + newCols);
           line.removeN(moveIndexStart, newCols);
@@ -74,8 +73,7 @@ class ReflowStrategyNarrower extends ReflowStrategy {
           }
         }
 
-        final newLine = BufferLine(isWrapped: true);
-        newLine.ensure(newCols);
+        final newLine = BufferLine(length: newCols, isWrapped: true);
         newLine.copyCellsFrom(line, moveIndexStart, 0, cellsToCopy);
         // clean the cells that we moved
         line.removeN(moveIndexStart, cellsToCopy);

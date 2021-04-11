@@ -26,8 +26,17 @@ const _cellBgColor = 8;
 const _cellWidth = 12;
 const _cellFlags = 13;
 
+int _nextLength(int lengthRequirement) {
+  var nextLength = 2;
+  while (nextLength < lengthRequirement) {
+    nextLength *= 2;
+  }
+  return nextLength;
+}
+
 class BufferLine {
-  BufferLine({this.isWrapped = false}) {
+  BufferLine({int length = 64, this.isWrapped = false}) {
+    _maxCols = _nextLength(length);
     _cells = ByteData(_maxCols * _cellSize);
   }
 
@@ -39,21 +48,15 @@ class BufferLine {
   int? _currentTrimmedLength;
 
   void ensure(int length) {
-    final expectedLengthInBytes = length * _cellSize;
-
-    if (expectedLengthInBytes < _cells.lengthInBytes) {
+    if (length <= _maxCols) {
       return;
     }
 
-    var newLengthInBytes = _cells.lengthInBytes;
-    while (newLengthInBytes < expectedLengthInBytes) {
-      newLengthInBytes *= 2;
-    }
-
-    final newCells = ByteData(newLengthInBytes);
+    final nextLength = _nextLength(length);
+    final newCells = ByteData(nextLength * _cellSize);
     newCells.buffer.asInt64List().setAll(0, _cells.buffer.asInt64List());
     _cells = newCells;
-    _maxCols = newLengthInBytes ~/ _cellSize;
+    _maxCols = nextLength;
   }
 
   void insert(int index) {
