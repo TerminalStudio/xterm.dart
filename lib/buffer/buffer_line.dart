@@ -149,10 +149,7 @@ class BufferLine {
   }
 
   int cellGetContent(int index) {
-    if (index >= _maxCols) {
-      return 0;
-    }
-    return _cells.getInt32(index * _cellSize + _cellContent);
+    return _cells.getUint32(index * _cellSize + _cellContent);
   }
 
   void cellSetContent(int index, int content) {
@@ -236,10 +233,10 @@ class BufferLine {
     if (cols == null) {
       cols = _maxCols;
     }
-    for (int i = cols; i >= 0; i--) {
+    for (var i = cols - 1; i >= 0; i--) {
       if (cellGetContent(i) != 0) {
-        int length = 0;
-        for (int j = 0; j <= i; j++) {
+        var length = 0;
+        for (var j = 0; j <= i; j++) {
           length += cellGetWidth(j);
         }
         _currentTrimmedLength = length;
@@ -254,7 +251,6 @@ class BufferLine {
     ensure(dstCol + len);
 
     final intsToCopy = len * _cellSize64Bit;
-
     final srcStart = srcCol * _cellSize64Bit;
     final dstStart = dstCol * _cellSize64Bit;
 
