@@ -103,21 +103,13 @@ class _TerminalViewState extends State<TerminalView> {
   /// been updated and needs to be syncronized to flutter side.
   double? _terminalScrollExtent;
 
-  /// Keep track of view port building to avoid calling `setState()` during
-  /// layout. During layout `ScrollNotification`s are sometimes dispatched, may
-  /// lead to unexpected calling of `setState()`. This is a temporary patch and
-  /// should be replaced when better approachs are discovered.
-  var _isDuringViewportBuilding = false;
-
   void onTerminalChange() {
-    if (!mounted) {
-      return;
-    }
-
     _terminalScrollExtent =
         _cellSize.cellHeight * widget.terminal.buffer.scrollOffsetFromTop;
 
-    setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   // listen to oscillator to update mouse blink etc.
@@ -179,7 +171,11 @@ class _TerminalViewState extends State<TerminalView> {
             child: Scrollable(
               controller: widget.scrollController,
               viewportBuilder: (context, offset) {
-                _isDuringViewportBuilding = true;
+                /// use [_EmptyScrollActivity] to suppress unexpected behaviors
+                /// that come from [applyViewportDimension].
+                widget.scrollController.position.beginActivity(
+                  _EmptyScrollActivity(),
+                );
 
                 // set viewport height.
                 offset.applyViewportDimension(constraints.maxHeight);
@@ -201,8 +197,6 @@ class _TerminalViewState extends State<TerminalView> {
                   );
                   _terminalScrollExtent = null;
                 }
-
-                _isDuringViewportBuilding = false;
 
                 return buildTerminal(context);
               },
@@ -279,23 +273,15 @@ class _TerminalViewState extends State<TerminalView> {
     final termWidth = (width / _cellSize.cellWidth).floor();
     final termHeight = (height / _cellSize.cellHeight).floor();
 
-    if (_lastTerminalWidth != termWidth || _lastTerminalHeight != termHeight) {
-      _lastTerminalWidth = termWidth;
-      _lastTerminalHeight = termHeight;
-
-      // print('($termWidth, $termHeight)');
-
-      widget.onResize?.call(termWidth, termHeight);
-
-      SchedulerBinding.instance!.addPostFrameCallback((_) {
-        widget.terminal.resize(termWidth, termHeight);
-        widget.terminal.refresh();
-      });
-
-      // Future.delayed(Duration.zero).then((_) {
-      //   widget.terminal.resize(termWidth, termHeight);
-      // });
+    if (_lastTerminalWidth == termWidth && _lastTerminalHeight == termHeight) {
+      return;
     }
+
+    _lastTerminalWidth = termWidth;
+    _lastTerminalHeight = termHeight;
+
+    widget.onResize?.call(termWidth, termHeight);
+    widget.terminal.resize(termWidth, termHeight);
   }
 
   TextEditingValue? onInput(TextEditingValue value) {
@@ -303,6 +289,7 @@ class _TerminalViewState extends State<TerminalView> {
   }
 
   void onKeyStroke(RawKeyEvent event) {
+    // TODO: find a way to stop scrolling immediately after key stroke.
     widget.inputBehavior.onKeyStroke(event, widget.terminal);
     widget.terminal.buffer.setScrollOffsetFromBottom(0);
   }
@@ -321,10 +308,6 @@ class _TerminalViewState extends State<TerminalView> {
   void onScroll(double offset) {
     final topOffset = (offset / _cellSize.cellHeight).ceil();
     final bottomOffset = widget.terminal.invisibleHeight - topOffset;
-
-    if (_isDuringViewportBuilding) {
-      return;
-    }
 
     setState(() {
       widget.terminal.buffer.setScrollOffsetFromBottom(bottomOffset);
@@ -566,4 +549,29 @@ class TerminalPainter extends CustomPainter {
     /// paint only when the terminal has changed since last paint.
     return terminal.dirty;
   }
+}
+
+/// A scroll activity delegate that does nothing. Used to construct
+/// [_EmptyScrollActivity].
+class _EmptyScrollActivityDelegate implements ScrollActivityDelegate {
+  const _EmptyScrollActivityDelegate();
+
+  final axisDirection = AxisDirection.down;
+
+  double setPixels(double pixels) => 0;
+
+  void applyUserOffset(double delta) {}
+
+  void goIdle() {}
+
+  void goBallistic(double velocity) {}
+}
+
+/// A scroll activity that does nothing. Used to suppress unexpected behaviors
+/// from [Scrollable].
+class _EmptyScrollActivity extends IdleScrollActivity {
+  _EmptyScrollActivity() : super(_EmptyScrollActivityDelegate());
+
+  @override
+  void applyNewDimensions() {}
 }
