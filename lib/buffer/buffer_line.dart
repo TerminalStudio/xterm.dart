@@ -45,7 +45,6 @@ class BufferLine {
   bool isWrapped;
 
   int _maxCols = 64;
-  int? _currentTrimmedLength;
 
   void ensure(int length) {
     if (length <= _maxCols) {
@@ -79,7 +78,6 @@ class BufferLine {
     for (var i = moveEnd; i < bufferEnd; i++) {
       cells[i] = 0x00;
     }
-    _currentTrimmedLength = null;
   }
 
   void insertN(int index, int count) {
@@ -109,7 +107,6 @@ class BufferLine {
     for (var i = moveStart; i < moveStart + moveOffset; i++) {
       cells[i] = 0x00;
     }
-    _currentTrimmedLength = null;
   }
 
   void clear() {
@@ -129,7 +126,6 @@ class BufferLine {
   void cellClear(int index) {
     _cells.setInt64(index * _cellSize, 0x00);
     _cells.setInt64(index * _cellSize + 8, 0x00);
-    _currentTrimmedLength = null;
   }
 
   void cellInitialize(
@@ -144,7 +140,6 @@ class BufferLine {
     _cells.setInt32(cell + _cellBgColor, cursor.bg);
     _cells.setInt8(cell + _cellWidth, width);
     _cells.setInt8(cell + _cellFlags, cursor.flags);
-    _currentTrimmedLength = null;
   }
 
   bool cellHasContent(int index) {
@@ -157,7 +152,6 @@ class BufferLine {
 
   void cellSetContent(int index, int content) {
     _cells.setInt32(index * _cellSize + _cellContent, content);
-    _currentTrimmedLength = null;
   }
 
   int cellGetFgColor(int index) {
@@ -202,7 +196,6 @@ class BufferLine {
 
   void cellSetWidth(int index, int width) {
     _cells.setInt8(index * _cellSize + _cellWidth, width);
-    _currentTrimmedLength = null;
   }
 
   void cellClearFlags(int index) {
@@ -226,27 +219,22 @@ class BufferLine {
     cellSetBgColor(index, cursor.bg);
     cellSetFlags(index, cursor.flags);
     cellSetWidth(index, 0);
-    _currentTrimmedLength = null;
   }
 
   int getTrimmedLength([int? cols]) {
-    if (_currentTrimmedLength != null) {
-      return _currentTrimmedLength!;
-    }
     if (cols == null) {
       cols = _maxCols;
     }
     for (var i = cols - 1; i >= 0; i--) {
       if (cellGetContent(i) != 0) {
-        var length = 0;
-        for (var j = 0; j <= i; j++) {
-          length += cellGetWidth(j);
-        }
-        _currentTrimmedLength = length;
-        return length;
+        // we are at the last cell in this line that has content.
+        // the length of this line is the index of this cell + 1
+        // the only exception is that if that last cell is wider
+        // than 1 then we have to add the diff
+        final lastCellWidth = cellGetWidth(i);
+        return i + lastCellWidth;
       }
     }
-    _currentTrimmedLength = 0;
     return 0;
   }
 
@@ -262,7 +250,6 @@ class BufferLine {
     for (var i = 0; i < intsToCopy; i++) {
       cells[dstStart + i] = srcCells[srcStart + i];
     }
-    _currentTrimmedLength = null;
   }
 
   // int cellGetHash(int index) {

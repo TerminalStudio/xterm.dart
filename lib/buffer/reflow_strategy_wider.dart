@@ -17,7 +17,9 @@ class ReflowStrategyWider extends ReflowStrategy {
         if (!nextLine.isWrapped) {
           break;
         }
-        final lineLength = line.getTrimmedLength();
+        // when we are reflowing wider we can be sure that this line and the next all have equal to or less than
+        // 'newCols' length => we can pass newCols as the upper limit
+        final lineLength = line.getTrimmedLength(newCols);
 
         var copyDestIndex = lineLength;
         if (copyDestIndex >= 1 &&
@@ -32,7 +34,9 @@ class ReflowStrategyWider extends ReflowStrategy {
           // no more space to unwrap
           break;
         }
-        final nextLineLength = nextLine.getTrimmedLength();
+        // when we are reflowing wider we can be sure that this line and the next all have equal to or less than
+        // 'newCols' length => we can pass newCols as the upper limit
+        final nextLineLength = nextLine.getTrimmedLength(newCols);
         var moveCount = min(spaceOnLine, nextLineLength);
         if (moveCount <= 0) {
           break;
