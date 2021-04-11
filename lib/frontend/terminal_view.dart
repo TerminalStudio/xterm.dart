@@ -101,14 +101,12 @@ class _TerminalViewState extends State<TerminalView> {
   double? _terminalScrollExtent;
 
   void onTerminalChange() {
-    if (!mounted) {
-      return;
-    }
-
     _terminalScrollExtent =
         _cellSize.cellHeight * widget.terminal.buffer.scrollOffsetFromTop;
 
-    setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   // listen to oscillator to update mouse blink etc.
@@ -162,14 +160,20 @@ class _TerminalViewState extends State<TerminalView> {
           onSize(constraints.maxWidth, constraints.maxHeight);
           // use flutter's Scrollable to manage scrolling to better integrate
           // with widgets such as Scrollbar.
-          return NotificationListener<UserScrollNotification>(
-            onNotification: (_) {
-              onScroll(_.metrics.pixels);
+          return NotificationListener<ScrollNotification>(
+            onNotification: (notification) {
+              onScroll(notification.metrics.pixels);
               return false;
             },
             child: Scrollable(
               controller: widget.scrollController,
               viewportBuilder: (context, offset) {
+                /// use [_EmptyScrollActivity] to suppress unexpected behaviors
+                /// that come from [applyViewportDimension].
+                widget.scrollController.position.beginActivity(
+                  _EmptyScrollActivity(),
+                );
+
                 // set viewport height.
                 offset.applyViewportDimension(constraints.maxHeight);
 
@@ -290,22 +294,15 @@ class _TerminalViewState extends State<TerminalView> {
     final termWidth = (width / _cellSize.cellWidth).floor();
     final termHeight = (height / _cellSize.cellHeight).floor();
 
-    if (_lastTerminalWidth != termWidth || _lastTerminalHeight != termHeight) {
-      _lastTerminalWidth = termWidth;
-      _lastTerminalHeight = termHeight;
-
-      // print('($termWidth, $termHeight)');
-
-      widget.onResize?.call(termWidth, termHeight);
-
-      SchedulerBinding.instance!.addPostFrameCallback((_) {
-        widget.terminal.resize(termWidth, termHeight);
-      });
-
-      // Future.delayed(Duration.zero).then((_) {
-      //   widget.terminal.resize(termWidth, termHeight);
-      // });
+    if (_lastTerminalWidth == termWidth && _lastTerminalHeight == termHeight) {
+      return;
     }
+
+    _lastTerminalWidth = termWidth;
+    _lastTerminalHeight = termHeight;
+
+    widget.onResize?.call(termWidth, termHeight);
+    widget.terminal.resize(termWidth, termHeight);
   }
 
   TextEditingValue? onInput(TextEditingValue value) {
@@ -313,6 +310,7 @@ class _TerminalViewState extends State<TerminalView> {
   }
 
   void onKeyStroke(RawKeyEvent event) {
+    // TODO: find a way to stop scrolling immediately after key stroke.
     widget.inputBehavior.onKeyStroke(event, widget.terminal);
     widget.terminal.buffer.setScrollOffsetFromBottom(0);
   }
@@ -423,4 +421,29 @@ class _CursorViewState extends State<CursorView> {
   void onOscillatorTick() {
     setState(() {});
   }
+}
+
+/// A scroll activity delegate that does nothing. Used to construct
+/// [_EmptyScrollActivity].
+class _EmptyScrollActivityDelegate implements ScrollActivityDelegate {
+  const _EmptyScrollActivityDelegate();
+
+  final axisDirection = AxisDirection.down;
+
+  double setPixels(double pixels) => 0;
+
+  void applyUserOffset(double delta) {}
+
+  void goIdle() {}
+
+  void goBallistic(double velocity) {}
+}
+
+/// A scroll activity that does nothing. Used to suppress unexpected behaviors
+/// from [Scrollable].
+class _EmptyScrollActivity extends IdleScrollActivity {
+  _EmptyScrollActivity() : super(_EmptyScrollActivityDelegate());
+
+  @override
+  void applyNewDimensions() {}
 }

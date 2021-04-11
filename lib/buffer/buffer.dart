@@ -1,6 +1,8 @@
 import 'dart:math' show max, min;
 
 import 'package:xterm/buffer/buffer_line.dart';
+import 'package:xterm/buffer/reflow_strategy_narrower.dart';
+import 'package:xterm/buffer/reflow_strategy_wider.dart';
 import 'package:xterm/terminal/charset.dart';
 import 'package:xterm/terminal/terminal.dart';
 import 'package:xterm/utli/circular_list.dart';
@@ -87,6 +89,9 @@ class Buffer {
     if (_cursorX >= terminal.viewWidth) {
       newLine();
       setCursorX(0);
+      if (terminal.autoWrapMode) {
+        currentLine.isWrapped = true;
+      }
     }
 
     final line = currentLine;
@@ -153,6 +158,7 @@ class Buffer {
 
   void backspace() {
     if (_cursorX == 0 && currentLine.isWrapped) {
+      currentLine.isWrapped = false;
       movePosition(terminal.viewWidth - 1, -1);
     } else if (_cursorX == terminal.viewWidth) {
       movePosition(-2, 0);
@@ -182,7 +188,9 @@ class Buffer {
     eraseLineFromCursor();
 
     for (var i = _cursorY + 1; i < terminal.viewHeight; i++) {
-      getViewLine(i).erase(terminal.cursor, 0, terminal.viewWidth);
+      final line = getViewLine(i);
+      line.isWrapped = false;
+      line.erase(terminal.cursor, 0, terminal.viewWidth);
     }
   }
 
@@ -190,26 +198,32 @@ class Buffer {
     eraseLineToCursor();
 
     for (var i = 0; i < _cursorY; i++) {
-      getViewLine(i).erase(terminal.cursor, 0, terminal.viewWidth);
+      final line = getViewLine(i);
+      line.isWrapped = false;
+      line.erase(terminal.cursor, 0, terminal.viewWidth);
     }
   }
 
   void eraseDisplay() {
     for (var i = 0; i < terminal.viewHeight; i++) {
       final line = getViewLine(i);
+      line.isWrapped = false;
       line.erase(terminal.cursor, 0, terminal.viewWidth);
     }
   }
 
   void eraseLineFromCursor() {
+    currentLine.isWrapped = false;
     currentLine.erase(terminal.cursor, _cursorX, terminal.viewWidth);
   }
 
   void eraseLineToCursor() {
+    currentLine.isWrapped = false;
     currentLine.erase(terminal.cursor, 0, _cursorX);
   }
 
   void eraseLine() {
+    currentLine.isWrapped = false;
     currentLine.erase(terminal.cursor, 0, terminal.viewWidth);
   }
 
@@ -408,7 +422,7 @@ class Buffer {
   void deleteChars(int count) {
     final start = _cursorX.clamp(0, terminal.viewWidth);
     final end = min(_cursorX + count, terminal.viewWidth);
-    currentLine.removeRange(start, end);
+    currentLine.clearRange(start, end);
   }
 
   void clearScrollback() {
@@ -478,17 +492,18 @@ class Buffer {
     lines.remove(index);
   }
 
-  void resize(int newWidth, int newHeight) {
-    if (newWidth > terminal.viewWidth) {
-      lines.forEach((line) {
-        line.ensure(newWidth);
-      });
+  void resize(int oldWidth, int oldHeight, int newWidth, int newHeight) {
+    if (newWidth > oldWidth) {
+      lines.forEach((item) => item.ensure(newWidth));
     }
 
-    if (newHeight > terminal.viewHeight) {
+    if (newHeight > oldHeight) {
+      while (lines.length < newHeight) {
+        lines.push(_newEmptyLine());
+      }
       // Grow larger
-      for (var i = 0; i < newHeight - terminal.viewHeight; i++) {
-        if (_cursorY < terminal.viewHeight - 1) {
+      for (var i = 0; i < newHeight - oldHeight; i++) {
+        if (_cursorY < oldHeight - 1) {
           lines.push(_newEmptyLine());
         } else {
           _cursorY++;
@@ -496,8 +511,8 @@ class Buffer {
       }
     } else {
       // Shrink smaller
-      for (var i = 0; i < terminal.viewHeight - newHeight; i++) {
-        if (_cursorY < terminal.viewHeight - 1) {
+      for (var i = 0; i < oldHeight - newHeight; i++) {
+        if (_cursorY < oldHeight - 1) {
           lines.pop();
         } else {
           _cursorY++;
@@ -508,11 +523,26 @@ class Buffer {
     // Ensure cursor is within the screen.
     _cursorX = _cursorX.clamp(0, newWidth - 1);
     _cursorY = _cursorY.clamp(0, newHeight - 1);
+
+    if (!terminal.isUsingAltBuffer()) {
+      final reflowStrategy = newWidth > oldWidth
+          ? ReflowStrategyWider(this)
+          : ReflowStrategyNarrower(this);
+      reflowStrategy.reflow(newWidth, newHeight, oldWidth, oldHeight);
+    }
   }
 
   BufferLine _newEmptyLine() {
-    final line = BufferLine();
-    line.ensure(terminal.viewWidth);
+    final line = BufferLine(length: terminal.viewWidth);
     return line;
+  }
+
+  adjustSavedCursor(int dx, int dy) {
+    if (_savedCursorX != null) {
+      _savedCursorX = _savedCursorX! + dx;
+    }
+    if (_savedCursorY != null) {
+      _savedCursorY = _savedCursorY! + dy;
+    }
   }
 }

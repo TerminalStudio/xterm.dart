@@ -90,6 +90,7 @@ class Terminal with Observable {
 
   bool _screenMode = false; // DECSCNM (black on white background)
   bool _autoWrapMode = true;
+  bool get autoWrapMode => _autoWrapMode;
 
   /// ### DECOM – Origin Mode (DEC Private)
   ///
@@ -342,13 +343,14 @@ class Terminal with Observable {
     newWidth = max(newWidth, 1);
     newHeight = max(newHeight, 1);
 
-    buffer.resize(newWidth, newHeight);
-
-    // maybe reflow should happen here.
-
+    final oldWidth = _viewWidth;
+    final oldHeight = _viewHeight;
     _viewWidth = newWidth;
     _viewHeight = newHeight;
 
+    buffer.resize(oldWidth, oldHeight, newWidth, newHeight);
+
+    // maybe reflow should happen here.
     if (buffer == _altBuffer) {
       buffer.clearScrollback();
     }
