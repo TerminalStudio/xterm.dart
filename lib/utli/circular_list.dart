@@ -173,6 +173,21 @@ class CircularList<T> {
     }
   }
 
+  void replaceWith(List<T> replacement) {
+    var copyStart = 0;
+    if (replacement.length > maxLength) {
+      copyStart = replacement.length - maxLength;
+    }
+
+    final copyLength = replacement.length - copyStart;
+    for (var i = 0; i < copyLength; i++) {
+      _array[i] = replacement[copyStart + i];
+    }
+
+    _startIndex = 0;
+    _length = copyLength;
+  }
+
   bool get isFull => length == maxLength;
 
   List<T> toList() {

@@ -9,10 +9,14 @@ class ReflowStrategyNarrower extends ReflowStrategy {
 
   @override
   void reflow(int newCols, int newRows, int oldCols, int oldRows) {
+    final linesAfterReflow = <BufferLine>[];
+
     //print('Reflow narrower $oldCols -> $newCols');
     for (var i = 0; i < buffer.lines.length; i++) {
       final line = buffer.lines[i];
       final lineLength = line.getTrimmedLength();
+      linesAfterReflow.add(line);
+
       if (lineLength > newCols) {
         var moveIndexStart = newCols;
         var cellsToCopy = lineLength - newCols;
@@ -31,7 +35,7 @@ class ReflowStrategyNarrower extends ReflowStrategy {
           addZero = true;
         }
 
-        var alreadyInserted = 0;
+        // var alreadyInserted = 0;
 
         //when we have aggregated a whole new line then insert it now
         while (cellsToCopy > newCols) {
@@ -41,16 +45,17 @@ class ReflowStrategyNarrower extends ReflowStrategy {
           // line.clearRange(moveIndexStart, moveIndexStart + newCols);
           line.removeN(moveIndexStart, newCols);
 
-          buffer.lines.insert(i + 1, newLine);
+          linesAfterReflow.add(newLine);
 
           cellsToCopy -= newCols;
-          alreadyInserted++;
+          // alreadyInserted++;
         }
 
         // we need to move cut cells to the next line
         // if the next line is wrapped anyway, we can push them onto the beginning of that line
         // otherwise, we need add a new wrapped line
-        final nextLineIndex = i + alreadyInserted + 1;
+        // final nextLineIndex = i + alreadyInserted + 1;
+        final nextLineIndex = i + 1;
         if (nextLineIndex < buffer.lines.length) {
           final nextLine = buffer.lines[nextLineIndex];
           if (nextLine.isWrapped) {
@@ -75,7 +80,7 @@ class ReflowStrategyNarrower extends ReflowStrategy {
         // clean the cells that we moved
         line.removeN(moveIndexStart, cellsToCopy);
 
-        buffer.lines.insert(nextLineIndex, newLine);
+        linesAfterReflow.add(newLine);
 
         //TODO: scrolling is a bit weird afterwards
 
@@ -84,5 +89,7 @@ class ReflowStrategyNarrower extends ReflowStrategy {
         //print('N: ${i < 10 ? '0' : ''}$i: ${line.toDebugString(oldCols)}');
       }
     }
+
+    buffer.lines.replaceWith(linesAfterReflow);
   }
 }
