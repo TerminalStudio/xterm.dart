@@ -41,9 +41,7 @@ class ReflowStrategyWider extends ReflowStrategy {
         // when we are about to copy a double width character
         // to the end of the line then we just ignore it as the target width
         // would be too much
-        if (moveCount >= 2 &&
-            nextLine.cellGetWidth(moveCount - 1) == 2 &&
-            nextLine.cellGetContent(moveCount - 2) == 0) {
+        if (nextLine.cellGetWidth(moveCount - 1) == 2) {
           moveCount -= 1;
         }
         line.copyCellsFrom(nextLine, 0, copyDestIndex, moveCount);
