@@ -289,6 +289,7 @@ class _TerminalViewState extends State<TerminalView> {
 
       SchedulerBinding.instance!.addPostFrameCallback((_) {
         widget.terminal.resize(termWidth, termHeight);
+        widget.terminal.refresh();
       });
 
       // Future.delayed(Duration.zero).then((_) {
