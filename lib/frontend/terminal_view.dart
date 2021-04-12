@@ -554,10 +554,15 @@ class TerminalPainter extends CustomPainter {
 }
 
 /// A scroll activity that does nothing. Used to suppress unexpected behaviors
-/// from [Scrollable].
+/// from [Scrollable] during viewport building process.
 class _EmptyScrollActivity extends IdleScrollActivity {
   _EmptyScrollActivity(ScrollActivityDelegate delegate) : super(delegate);
 
   @override
   void applyNewDimensions() {}
+
+  /// set [isScrolling] to ture to prevent flutter from calling the old scroll
+  /// activity.
+  @override
+  final isScrolling = true;
 }
