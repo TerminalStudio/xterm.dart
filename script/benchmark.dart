@@ -114,4 +114,3 @@ class BenchmarkWriteBuffer extends Benchmark {
     }
   }
 }
-
