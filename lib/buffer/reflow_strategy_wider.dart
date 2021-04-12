@@ -9,9 +9,14 @@ class ReflowStrategyWider extends ReflowStrategy {
 
   @override
   void reflow(int newCols, int newRows, int oldCols, int oldRows) {
+    final linesAfterReflow = <BufferLine>[];
+
     for (var i = 0; i < buffer.lines.length; i++) {
       final line = buffer.lines[i];
       line.ensure(newCols);
+      linesAfterReflow.add(line);
+
+      var linesToSkip = 0;
       for (var offset = 1; i + offset < buffer.lines.length; offset++) {
         final nextLine = buffer.lines[i + offset];
         if (!nextLine.isWrapped) {
@@ -50,18 +55,22 @@ class ReflowStrategyWider extends ReflowStrategy {
         }
         line.copyCellsFrom(nextLine, 0, copyDestIndex, moveCount);
         if (moveCount >= nextLineLength) {
-          // if we unwrapped all cells off the next line, delete it
-          buffer.lines.remove(i + offset);
-          offset--;
+          // if we unwrapped all cells off the next line, skip it
+          linesToSkip++;
         } else {
           // otherwise just remove the characters we moved up a line
           nextLine.removeN(0, moveCount);
         }
       }
+
+      // skip empty lines.
+      i += linesToSkip;
     }
     //buffer doesn't have enough lines
-    while (buffer.lines.length < buffer.terminal.viewHeight) {
-      buffer.lines.push(BufferLine());
+    while (linesAfterReflow.length < buffer.terminal.viewHeight) {
+      linesAfterReflow.add(BufferLine(length: buffer.terminal.viewWidth));
     }
+
+    buffer.lines.replaceWith(linesAfterReflow);
   }
 }

@@ -1,3 +1,5 @@
+## [2.2.0-pre] - 2021-4-12
+
 ## [2.1.0-pre] - 2021-3-20
 * Better support for resizing and scrolling.
 * Reflow support (in progress [#13](https://github.com/TerminalStudio/xterm.dart/pull/13)), thanks [@devmil](https://github.com/devmil).
