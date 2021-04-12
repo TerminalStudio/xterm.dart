@@ -5,9 +5,9 @@ import 'package:xterm/buffer/reflow_strategy_narrower.dart';
 import 'package:xterm/buffer/reflow_strategy_wider.dart';
 import 'package:xterm/terminal/charset.dart';
 import 'package:xterm/terminal/terminal.dart';
-import 'package:xterm/utli/circular_list.dart';
-import 'package:xterm/utli/scroll_range.dart';
-import 'package:xterm/utli/unicode_v11.dart';
+import 'package:xterm/util/circular_list.dart';
+import 'package:xterm/util/scroll_range.dart';
+import 'package:xterm/util/unicode_v11.dart';
 
 class Buffer {
   Buffer(this.terminal) {

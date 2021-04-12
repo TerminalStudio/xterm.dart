@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:xterm/terminal/modes.dart';
 import 'package:xterm/terminal/sgr.dart';
 import 'package:xterm/terminal/terminal.dart';
-import 'package:xterm/utli/lookup_table.dart';
+import 'package:xterm/util/lookup_table.dart';
 
 typedef CsiSequenceHandler = void Function(CSI, Terminal);
 

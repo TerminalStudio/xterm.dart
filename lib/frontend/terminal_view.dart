@@ -18,8 +18,8 @@ import 'package:xterm/frontend/cache.dart';
 import 'package:xterm/mouse/position.dart';
 import 'package:xterm/terminal/terminal.dart';
 import 'package:xterm/theme/terminal_style.dart';
-import 'package:xterm/utli/bit_flags.dart';
-import 'package:xterm/utli/hash_values.dart';
+import 'package:xterm/util/bit_flags.dart';
+import 'package:xterm/util/hash_values.dart';
 
 typedef TerminalResizeHandler = void Function(int width, int height);
 

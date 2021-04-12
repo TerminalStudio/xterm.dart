@@ -2,7 +2,7 @@ import 'package:xterm/buffer/cell_flags.dart';
 import 'package:xterm/theme/terminal_color.dart';
 import 'package:xterm/terminal/csi.dart';
 import 'package:xterm/terminal/terminal.dart';
-import 'package:xterm/utli/lookup_table.dart';
+import 'package:xterm/util/lookup_table.dart';
 
 /// SGR selects one or more character attributes at the same time.
 /// Multiple params (up to 32) are applied from in order from left to right.

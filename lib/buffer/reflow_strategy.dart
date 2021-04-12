@@ -1,6 +1,6 @@
 import 'package:xterm/buffer/buffer.dart';
 import 'package:xterm/buffer/buffer_line.dart';
-import 'package:xterm/utli/circular_list.dart';
+import 'package:xterm/util/circular_list.dart';
 
 abstract class ReflowStrategy {
   final Buffer _buffer;

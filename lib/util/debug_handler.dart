@@ -1,6 +1,6 @@
 import 'package:convert/convert.dart';
 import 'package:xterm/terminal/csi.dart';
-import 'package:xterm/utli/ansi_color.dart';
+import 'package:xterm/util/ansi_color.dart';
 
 class DebugHandler {
   final _buffer = StringBuffer();
