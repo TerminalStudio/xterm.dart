@@ -171,11 +171,15 @@ class _TerminalViewState extends State<TerminalView> {
             child: Scrollable(
               controller: widget.scrollController,
               viewportBuilder: (context, offset) {
+                final position = widget.scrollController.position;
+
                 /// use [_EmptyScrollActivity] to suppress unexpected behaviors
                 /// that come from [applyViewportDimension].
-                widget.scrollController.position.beginActivity(
-                  _EmptyScrollActivity(),
-                );
+                if (position is ScrollActivityDelegate) {
+                  position.beginActivity(
+                    _EmptyScrollActivity(position as ScrollActivityDelegate),
+                  );
+                }
 
                 // set viewport height.
                 offset.applyViewportDimension(constraints.maxHeight);
@@ -190,11 +194,9 @@ class _TerminalViewState extends State<TerminalView> {
                 // set how much the terminal can scroll
                 offset.applyContentDimensions(minScrollExtent, maxScrollExtent);
 
-                // syncronize terminal scroll extent to ScrollController
+                // syncronize pending terminal scroll extent to ScrollController
                 if (_terminalScrollExtent != null) {
-                  widget.scrollController.position.correctPixels(
-                    _terminalScrollExtent!,
-                  );
+                  position.correctPixels(_terminalScrollExtent!);
                   _terminalScrollExtent = null;
                 }
 
@@ -551,26 +553,10 @@ class TerminalPainter extends CustomPainter {
   }
 }
 
-/// A scroll activity delegate that does nothing. Used to construct
-/// [_EmptyScrollActivity].
-class _EmptyScrollActivityDelegate implements ScrollActivityDelegate {
-  const _EmptyScrollActivityDelegate();
-
-  final axisDirection = AxisDirection.down;
-
-  double setPixels(double pixels) => 0;
-
-  void applyUserOffset(double delta) {}
-
-  void goIdle() {}
-
-  void goBallistic(double velocity) {}
-}
-
 /// A scroll activity that does nothing. Used to suppress unexpected behaviors
 /// from [Scrollable].
 class _EmptyScrollActivity extends IdleScrollActivity {
-  _EmptyScrollActivity() : super(_EmptyScrollActivityDelegate());
+  _EmptyScrollActivity(ScrollActivityDelegate delegate) : super(delegate);
 
   @override
   void applyNewDimensions() {}
