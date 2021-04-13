@@ -100,6 +100,9 @@ class CircularList<T> {
   /// Deletes item at [index].
   void remove(int index, [int count = 1]) {
     if (count > 0) {
+      if (index + count >= _length) {
+        count = _length - index;
+      }
       for (var i = index; i < _length - count; i++) {
         _array[_getCyclicIndex(i)] = _array[_getCyclicIndex(i + count)];
       }
@@ -109,6 +112,11 @@ class CircularList<T> {
 
   /// Inserts [item] at [index].
   void insert(int index, T item) {
+    if (index == 0 && _length >= _array.length) {
+      // when something is inserted at index 0 and the list is full then
+      // the new value immediately gets removed => nothing changes
+      return;
+    }
     for (var i = _length - 1; i >= index; i--) {
       _array[_getCyclicIndex(i + 1)] = _array[_getCyclicIndex(i)];
     }
@@ -124,20 +132,16 @@ class CircularList<T> {
 
   /// Inserts [items] at [index] in order.
   void insertAll(int index, List<T> items) {
-    for (var i = _length - 1; i >= index; i--) {
-      _array[_getCyclicIndex(i + 1)] = _array[_getCyclicIndex(i)];
-    }
-
-    for (var i = 0; i < items.length; i++) {
-      _array[_getCyclicIndex(index + i)] = items[i];
-    }
-
-    if (_length + items.length > _array.length) {
-      final countToTrim = _length + items.length - _array.length;
-      _startIndex += countToTrim;
-      length = _array.length;
-    } else {
-      _length += items.length;
+    for (var i = items.length - 1; i >= 0; i--) {
+      insert(index, items[i]);
+      // when the list is full then we have to move the index down
+      // as newly inserted values remove values with a lower index
+      if (_length >= _array.length) {
+        index--;
+        if (index < 0) {
+          return;
+        }
+      }
     }
   }
 

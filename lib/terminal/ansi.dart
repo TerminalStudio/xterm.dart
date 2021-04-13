@@ -3,7 +3,7 @@ import 'dart:collection';
 import 'package:xterm/terminal/csi.dart';
 import 'package:xterm/terminal/osc.dart';
 import 'package:xterm/terminal/terminal.dart';
-import 'package:xterm/utli/lookup_table.dart';
+import 'package:xterm/util/lookup_table.dart';
 
 /// Handler of terminal sequences. Returns true if the sequence is consumed,
 /// false to indicate that the sequence is not completed and no charater is

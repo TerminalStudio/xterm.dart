@@ -1,8 +1,13 @@
-**[xterm.dart 1.0.0+](https://pub.dev/packages/xterm) is available! 🎉**
 
 ## xterm.dart
 
 <p>
+    <a href="https://github.com/TerminalStudio/xterm.dart/actions/workflows/ci.yml">
+      <img alt="Actions" src="https://github.com/TerminalStudio/xterm.dart/actions/workflows/ci.yml/badge.svg">
+    </a>
+    <a href="https://pub.dev/packages/xterm">
+      <img alt="Package version" src="https://img.shields.io/pub/v/xterm?color=blue&include_prereleases">
+    </a>
     <img alt="GitHub repo size" src="https://img.shields.io/github/repo-size/TerminalStudio/xterm.dart">
     <img alt="GitHub issues" src="https://img.shields.io/github/issues-raw/TerminalStudio/xterm.dart">
     <img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr/TerminalStudio/xterm.dart">
@@ -49,7 +54,7 @@
 ```yml
 dependencies:
   ...
-  xterm: ^2.0.0
+  xterm: ^2.2.0-pre
 ```
 
 **2.** Create the terminal:

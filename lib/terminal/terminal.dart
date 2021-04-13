@@ -17,8 +17,8 @@ import 'package:xterm/terminal/tabs.dart';
 import 'package:xterm/theme/terminal_color.dart';
 import 'package:xterm/theme/terminal_theme.dart';
 import 'package:xterm/theme/terminal_themes.dart';
-import 'package:xterm/utli/debug_handler.dart';
-import 'package:xterm/utli/observable.dart';
+import 'package:xterm/util/debug_handler.dart';
+import 'package:xterm/util/observable.dart';
 
 typedef TerminalInputHandler = void Function(String);
 typedef BellHandler = void Function();
