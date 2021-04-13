@@ -422,7 +422,7 @@ class Buffer {
   void deleteChars(int count) {
     final start = _cursorX.clamp(0, terminal.viewWidth);
     final end = min(_cursorX + count, terminal.viewWidth);
-    currentLine.clearRange(start, end);
+    currentLine.removeRange(start, end);
   }
 
   void clearScrollback() {
