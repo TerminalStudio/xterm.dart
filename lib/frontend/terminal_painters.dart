@@ -15,13 +15,11 @@ class TerminalPainter extends CustomPainter {
   TerminalPainter({
     required this.terminal,
     required this.style,
-    required this.blinkOscillator,
     required this.charSize,
   });
 
   final Terminal terminal;
   final TerminalStyle style;
-  final Oscillator blinkOscillator;
   final CellSize charSize;
 
   @override
