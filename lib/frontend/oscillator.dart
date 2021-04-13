@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:xterm/utli/observable.dart';
+import 'package:xterm/util/observable.dart';
 
 class Oscillator with Observable {
   Oscillator(this.duration);
