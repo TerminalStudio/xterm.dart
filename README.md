@@ -3,7 +3,10 @@
 
 <p>
     <a href="https://github.com/TerminalStudio/xterm.dart/actions/workflows/ci.yml">
-    <img alt="Actions" src="https://github.com/TerminalStudio/xterm.dart/actions/workflows/ci.yml/badge.svg">
+      <img alt="Actions" src="https://github.com/TerminalStudio/xterm.dart/actions/workflows/ci.yml/badge.svg">
+    </a>
+    <a href="https://pub.dev/packages/xterm">
+      <img alt="Package version" src="https://img.shields.io/pub/v/xterm?color=blue&include_prereleases">
     </a>
     <img alt="GitHub repo size" src="https://img.shields.io/github/repo-size/TerminalStudio/xterm.dart">
     <img alt="GitHub issues" src="https://img.shields.io/github/issues-raw/TerminalStudio/xterm.dart">
