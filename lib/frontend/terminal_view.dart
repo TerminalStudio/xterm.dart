@@ -98,10 +98,10 @@ class _TerminalViewState extends State<TerminalView> {
 
   /// Scroll position from the terminal. Not null if terminal scroll extent has
   /// been updated and needs to be syncronized to flutter side.
-  double? _terminalScrollExtent;
+  double? _pendingTerminalScrollExtent;
 
   void onTerminalChange() {
-    _terminalScrollExtent =
+    _pendingTerminalScrollExtent =
         _cellSize.cellHeight * widget.terminal.buffer.scrollOffsetFromTop;
 
     if (mounted) {
@@ -192,9 +192,9 @@ class _TerminalViewState extends State<TerminalView> {
                 offset.applyContentDimensions(minScrollExtent, maxScrollExtent);
 
                 // syncronize pending terminal scroll extent to ScrollController
-                if (_terminalScrollExtent != null) {
-                  position.correctPixels(_terminalScrollExtent!);
-                  _terminalScrollExtent = null;
+                if (_pendingTerminalScrollExtent != null) {
+                  position.correctPixels(_pendingTerminalScrollExtent!);
+                  _pendingTerminalScrollExtent = null;
                 }
 
                 return buildTerminal(context);
@@ -244,7 +244,6 @@ class _TerminalViewState extends State<TerminalView> {
               painter: TerminalPainter(
                 terminal: widget.terminal,
                 style: widget.style,
-                blinkOscillator: blinkOscillator,
                 charSize: _cellSize,
               ),
             ),
