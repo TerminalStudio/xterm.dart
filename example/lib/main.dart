@@ -43,6 +43,11 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void onInput(String input) {
+    // in a "real" terminal emulation you would connect onInput to the backend
+    // (like a pty or ssh connection) that then handles the changes in the
+    // terminal.
+    // As we don't have a connected backend here we simulate the changes by
+    // directly writing to the terminal.
     if (input == '\r') {
       terminal.write('\r\n');
       terminal.write('\$ ');
@@ -50,7 +55,6 @@ class _MyHomePageState extends State<MyHomePage> {
       terminal.buffer.eraseCharacters(1);
       terminal.buffer.backspace();
       terminal.refresh();
-      return;
     } else {
       terminal.write(input);
     }
