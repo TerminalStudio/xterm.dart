@@ -33,7 +33,10 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    terminal = Terminal(onInput: onInput);
+    terminal = Terminal(
+      onInput: onInput,
+      maxLines: 10000,
+    );
     terminal.write('xterm.dart demo');
     terminal.write('\r\n');
     terminal.write('\$ ');
@@ -43,6 +46,11 @@ class _MyHomePageState extends State<MyHomePage> {
     if (input == '\r') {
       terminal.write('\r\n');
       terminal.write('\$ ');
+    } else if (input.codeUnitAt(0) == 127) {
+      terminal.buffer.eraseCharacters(1);
+      terminal.buffer.backspace();
+      terminal.refresh();
+      return;
     } else {
       terminal.write(input);
     }
