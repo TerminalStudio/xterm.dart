@@ -4,10 +4,10 @@ import 'dart:math' show max, min;
 import 'package:xterm/buffer/buffer.dart';
 import 'package:xterm/buffer/buffer_line.dart';
 import 'package:xterm/mouse/selection.dart';
-import 'package:xterm/input/keys.dart';
-import 'package:xterm/input/keytab/keytab.dart';
-import 'package:xterm/input/keytab/keytab_escape.dart';
-import 'package:xterm/input/keytab/keytab_record.dart';
+import 'package:xterm/keyboard/keys.dart';
+import 'package:xterm/keyboard/keytab/keytab.dart';
+import 'package:xterm/keyboard/keytab/keytab_escape.dart';
+import 'package:xterm/keyboard/keytab/keytab_record.dart';
 import 'package:xterm/mouse/mouse_mode.dart';
 import 'package:xterm/terminal/ansi.dart';
 import 'package:xterm/terminal/cursor.dart';
@@ -358,7 +358,9 @@ class Terminal with Observable {
     buffer.resetVerticalMargins();
   }
 
-  void keyInput(
+  /// Sends a keyboard input to the terminal. Returns [true] if the keyboard
+  /// input is handled.
+  bool keyInput(
     TerminalKey key, {
     bool ctrl = false,
     bool alt = false,
@@ -421,7 +423,7 @@ class Terminal with Observable {
         debug.onMsg('input: ${record.action.value}');
         final input = keytabUnescape(record.action.value);
         onInput(input);
-        return;
+        return true;
       }
     }
 
@@ -430,7 +432,7 @@ class Terminal with Observable {
           key.index <= TerminalKey.keyZ.index) {
         final input = key.index - TerminalKey.keyA.index + 1;
         onInput(String.fromCharCode(input));
-        return;
+        return true;
       }
     }
 
@@ -439,9 +441,11 @@ class Terminal with Observable {
           key.index <= TerminalKey.keyZ.index) {
         final input = [0x1b, key.index - TerminalKey.keyA.index + 65];
         onInput(String.fromCharCodes(input));
-        return;
+        return true;
       }
     }
+
+    return false;
   }
 
   String? getSelectedText() {

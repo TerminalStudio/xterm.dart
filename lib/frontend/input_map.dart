@@ -1,5 +1,5 @@
 import 'package:flutter/services.dart';
-import 'package:xterm/input/keys.dart';
+import 'package:xterm/keyboard/keys.dart';
 
 final _idKeyMap = {
   LogicalKeyboardKey.none.keyId: TerminalKey.none,

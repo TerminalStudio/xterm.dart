@@ -14,22 +14,24 @@ class InputBehaviorDefault extends InputBehavior {
   TextEditingValue get initEditingState => TextEditingValue.empty;
 
   @override
-  void onKeyStroke(RawKeyEvent event, Terminal terminal) {
+  bool onKeyStroke(RawKeyEvent event, Terminal terminal) {
     if (event is! RawKeyDownEvent) {
-      return;
+      return false;
     }
 
     final key = inputMap(event.logicalKey);
 
-    if (key != null) {
-      terminal.keyInput(
-        key,
-        ctrl: event.isControlPressed,
-        alt: event.isAltPressed,
-        shift: event.isShiftPressed,
-        mac: terminal.platform.useMacInputBehavior,
-      );
+    if (key == null) {
+      return false;
     }
+
+    return terminal.keyInput(
+      key,
+      ctrl: event.isControlPressed,
+      alt: event.isAltPressed,
+      shift: event.isShiftPressed,
+      mac: terminal.platform.useMacInputBehavior,
+    );
   }
 
   @override
