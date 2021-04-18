@@ -1,4 +1,4 @@
-import 'package:xterm/input/keys.dart';
+import 'package:xterm/keyboard/keys.dart';
 
 enum KeytabActionType {
   input,

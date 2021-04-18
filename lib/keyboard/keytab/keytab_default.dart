@@ -1,5 +1,5 @@
-import 'package:xterm/input/keytab/keytab_parse.dart';
-import 'package:xterm/input/keytab/keytab_token.dart';
+import 'package:xterm/keyboard/keytab/keytab_parse.dart';
+import 'package:xterm/keyboard/keytab/keytab_token.dart';
 
 const kDefaultKeytab = r'''
 # [README.default.Keytab] Default Keyboard Table
