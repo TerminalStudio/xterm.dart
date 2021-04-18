@@ -5,7 +5,7 @@ import 'package:xterm/buffer/cell_flags.dart';
 import 'package:xterm/mouse/position.dart';
 import 'package:xterm/terminal/terminal.dart';
 import 'package:xterm/theme/terminal_style.dart';
-import 'package:xterm/utli/bit_flags.dart';
+import 'package:xterm/util/bit_flags.dart';
 
 import 'char_size.dart';
 import 'oscillator.dart';
