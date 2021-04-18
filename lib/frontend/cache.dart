@@ -12,15 +12,6 @@ class TextLayoutCache {
     return _cache[key];
   }
 
-  // TextPainter getOrPerformLayout(TextSpan text, int key) {
-  //   final cachedPainter = _cache[key];
-  //   if (cachedPainter != null) {
-  //     return cachedPainter;
-  //   } else {
-  //     return performAndCacheLayout(text, key);
-  //   }
-  // }
-
   TextPainter performAndCacheLayout(TextSpan text, int key) {
     final textPainter = TextPainter(text: text, textDirection: textDirection);
     textPainter.layout();
@@ -36,29 +27,3 @@ class TextLayoutCache {
 }
 
 final textLayoutCache = TextLayoutCache(TextDirection.ltr, 10240);
-
-// class CodePointCache {
-//   CodePointCache(int maximumSize)
-//       : _cache = LruMap<int, String>(maximumSize: maximumSize);
-
-//   final LruMap<int, String> _cache;
-
-//   String getOrConstruct(int codePoint) {
-//     final cachedString = _cache[codePoint];
-//     if (cachedString != null) {
-//       return cachedString;
-//     } else {
-//       return _constructAndCacheString(codePoint);
-//     }
-//   }
-
-//   String _constructAndCacheString(int codePoint) {
-//     final string = String.fromCharCode(codePoint);
-
-//     _cache[codePoint] = string;
-
-//     return string;
-//   }
-// }
-
-// final codePointCache = CodePointCache(1024);
