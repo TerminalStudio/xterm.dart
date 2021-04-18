@@ -565,4 +565,16 @@ class _EmptyScrollActivity extends IdleScrollActivity {
   /// activity.
   @override
   final isScrolling = true;
+
+  void dispatchScrollStartNotification(
+      ScrollMetrics metrics, BuildContext? context) {}
+
+  void dispatchScrollUpdateNotification(
+      ScrollMetrics metrics, BuildContext context, double scrollDelta) {}
+
+  void dispatchOverscrollNotification(
+      ScrollMetrics metrics, BuildContext context, double overscroll) {}
+
+  void dispatchScrollEndNotification(
+      ScrollMetrics metrics, BuildContext context) {}
 }
