@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:isolate';
 
 import 'package:xterm/buffer/buffer_line.dart';
@@ -7,7 +8,6 @@ import 'package:xterm/mouse/selection.dart';
 import 'package:xterm/terminal/platform.dart';
 import 'package:xterm/terminal/terminal.dart';
 import 'package:xterm/terminal/terminal_ui_interaction.dart';
-import 'package:xterm/theme/terminal_color.dart';
 import 'package:xterm/theme/terminal_theme.dart';
 import 'package:xterm/theme/terminal_themes.dart';
 import 'package:xterm/util/observable.dart';
@@ -45,6 +45,7 @@ void terminalMain(SendPort port) async {
         _terminal.addListener(() {
           port.send(['notify']);
         });
+        port.send(['notify']);
         break;
       case 'write':
         if (_terminal == null) {
@@ -87,19 +88,13 @@ void terminalMain(SendPort port) async {
         if (_terminal == null) {
           break;
         }
-        _terminal.buffer.setScrollOffsetFromBottom(msg[1]);
+        _terminal.setScrollOffsetFromBottom(msg[1]);
         break;
       case 'resize':
         if (_terminal == null) {
           break;
         }
         _terminal.resize(msg[1], msg[2]);
-        break;
-      case 'setScrollOffsetFromBottom':
-        if (_terminal == null) {
-          break;
-        }
-        _terminal.buffer.setScrollOffsetFromBottom(msg[1]);
         break;
       case 'keyInput':
         if (_terminal == null) {
@@ -230,25 +225,25 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
       : _platform = platform;
 
   @override
-  int get scrollOffsetFromBottom => _lastState?.scrollOffsetFromBottom ?? 0;
+  int get scrollOffsetFromBottom => _lastState!.scrollOffsetFromBottom;
 
   @override
-  int get scrollOffsetFromTop => _lastState?.scrollOffsetFromTop ?? 0;
+  int get scrollOffsetFromTop => _lastState!.scrollOffsetFromTop;
 
   @override
-  int get scrollOffset => _lastState?.scrollOffset ?? 0;
+  int get scrollOffset => _lastState!.scrollOffset;
 
   @override
-  int get bufferHeight => _lastState?.bufferHeight ?? 0;
+  int get bufferHeight => _lastState!.bufferHeight;
 
   @override
-  int get terminalHeight => _lastState?.viewHeight ?? 0;
+  int get terminalHeight => _lastState!.viewHeight;
 
   @override
-  int get terminalWidth => _lastState?.viewWidth ?? 0;
+  int get terminalWidth => _lastState!.viewWidth;
 
   @override
-  int get invisibleHeight => _lastState?.invisibleHeight ?? 0;
+  int get invisibleHeight => _lastState!.invisibleHeight;
 
   @override
   Selection? get selection => _lastState?.selection;
@@ -305,7 +300,11 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   @override
   PlatformBehavior get platform => _platform;
 
+  @override
+  bool get isReady => _lastState != null;
+
   void start() async {
+    final initialRefreshCompleted = Completer<bool>();
     var firstReceivePort = ReceivePort();
     _isolate = await Isolate.spawn(terminalMain, firstReceivePort.sendPort);
     _sendPort = await firstReceivePort.first;
@@ -330,12 +329,16 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
           break;
         case 'newState':
           _lastState = message[1];
+          if (!initialRefreshCompleted.isCompleted) {
+            initialRefreshCompleted.complete(true);
+          }
           this.notifyListeners();
           break;
       }
     });
     _sendPort!.send(
         ['init', TerminalInitData(this.platform, this.theme, this.maxLines)]);
+    await initialRefreshCompleted.future;
   }
 
   void stop() {

@@ -24,6 +24,8 @@ abstract class TerminalUiInteraction with Observable {
   bool get dirty;
   PlatformBehavior get platform;
 
+  bool get isReady;
+
   void refresh();
   void clearSelection();
   void onMouseTap(Position position);

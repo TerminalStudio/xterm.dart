@@ -184,20 +184,23 @@ class _TerminalViewState extends State<TerminalView> {
                 // set viewport height.
                 offset.applyViewportDimension(constraints.maxHeight);
 
-                final minScrollExtent = 0.0;
+                if (widget.terminal.isReady) {
+                  final minScrollExtent = 0.0;
 
-                final maxScrollExtent = math.max(
-                    0.0,
-                    _cellSize.cellHeight * widget.terminal.terminalHeight -
-                        constraints.maxHeight);
+                  final maxScrollExtent = math.max(
+                      0.0,
+                      _cellSize.cellHeight * widget.terminal.bufferHeight -
+                          constraints.maxHeight);
 
-                // set how much the terminal can scroll
-                offset.applyContentDimensions(minScrollExtent, maxScrollExtent);
+                  // set how much the terminal can scroll
+                  offset.applyContentDimensions(
+                      minScrollExtent, maxScrollExtent);
 
-                // syncronize pending terminal scroll extent to ScrollController
-                if (_terminalScrollExtent != null) {
-                  position.correctPixels(_terminalScrollExtent!);
-                  _terminalScrollExtent = null;
+                  // syncronize pending terminal scroll extent to ScrollController
+                  if (_terminalScrollExtent != null) {
+                    position.correctPixels(_terminalScrollExtent!);
+                    _terminalScrollExtent = null;
+                  }
                 }
 
                 return buildTerminal(context);
@@ -272,6 +275,9 @@ class _TerminalViewState extends State<TerminalView> {
   int? _lastTerminalHeight;
 
   void onSize(double width, double height) {
+    if (!widget.terminal.isReady) {
+      return;
+    }
     final termWidth = (width / _cellSize.cellWidth).floor();
     final termHeight = (height / _cellSize.cellHeight).floor();
 
@@ -310,10 +316,7 @@ class _TerminalViewState extends State<TerminalView> {
   void onScroll(double offset) {
     final topOffset = (offset / _cellSize.cellHeight).ceil();
     final bottomOffset = widget.terminal.invisibleHeight - topOffset;
-
-    setState(() {
-      widget.terminal.setScrollOffsetFromBottom(bottomOffset);
-    });
+    widget.terminal.setScrollOffsetFromBottom(bottomOffset);
   }
 }
 
@@ -334,6 +337,9 @@ class TerminalPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (!terminal.isReady) {
+      return;
+    }
     _paintBackground(canvas);
 
     // if (oscillator.value) {

@@ -196,6 +196,15 @@ class Terminal with Observable {
   int get cursorY => buffer.cursorY;
   int get scrollOffset => buffer.scrollOffsetFromBottom;
 
+  void setScrollOffsetFromBottom(int scrollOffset) {
+    final oldOffset = _buffer.scrollOffsetFromBottom;
+    _buffer.setScrollOffsetFromBottom(scrollOffset);
+    if (oldOffset != scrollOffset) {
+      _dirty = true;
+      refresh();
+    }
+  }
+
   /// Writes data to the terminal. Terminal sequences and special characters are
   /// interpreted.
   ///
