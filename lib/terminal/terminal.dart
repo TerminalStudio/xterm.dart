@@ -3,6 +3,7 @@ import 'dart:math' show max, min;
 
 import 'package:xterm/buffer/buffer.dart';
 import 'package:xterm/buffer/buffer_line.dart';
+import 'package:xterm/mouse/position.dart';
 import 'package:xterm/mouse/selection.dart';
 import 'package:xterm/input/keys.dart';
 import 'package:xterm/input/keytab/keytab.dart';
@@ -15,6 +16,7 @@ import 'package:xterm/terminal/platform.dart';
 import 'package:xterm/terminal/sbc.dart';
 import 'package:xterm/terminal/tabs.dart';
 import 'package:xterm/terminal/terminal_backend.dart';
+import 'package:xterm/terminal/terminal_ui_interaction.dart';
 import 'package:xterm/theme/terminal_color.dart';
 import 'package:xterm/theme/terminal_theme.dart';
 import 'package:xterm/theme/terminal_themes.dart';
@@ -26,12 +28,11 @@ typedef BellHandler = void Function();
 typedef TitleChangeHandler = void Function(String);
 typedef IconChangeHandler = void Function(String);
 
-void _defaultInputHandler(String _) {}
 void _defaultBellHandler() {}
 void _defaultTitleHandler(String _) {}
 void _defaultIconHandler(String _) {}
 
-class Terminal with Observable {
+class Terminal with Observable implements TerminalUiInteraction {
   Terminal({
     this.backend,
     this.onBell = _defaultBellHandler,
@@ -181,7 +182,7 @@ class Terminal with Observable {
   late final Cursor cursor;
 
   final keytab = Keytab.defaultKeytab();
-  final selection = Selection();
+  final _selection = Selection();
   final tabs = Tabs();
   final debug = DebugHandler();
 
@@ -458,13 +459,13 @@ class Terminal with Observable {
   }
 
   String? getSelectedText() {
-    if (selection.isEmpty) {
+    if (_selection.isEmpty) {
       return null;
     }
 
     final builder = StringBuffer();
 
-    for (var row = selection.start!.y; row <= selection.end!.y; row++) {
+    for (var row = _selection.start!.y; row <= _selection.end!.y; row++) {
       if (row >= buffer.height) {
         break;
       }
@@ -474,14 +475,14 @@ class Terminal with Observable {
       var xStart = 0;
       var xEnd = viewWidth - 1;
 
-      if (row == selection.start!.y) {
-        xStart = selection.start!.x;
+      if (row == _selection.start!.y) {
+        xStart = _selection.start!.x;
       } else if (!line.isWrapped) {
         builder.write("\n");
       }
 
-      if (row == selection.end!.y) {
-        xEnd = selection.end!.x;
+      if (row == _selection.end!.y) {
+        xEnd = _selection.end!.x;
       }
 
       for (var col = xStart; col <= xEnd; col++) {
@@ -543,5 +544,69 @@ class Terminal with Observable {
         break;
       }
     }
+  }
+
+  @override
+  int get backgroundColor => theme.background;
+
+  @override
+  int get bufferHeight => buffer.height;
+
+  @override
+  void clearSelection() {
+    selection?.clear();
+  }
+
+  @override
+  int convertViewLineToRawLine(int viewLine) {
+    if (viewHeight > buffer.height) {
+      return viewLine;
+    }
+
+    return viewLine + (buffer.height - viewHeight);
+  }
+
+  @override
+  BufferLine? get currentLine => buffer.currentLine;
+
+  @override
+  int get cursorColor => theme.cursor;
+
+  @override
+  bool get isReady => true;
+
+  @override
+  void onMouseTap(Position position) {
+    mouseMode.onTap(this, position);
+  }
+
+  @override
+  void onPanStart(Position position) {
+    mouseMode.onPanStart(this, position);
+  }
+
+  @override
+  void onPanUpdate(Position position) {
+    mouseMode.onPanUpdate(this, position);
+  }
+
+  @override
+  int get scrollOffsetFromBottom => buffer.scrollOffsetFromBottom;
+
+  @override
+  int get scrollOffsetFromTop => buffer.scrollOffsetFromTop;
+
+  @override
+  int get terminalHeight => viewHeight;
+
+  @override
+  int get terminalWidth => viewWidth;
+
+  @override
+  Selection? get selection => _selection;
+
+  @override
+  void raiseOnInput(String input) {
+    backend?.write(input);
   }
 }

@@ -24,12 +24,12 @@ class MouseModeNone extends MouseMode {
 
   @override
   void onPanStart(Terminal terminal, Position offset) {
-    terminal.selection.init(offset);
+    terminal.selection!.init(offset);
   }
 
   @override
   void onPanUpdate(Terminal terminal, Position offset) {
-    terminal.selection.update(offset);
+    terminal.selection!.update(offset);
   }
 }
 

@@ -54,7 +54,7 @@ void terminalMain(SendPort port) async {
         _terminal?.refresh();
         break;
       case 'selection.clear':
-        _terminal?.selection.clear();
+        _terminal?.selection!.clear();
         break;
       case 'mouseMode.onTap':
         _terminal?.mouseMode.onTap(_terminal, msg[1]);
@@ -93,7 +93,7 @@ void terminalMain(SendPort port) async {
               _terminal.invisibleHeight,
               _terminal.viewHeight,
               _terminal.viewWidth,
-              _terminal.selection,
+              _terminal.selection!,
               _terminal.getSelectedText(),
               _terminal.theme.background,
               _terminal.cursorX,
@@ -167,7 +167,6 @@ class TerminalState {
       this.scrollOffset);
 }
 
-void _defaultInputHandler(String _) {}
 void _defaultBellHandler() {}
 void _defaultTitleHandler(String _) {}
 void _defaultIconHandler(String _) {}
