@@ -14,6 +14,7 @@ import 'package:xterm/terminal/cursor.dart';
 import 'package:xterm/terminal/platform.dart';
 import 'package:xterm/terminal/sbc.dart';
 import 'package:xterm/terminal/tabs.dart';
+import 'package:xterm/terminal/terminal_backend.dart';
 import 'package:xterm/theme/terminal_color.dart';
 import 'package:xterm/theme/terminal_theme.dart';
 import 'package:xterm/theme/terminal_themes.dart';
@@ -32,7 +33,7 @@ void _defaultIconHandler(String _) {}
 
 class Terminal with Observable {
   Terminal({
-    this.onInput = _defaultInputHandler,
+    this.backend,
     this.onBell = _defaultBellHandler,
     this.onTitleChange = _defaultTitleHandler,
     this.onIconChange = _defaultIconHandler,
@@ -40,6 +41,8 @@ class Terminal with Observable {
     this.theme = TerminalThemes.defaultTheme,
     required int maxLines,
   }) : _maxLines = maxLines {
+    backend?.init();
+    backend?.out.listen(write);
     _mainBuffer = Buffer(this);
     _altBuffer = Buffer(this);
     _buffer = _mainBuffer;
@@ -182,7 +185,7 @@ class Terminal with Observable {
   final tabs = Tabs();
   final debug = DebugHandler();
 
-  final TerminalInputHandler onInput;
+  final TerminalBackend? backend;
   final BellHandler onBell;
   final TitleChangeHandler onTitleChange;
   final IconChangeHandler onIconChange;
@@ -349,6 +352,7 @@ class Terminal with Observable {
   /// than 0. Text reflow is currently not implemented and will be avaliable in
   /// the future.
   void resize(int newWidth, int newHeight) {
+    backend?.resize(newWidth, newHeight);
     newWidth = max(newWidth, 1);
     newHeight = max(newHeight, 1);
 
@@ -429,7 +433,7 @@ class Terminal with Observable {
       if (record.action.type == KeytabActionType.input) {
         debug.onMsg('input: ${record.action.value}');
         final input = keytabUnescape(record.action.value);
-        onInput(input);
+        backend?.write(input);
         return;
       }
     }
@@ -438,7 +442,7 @@ class Terminal with Observable {
       if (key.index >= TerminalKey.keyA.index &&
           key.index <= TerminalKey.keyZ.index) {
         final input = key.index - TerminalKey.keyA.index + 1;
-        onInput(String.fromCharCode(input));
+        backend?.write(String.fromCharCode(input));
         return;
       }
     }
@@ -447,7 +451,7 @@ class Terminal with Observable {
       if (key.index >= TerminalKey.keyA.index &&
           key.index <= TerminalKey.keyZ.index) {
         final input = [0x1b, key.index - TerminalKey.keyA.index + 65];
-        onInput(String.fromCharCodes(input));
+        backend?.write(String.fromCharCodes(input));
         return;
       }
     }
@@ -508,7 +512,7 @@ class Terminal with Observable {
       data = '\x1b[200~$data\x1b[201~';
     }
 
-    onInput(data);
+    backend?.write(data);
   }
 
   void selectWord(int x, int y) {}

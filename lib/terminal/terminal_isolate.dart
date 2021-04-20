@@ -7,6 +7,7 @@ import 'package:xterm/mouse/position.dart';
 import 'package:xterm/mouse/selection.dart';
 import 'package:xterm/terminal/platform.dart';
 import 'package:xterm/terminal/terminal.dart';
+import 'package:xterm/terminal/terminal_backend.dart';
 import 'package:xterm/terminal/terminal_ui_interaction.dart';
 import 'package:xterm/theme/terminal_theme.dart';
 import 'package:xterm/theme/terminal_themes.dart';
@@ -27,9 +28,7 @@ void terminalMain(SendPort port) async {
       case 'init':
         final TerminalInitData initData = msg[1];
         _terminal = Terminal(
-            onInput: (String input) {
-              port.send(['onInput', input]);
-            },
+            backend: initData.backend,
             onTitleChange: (String title) {
               port.send(['onTitleChange', title]);
             },
@@ -45,56 +44,35 @@ void terminalMain(SendPort port) async {
         _terminal.addListener(() {
           port.send(['notify']);
         });
+        initData.backend?.exitCode.then((value) => port.send(['exit', value]));
         port.send(['notify']);
         break;
       case 'write':
-        if (_terminal == null) {
-          break;
-        }
-        _terminal.write(msg[1]);
+        _terminal?.write(msg[1]);
         break;
       case 'refresh':
-        if (_terminal == null) {
-          break;
-        }
-
-        _terminal.refresh();
+        _terminal?.refresh();
         break;
       case 'selection.clear':
-        if (_terminal == null) {
-          break;
-        }
-        _terminal.selection.clear();
+        _terminal?.selection.clear();
         break;
       case 'mouseMode.onTap':
-        if (_terminal == null) {
-          break;
-        }
-        _terminal.mouseMode.onTap(_terminal, msg[1]);
+        _terminal?.mouseMode.onTap(_terminal, msg[1]);
         break;
       case 'mouseMode.onPanStart':
-        if (_terminal == null) {
-          break;
-        }
-        _terminal.mouseMode.onPanStart(_terminal, msg[1]);
+        _terminal?.mouseMode.onPanStart(_terminal, msg[1]);
         break;
       case 'mouseMode.onPanUpdate':
-        if (_terminal == null) {
-          break;
-        }
-        _terminal.mouseMode.onPanUpdate(_terminal, msg[1]);
+        _terminal?.mouseMode.onPanUpdate(_terminal, msg[1]);
         break;
       case 'setScrollOffsetFromBottom':
-        if (_terminal == null) {
-          break;
-        }
-        _terminal.setScrollOffsetFromBottom(msg[1]);
+        _terminal?.setScrollOffsetFromBottom(msg[1]);
         break;
       case 'resize':
-        if (_terminal == null) {
-          break;
-        }
-        _terminal.resize(msg[1], msg[2]);
+        _terminal?.resize(msg[1], msg[2]);
+        break;
+      case 'onInput':
+        _terminal?.backend?.write(msg[1]);
         break;
       case 'keyInput':
         if (_terminal == null) {
@@ -141,8 +119,8 @@ class TerminalInitData {
   PlatformBehavior platform;
   TerminalTheme theme;
   int maxLines;
-
-  TerminalInitData(this.platform, this.theme, this.maxLines);
+  TerminalBackend? backend;
+  TerminalInitData(this.backend, this.platform, this.theme, this.maxLines);
 }
 
 class TerminalState {
@@ -199,7 +177,7 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   SendPort? _sendPort;
   late Isolate _isolate;
 
-  final TerminalInputHandler onInput;
+  final TerminalBackend? backend;
   final BellHandler onBell;
   final TitleChangeHandler onTitleChange;
   final IconChangeHandler onIconChange;
@@ -209,13 +187,15 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   final int maxLines;
 
   TerminalState? _lastState;
+  final _backendExited = Completer<int>();
+  Future<int> get backendExited => _backendExited.future;
 
   TerminalState? get lastState {
     return _lastState;
   }
 
   TerminalIsolate(
-      {this.onInput = _defaultInputHandler,
+      {this.backend,
       this.onBell = _defaultBellHandler,
       this.onTitleChange = _defaultTitleHandler,
       this.onIconChange = _defaultIconHandler,
@@ -312,9 +292,6 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
     _receivePort.listen((message) {
       String action = message[0];
       switch (action) {
-        case 'onInput':
-          this.onInput(message[1]);
-          break;
         case 'onBell':
           this.onBell();
           break;
@@ -334,10 +311,15 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
           }
           this.notifyListeners();
           break;
+        case 'exit':
+          _backendExited.complete(message[1]);
+          break;
       }
     });
-    _sendPort!.send(
-        ['init', TerminalInitData(this.platform, this.theme, this.maxLines)]);
+    _sendPort!.send([
+      'init',
+      TerminalInitData(this.backend, this.platform, this.theme, this.maxLines)
+    ]);
     await initialRefreshCompleted.future;
   }
 
@@ -427,7 +409,7 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   }
 
   void raiseOnInput(String text) {
-    onInput(text);
+    _sendPort!.send(['onInput', text]);
   }
 
   void keyInput(

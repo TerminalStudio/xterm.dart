@@ -49,6 +49,6 @@ class MouseModeX10 extends MouseMode {
     buffer.writeCharCode(btn + 32);
     buffer.writeCharCode(px + 32);
     buffer.writeCharCode(py + 32);
-    terminal.onInput(buffer.toString());
+    terminal.backend?.write(buffer.toString());
   }
 }

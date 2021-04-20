@@ -21,13 +21,10 @@ import 'package:xterm/theme/terminal_style.dart';
 import 'package:xterm/util/bit_flags.dart';
 import 'package:xterm/util/hash_values.dart';
 
-typedef TerminalResizeHandler = void Function(int width, int height);
-
 class TerminalView extends StatefulWidget {
   TerminalView({
     Key? key,
     required this.terminal,
-    this.onResize,
     this.style = const TerminalStyle(),
     this.opacity = 1.0,
     FocusNode? focusNode,
@@ -40,7 +37,6 @@ class TerminalView extends StatefulWidget {
         super(key: key ?? ValueKey(terminal));
 
   final TerminalUiInteraction terminal;
-  final TerminalResizeHandler? onResize;
   final FocusNode focusNode;
   final bool autofocus;
   final ScrollController scrollController;
@@ -288,7 +284,6 @@ class _TerminalViewState extends State<TerminalView> {
     _lastTerminalWidth = termWidth;
     _lastTerminalHeight = termHeight;
 
-    widget.onResize?.call(termWidth, termHeight);
     widget.terminal.resize(termWidth, termHeight);
   }
 
