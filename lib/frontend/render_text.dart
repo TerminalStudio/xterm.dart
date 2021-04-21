@@ -2,17 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:xterm/buffer/buffer_line.dart';
 import 'package:xterm/buffer/cell_flags.dart';
-import 'package:xterm/mouse/position.dart';
+import 'package:xterm/frontend/renderer.dart';
 import 'package:xterm/terminal/terminal.dart';
 import 'package:xterm/theme/terminal_style.dart';
-import 'package:xterm/utli/bit_flags.dart';
+import 'package:xterm/util/bit_flags.dart';
 
-import 'char_size.dart';
-import 'oscillator.dart';
+import 'cell_size.dart';
 import 'cache.dart';
 
-class TerminalPainter extends CustomPainter {
-  TerminalPainter({
+class RenderText implements TerminalRenderer {
+  RenderText({
     required this.terminal,
     required this.style,
     required this.charSize,
@@ -26,12 +25,7 @@ class TerminalPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     _paintBackground(canvas);
 
-    // if (oscillator.value) {
-    // }
-
     _paintText(canvas);
-
-    _paintSelection(canvas);
   }
 
   void _paintBackground(Canvas canvas) {
@@ -80,41 +74,6 @@ class TerminalPainter extends CustomPainter {
     }
   }
 
-  void _paintSelection(Canvas canvas) {
-    final paint = Paint()..color = Colors.white.withOpacity(0.3);
-
-    for (var y = 0; y < terminal.viewHeight; y++) {
-      final offsetY = y * charSize.cellHeight;
-      final absoluteY = terminal.buffer.convertViewLineToRawLine(y) -
-          terminal.buffer.scrollOffsetFromBottom;
-
-      for (var x = 0; x < terminal.viewWidth; x++) {
-        var cellCount = 0;
-
-        while (
-            terminal.selection.contains(Position(x + cellCount, absoluteY)) &&
-                x + cellCount < terminal.viewWidth) {
-          cellCount++;
-        }
-
-        if (cellCount == 0) {
-          continue;
-        }
-
-        final offsetX = x * charSize.cellWidth;
-        final effectWidth = cellCount * charSize.cellWidth;
-        final effectHeight = charSize.cellHeight;
-
-        canvas.drawRect(
-          Rect.fromLTWH(offsetX, offsetY, effectWidth, effectHeight),
-          paint,
-        );
-
-        x += cellCount;
-      }
-    }
-  }
-
   void _paintText(Canvas canvas) {
     final lines = terminal.getVisibleLines();
 
@@ -156,9 +115,9 @@ class TerminalPainter extends CustomPainter {
     // final cellHash = line.cellGetHash(cell);
     final cellHash = hashValues(codePoint, fgColor, bgColor, flags);
 
-    var tp = textLayoutCache.getLayoutFromCache(cellHash);
-    if (tp != null) {
-      tp.paint(canvas, Offset(offsetX, offsetY));
+    var paragraph = textLayoutCache.getLayoutFromCache(cellHash);
+    if (paragraph != null) {
+      canvas.drawParagraph(paragraph, Offset(offsetX, offsetY));
       return;
     }
 
@@ -200,66 +159,9 @@ class TerminalPainter extends CustomPainter {
             fontFamilyFallback: style.fontFamily,
           );
 
-    final span = TextSpan(
-      text: String.fromCharCode(codePoint),
-      // text: codePointCache.getOrConstruct(cell.codePoint),
-      style: styleToUse,
-    );
+    paragraph = textLayoutCache.performAndCacheLayout(
+        String.fromCharCode(codePoint), styleToUse, cellHash);
 
-    // final tp = textLayoutCache.getOrPerformLayout(span);
-    tp = textLayoutCache.performAndCacheLayout(span, cellHash);
-
-    tp.paint(canvas, Offset(offsetX, offsetY));
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) {
-    /// paint only when the terminal has changed since last paint.
-    return terminal.dirty;
-  }
-}
-
-class CursorPainter extends CustomPainter {
-  final bool visible;
-  final CellSize charSize;
-  final bool focused;
-  final bool blinkVisible;
-  final int cursorColor;
-
-  CursorPainter({
-    required this.visible,
-    required this.charSize,
-    required this.focused,
-    required this.blinkVisible,
-    required this.cursorColor,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (blinkVisible && visible) {
-      _paintCursor(canvas);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    if (oldDelegate is CursorPainter) {
-      return blinkVisible != oldDelegate.blinkVisible ||
-          focused != oldDelegate.focused ||
-          visible != oldDelegate.visible ||
-          charSize.cellWidth != oldDelegate.charSize.cellWidth ||
-          charSize.cellHeight != oldDelegate.charSize.cellHeight;
-    }
-    return true;
-  }
-
-  void _paintCursor(Canvas canvas) {
-    final paint = Paint()
-      ..color = Color(cursorColor)
-      ..strokeWidth = focused ? 0.0 : 1.0
-      ..style = focused ? PaintingStyle.fill : PaintingStyle.stroke;
-
-    canvas.drawRect(
-        Rect.fromLTWH(0, 0, charSize.cellWidth, charSize.cellHeight), paint);
+    canvas.drawParagraph(paragraph, Offset(offsetX, offsetY));
   }
 }

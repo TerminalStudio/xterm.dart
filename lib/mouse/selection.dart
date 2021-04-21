@@ -35,8 +35,6 @@ class Selection {
     } else {
       _end = position;
     }
-
-    // print('($_start, $end');
   }
 
   void clear() {

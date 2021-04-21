@@ -54,7 +54,7 @@ class Terminal with Observable {
   }
 
   bool _dirty = false;
-  bool get dirty {
+  bool consumeDirty() {
     if (_dirty) {
       _dirty = false;
       return true;

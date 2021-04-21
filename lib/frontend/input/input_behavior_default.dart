@@ -1,7 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:xterm/frontend/input_behavior.dart';
-import 'package:xterm/frontend/input_map.dart';
+import 'package:xterm/frontend/input/input_behavior.dart';
+import 'package:xterm/frontend/input/input_map.dart';
 import 'package:xterm/xterm.dart';
 
 class InputBehaviorDefault extends InputBehavior {

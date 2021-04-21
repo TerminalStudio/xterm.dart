@@ -1,24 +1,29 @@
+import 'dart:ui';
+
 import 'package:flutter/painting.dart';
 import 'package:quiver/collection.dart';
 
 class TextLayoutCache {
   TextLayoutCache(this.textDirection, int maximumSize)
-      : _cache = LruMap<int, TextPainter>(maximumSize: maximumSize);
+      : _cache = LruMap<int, Paragraph>(maximumSize: maximumSize);
 
-  final LruMap<int, TextPainter> _cache;
+  final LruMap<int, Paragraph> _cache;
   final TextDirection textDirection;
 
-  TextPainter? getLayoutFromCache(int key) {
+  Paragraph? getLayoutFromCache(int key) {
     return _cache[key];
   }
 
-  TextPainter performAndCacheLayout(TextSpan text, int key) {
-    final textPainter = TextPainter(text: text, textDirection: textDirection);
-    textPainter.layout();
+  Paragraph performAndCacheLayout(String text, TextStyle style, int key) {
+    final builder = ParagraphBuilder(style.getParagraphStyle());
+    builder.pushStyle(style.getTextStyle());
+    builder.addText(text);
 
-    _cache[key] = textPainter;
+    final paragraph = builder.build();
+    paragraph.layout(ParagraphConstraints(width: double.infinity));
 
-    return textPainter;
+    _cache[key] = paragraph;
+    return paragraph;
   }
 
   int get length {
