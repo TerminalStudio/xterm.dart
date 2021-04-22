@@ -68,29 +68,31 @@ class _TerminalViewState extends State<TerminalView> {
 
   @override
   Widget build(BuildContext context) {
-    return TerminalKeyboardLayer(
-      autofocus: widget.autofocus,
-      focusNode: widget.focusNode,
-      terminal: widget.terminal,
-      inputBehavior: widget.inputBehavior,
-      child: TerminalMouseLayer(
+    return RepaintBoundary(
+      child: TerminalKeyboardLayer(
+        autofocus: widget.autofocus,
+        focusNode: widget.focusNode,
         terminal: widget.terminal,
-        cellSize: _cellSize,
-        child: TerminalSizingLayer(
+        inputBehavior: widget.inputBehavior,
+        child: TerminalMouseLayer(
           terminal: widget.terminal,
           cellSize: _cellSize,
-          onResize: widget.onResize,
-          child: TerminalScrollable(
+          child: TerminalSizingLayer(
             terminal: widget.terminal,
             cellSize: _cellSize,
-            scrollController: widget.scrollController,
-            child: TerminalContent(
+            onResize: widget.onResize,
+            child: TerminalScrollable(
               terminal: widget.terminal,
-              style: widget.style,
               cellSize: _cellSize,
-              opacity: widget.opacity,
-              focusNode: widget.focusNode,
-              autofocus: widget.autofocus,
+              scrollController: widget.scrollController,
+              child: TerminalContent(
+                terminal: widget.terminal,
+                style: widget.style,
+                cellSize: _cellSize,
+                opacity: widget.opacity,
+                focusNode: widget.focusNode,
+                autofocus: widget.autofocus,
+              ),
             ),
           ),
         ),
