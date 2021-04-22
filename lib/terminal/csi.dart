@@ -1,5 +1,4 @@
 import 'dart:collection';
-import 'dart:convert';
 
 import 'package:xterm/terminal/modes.dart';
 import 'package:xterm/terminal/sgr.dart';
