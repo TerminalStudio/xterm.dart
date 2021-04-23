@@ -216,6 +216,11 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   final _backendExited = Completer<int>();
   Future<int> get backendExited => _backendExited.future;
 
+  final Function(Function) _doRequestNewState;
+
+  static final _defaultRequestNewStateFunction =
+      (Function requestFun) => requestFun();
+
   TerminalState? get lastState {
     return _lastState;
   }
@@ -227,8 +232,11 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
       this.onIconChange = _defaultIconHandler,
       PlatformBehavior platform = PlatformBehaviors.unix,
       this.theme = TerminalThemes.defaultTheme,
+      Function(Function)? doRequestNewState,
       required this.maxLines})
-      : _platform = platform;
+      : _platform = platform,
+        _doRequestNewState =
+            doRequestNewState ?? _defaultRequestNewStateFunction;
 
   @override
   int get scrollOffsetFromBottom => _lastState!.scrollOffsetFromBottom;
@@ -328,7 +336,9 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
           this.onIconChange(message[1]);
           break;
         case _IsolateEvent.NotifyChange:
-          poll();
+          _doRequestNewState(() {
+            poll();
+          });
           break;
         case _IsolateEvent.NewState:
           _lastState = message[1];
