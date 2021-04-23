@@ -11,6 +11,7 @@ import 'package:xterm/terminal/terminal_backend.dart';
 import 'package:xterm/terminal/terminal_ui_interaction.dart';
 import 'package:xterm/theme/terminal_theme.dart';
 import 'package:xterm/theme/terminal_themes.dart';
+import 'package:xterm/util/event_debouncer.dart';
 import 'package:xterm/util/observable.dart';
 
 enum _IsolateCommand {
@@ -212,14 +213,12 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   final TerminalTheme theme;
   final int maxLines;
 
+  final Duration minRefreshDelay;
+  final EventDebouncer _refreshEventDebouncer;
+
   TerminalState? _lastState;
   final _backendExited = Completer<int>();
   Future<int> get backendExited => _backendExited.future;
-
-  final Function(Function) _doRequestNewState;
-
-  static final _defaultRequestNewStateFunction =
-      (Function requestFun) => requestFun();
 
   TerminalState? get lastState {
     return _lastState;
@@ -232,11 +231,10 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
       this.onIconChange = _defaultIconHandler,
       PlatformBehavior platform = PlatformBehaviors.unix,
       this.theme = TerminalThemes.defaultTheme,
-      Function(Function)? doRequestNewState,
+      this.minRefreshDelay = const Duration(milliseconds: 16),
       required this.maxLines})
       : _platform = platform,
-        _doRequestNewState =
-            doRequestNewState ?? _defaultRequestNewStateFunction;
+        _refreshEventDebouncer = EventDebouncer(minRefreshDelay);
 
   @override
   int get scrollOffsetFromBottom => _lastState!.scrollOffsetFromBottom;
@@ -336,7 +334,7 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
           this.onIconChange(message[1]);
           break;
         case _IsolateEvent.NotifyChange:
-          _doRequestNewState(() {
+          _refreshEventDebouncer.notifyEvent(() {
             poll();
           });
           break;
