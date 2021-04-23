@@ -13,6 +13,32 @@ import 'package:xterm/theme/terminal_theme.dart';
 import 'package:xterm/theme/terminal_themes.dart';
 import 'package:xterm/util/observable.dart';
 
+enum IsolateCommand {
+  SendPort,
+  Init,
+  Write,
+  Refresh,
+  ClearSelection,
+  MouseTap,
+  MousePanStart,
+  MousePanUpdate,
+  SetScrollOffsetFromTop,
+  Resize,
+  OnInput,
+  KeyInput,
+  RequestNewStateWhenDirty,
+  Paste
+}
+
+enum IsolateEvent {
+  TitleChanged,
+  IconChanged,
+  Bell,
+  NotifyChange,
+  NewState,
+  Exit
+}
+
 void terminalMain(SendPort port) async {
   final rp = ReceivePort();
   port.send(rp.sendPort);
@@ -20,68 +46,69 @@ void terminalMain(SendPort port) async {
   Terminal? _terminal;
 
   await for (var msg in rp) {
-    final String action = msg[0];
+    final IsolateCommand action = msg[0];
     switch (action) {
-      case 'sendPort':
+      case IsolateCommand.SendPort:
         port = msg[1];
         break;
-      case 'init':
+      case IsolateCommand.Init:
         final TerminalInitData initData = msg[1];
         _terminal = Terminal(
             backend: initData.backend,
             onTitleChange: (String title) {
-              port.send(['onTitleChange', title]);
+              port.send([IsolateEvent.TitleChanged, title]);
             },
             onIconChange: (String icon) {
-              port.send(['onIconChange', icon]);
+              port.send([IsolateEvent.IconChanged, icon]);
             },
             onBell: () {
-              port.send(['onBell']);
+              port.send([IsolateEvent.Bell]);
             },
             platform: initData.platform,
             theme: initData.theme,
             maxLines: initData.maxLines);
         _terminal.addListener(() {
-          port.send(['notify']);
+          port.send([IsolateEvent.NotifyChange]);
         });
-        initData.backend?.exitCode.then((value) => port.send(['exit', value]));
-        port.send(['notify']);
+        initData.backend?.exitCode
+            .then((value) => port.send([IsolateEvent.Exit, value]));
+        port.send([IsolateEvent.NotifyChange]);
         break;
-      case 'write':
+      case IsolateCommand.Write:
         _terminal?.write(msg[1]);
         break;
-      case 'refresh':
+      case IsolateCommand.Refresh:
         _terminal?.refresh();
         break;
-      case 'selection.clear':
+      case IsolateCommand.ClearSelection:
         _terminal?.selection!.clear();
         break;
-      case 'mouseMode.onTap':
+      case IsolateCommand.MouseTap:
         _terminal?.mouseMode.onTap(_terminal, msg[1]);
         break;
-      case 'mouseMode.onPanStart':
+      case IsolateCommand.MousePanStart:
         _terminal?.mouseMode.onPanStart(_terminal, msg[1]);
         break;
-      case 'mouseMode.onPanUpdate':
+      case IsolateCommand.MousePanUpdate:
         _terminal?.mouseMode.onPanUpdate(_terminal, msg[1]);
         break;
-      case 'setScrollOffsetFromBottom':
+      case IsolateCommand.SetScrollOffsetFromTop:
         _terminal?.setScrollOffsetFromBottom(msg[1]);
         break;
-      case 'resize':
+      case IsolateCommand.Resize:
         _terminal?.resize(msg[1], msg[2]);
         break;
-      case 'onInput':
+      case IsolateCommand.OnInput:
         _terminal?.backend?.write(msg[1]);
         break;
-      case 'keyInput':
+      case IsolateCommand.KeyInput:
         if (_terminal == null) {
           break;
         }
         _terminal.keyInput(msg[1],
             ctrl: msg[2], alt: msg[3], shift: msg[4], mac: msg[5]);
         break;
-      case 'requestNewStateWhenDirty':
+      case IsolateCommand.RequestNewStateWhenDirty:
         if (_terminal == null) {
           break;
         }
@@ -102,10 +129,10 @@ void terminalMain(SendPort port) async {
               _terminal.theme.cursor,
               _terminal.getVisibleLines(),
               _terminal.scrollOffset);
-          port.send(['newState', newState]);
+          port.send([IsolateEvent.NewState, newState]);
         }
         break;
-      case 'paste':
+      case IsolateCommand.Paste:
         if (_terminal == null) {
           break;
         }
@@ -287,36 +314,36 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
     var firstReceivePort = ReceivePort();
     _isolate = await Isolate.spawn(terminalMain, firstReceivePort.sendPort);
     _sendPort = await firstReceivePort.first;
-    _sendPort!.send(['sendPort', _receivePort.sendPort]);
+    _sendPort!.send([IsolateCommand.SendPort, _receivePort.sendPort]);
     _receivePort.listen((message) {
-      String action = message[0];
+      IsolateEvent action = message[0];
       switch (action) {
-        case 'onBell':
+        case IsolateEvent.Bell:
           this.onBell();
           break;
-        case 'onTitleChange':
+        case IsolateEvent.TitleChanged:
           this.onTitleChange(message[1]);
           break;
-        case 'onIconChange':
+        case IsolateEvent.IconChanged:
           this.onIconChange(message[1]);
           break;
-        case 'notify':
+        case IsolateEvent.NotifyChange:
           poll();
           break;
-        case 'newState':
+        case IsolateEvent.NewState:
           _lastState = message[1];
           if (!initialRefreshCompleted.isCompleted) {
             initialRefreshCompleted.complete(true);
           }
           this.notifyListeners();
           break;
-        case 'exit':
+        case IsolateEvent.Exit:
           _backendExited.complete(message[1]);
           break;
       }
     });
     _sendPort!.send([
-      'init',
+      IsolateCommand.Init,
       TerminalInitData(this.backend, this.platform, this.theme, this.maxLines)
     ]);
     await initialRefreshCompleted.future;
@@ -330,49 +357,49 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
     if (_sendPort == null) {
       return;
     }
-    _sendPort!.send(['requestNewStateWhenDirty']);
+    _sendPort!.send([IsolateCommand.RequestNewStateWhenDirty]);
   }
 
   void refresh() {
     if (_sendPort == null) {
       return;
     }
-    _sendPort!.send(['refresh']);
+    _sendPort!.send([IsolateCommand.Refresh]);
   }
 
   void clearSelection() {
     if (_sendPort == null) {
       return;
     }
-    _sendPort!.send(['clearSelection']);
+    _sendPort!.send([IsolateCommand.ClearSelection]);
   }
 
   void onMouseTap(Position position) {
     if (_sendPort == null) {
       return;
     }
-    _sendPort!.send(['mouseMode.onTap', position]);
+    _sendPort!.send([IsolateCommand.MouseTap, position]);
   }
 
   void onPanStart(Position position) {
     if (_sendPort == null) {
       return;
     }
-    _sendPort!.send(['mouseMode.onPanStart', position]);
+    _sendPort!.send([IsolateCommand.MousePanStart, position]);
   }
 
   void onPanUpdate(Position position) {
     if (_sendPort == null) {
       return;
     }
-    _sendPort!.send(['mouseMode.onPanUpdate', position]);
+    _sendPort!.send([IsolateCommand.MousePanUpdate, position]);
   }
 
   void setScrollOffsetFromBottom(int offset) {
     if (_sendPort == null) {
       return;
     }
-    _sendPort!.send(['setScrollOffsetFromBottom', offset]);
+    _sendPort!.send([IsolateCommand.SetScrollOffsetFromTop, offset]);
   }
 
   int convertViewLineToRawLine(int viewLine) {
@@ -390,25 +417,25 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
     if (_sendPort == null) {
       return;
     }
-    _sendPort!.send(['write', text]);
+    _sendPort!.send([IsolateCommand.Write, text]);
   }
 
   void paste(String data) {
     if (_sendPort == null) {
       return;
     }
-    _sendPort!.send(['paste', data]);
+    _sendPort!.send([IsolateCommand.Paste, data]);
   }
 
   void resize(int newWidth, int newHeight) {
     if (_sendPort == null) {
       return;
     }
-    _sendPort!.send(['resize', newWidth, newHeight]);
+    _sendPort!.send([IsolateCommand.Resize, newWidth, newHeight]);
   }
 
   void raiseOnInput(String text) {
-    _sendPort!.send(['onInput', text]);
+    _sendPort!.send([IsolateCommand.OnInput, text]);
   }
 
   void keyInput(
@@ -422,6 +449,6 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
     if (_sendPort == null) {
       return;
     }
-    _sendPort!.send(['keyInput', key, ctrl, alt, shift, mac]);
+    _sendPort!.send([IsolateCommand.KeyInput, key, ctrl, alt, shift, mac]);
   }
 }
