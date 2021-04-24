@@ -23,6 +23,7 @@ abstract class TerminalUiInteraction with Observable {
   int get backgroundColor;
   bool get dirty;
   PlatformBehavior get platform;
+  String? get selectedText;
 
   bool get isReady;
 
@@ -45,4 +46,8 @@ abstract class TerminalUiInteraction with Observable {
     bool mac = false,
     // bool meta,
   });
+
+  Future<int> get backendExited;
+  void terminateBackend();
+  bool get isTerminated;
 }

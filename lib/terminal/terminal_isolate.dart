@@ -29,6 +29,7 @@ enum _IsolateCommand {
   keyInput,
   requestNewStateWhenDirty,
   paste,
+  terminateBackend
 }
 
 enum _IsolateEvent {
@@ -75,7 +76,7 @@ void terminalMain(SendPort port) async {
             _needNotify = false;
           }
         });
-        initData.backend?.exitCode
+        _terminal.backendExited
             .then((value) => port.send([_IsolateEvent.exit, value]));
         port.send([_IsolateEvent.notifyChange]);
         break;
@@ -107,10 +108,7 @@ void terminalMain(SendPort port) async {
         _terminal?.backend?.write(msg[1]);
         break;
       case _IsolateCommand.keyInput:
-        if (_terminal == null) {
-          break;
-        }
-        _terminal.keyInput(msg[1],
+        _terminal?.keyInput(msg[1],
             ctrl: msg[2], alt: msg[3], shift: msg[4], mac: msg[5]);
         break;
       case _IsolateCommand.requestNewStateWhenDirty:
@@ -140,11 +138,10 @@ void terminalMain(SendPort port) async {
         }
         break;
       case _IsolateCommand.paste:
-        if (_terminal == null) {
-          break;
-        }
-        _terminal.paste(msg[1]);
+        _terminal?.paste(msg[1]);
         break;
+      case _IsolateCommand.terminateBackend:
+        _terminal?.terminateBackend();
     }
   }
 }
@@ -224,8 +221,6 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   final EventDebouncer _refreshEventDebouncer;
 
   TerminalState? _lastState;
-  final _backendExited = Completer<int>();
-  Future<int> get backendExited => _backendExited.future;
 
   TerminalState? get lastState {
     return _lastState;
@@ -320,6 +315,9 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   PlatformBehavior get platform => _platform;
 
   @override
+  String? get selectedText => _lastState?.selectedText;
+
+  @override
   bool get isReady => _lastState != null;
 
   void start() async {
@@ -353,6 +351,7 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
           this.notifyListeners();
           break;
         case _IsolateEvent.exit:
+          _isTerminated = true;
           _backendExited.complete(message[1]);
           break;
       }
@@ -421,7 +420,7 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   }
 
   void raiseOnInput(String text) {
-    _sendPort!.send([_IsolateCommand.onInput, text]);
+    _sendPort?.send([_IsolateCommand.onInput, text]);
   }
 
   void keyInput(
@@ -434,4 +433,22 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   }) {
     _sendPort?.send([_IsolateCommand.keyInput, key, ctrl, alt, shift, mac]);
   }
+
+  var _isTerminated = false;
+
+  final _backendExited = Completer<int>();
+  @override
+  Future<int> get backendExited => _backendExited.future;
+
+  @override
+  void terminateBackend() {
+    if (_isTerminated) {
+      return;
+    }
+    _isTerminated = true;
+    _sendPort?.send([_IsolateCommand.terminateBackend]);
+  }
+
+  @override
+  bool get isTerminated => _isTerminated;
 }

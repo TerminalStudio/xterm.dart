@@ -93,6 +93,11 @@ class SSHTerminalBackend implements TerminalBackend {
   void write(String input) {
     client?.sendChannelData(utf8.encode(input));
   }
+
+  @override
+  void terminate() {
+    client?.disconnect('terminate');
+  }
 }
 
 class _MyHomePageState extends State<MyHomePage> {

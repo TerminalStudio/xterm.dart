@@ -76,6 +76,11 @@ class FakeTerminalBackend implements TerminalBackend {
       _outStream.sink.add(input);
     }
   }
+
+  @override
+  void terminate() {
+    //NOOP
+  }
 }
 
 class _MyHomePageState extends State<MyHomePage> {

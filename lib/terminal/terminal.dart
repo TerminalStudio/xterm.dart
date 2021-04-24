@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:collection';
 import 'dart:math' show max, min;
 
@@ -43,6 +44,10 @@ class Terminal with Observable implements TerminalUiInteraction {
     required int maxLines,
   }) : _maxLines = maxLines {
     backend?.init();
+    backend?.exitCode.then((value) {
+      _isTerminated = true;
+      _backendExited.complete(value);
+    });
     backend?.out.listen(write);
     _mainBuffer = Buffer(terminal: this, isAltBuffer: false);
     _altBuffer = Buffer(terminal: this, isAltBuffer: true);
@@ -575,6 +580,9 @@ class Terminal with Observable implements TerminalUiInteraction {
   int get cursorColor => theme.cursor;
 
   @override
+  String? get selectedText => getSelectedText();
+
+  @override
   bool get isReady => true;
 
   @override
@@ -611,4 +619,22 @@ class Terminal with Observable implements TerminalUiInteraction {
   void raiseOnInput(String input) {
     backend?.write(input);
   }
+
+  final _backendExited = Completer<int>();
+  @override
+  Future<int> get backendExited => _backendExited.future;
+
+  var _isTerminated = false;
+
+  @override
+  void terminateBackend() {
+    if (_isTerminated) {
+      return;
+    }
+    _isTerminated = true;
+    backend?.terminate();
+  }
+
+  @override
+  bool get isTerminated => _isTerminated;
 }

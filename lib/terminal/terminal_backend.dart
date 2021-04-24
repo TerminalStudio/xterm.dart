@@ -6,4 +6,6 @@ abstract class TerminalBackend {
 
   void write(String input);
   void resize(int width, int height);
+
+  void terminate();
 }
