@@ -119,21 +119,22 @@ void terminalMain(SendPort port) async {
         }
         if (_terminal.dirty) {
           final newState = TerminalState(
-              _terminal.buffer.scrollOffsetFromBottom,
-              _terminal.buffer.scrollOffsetFromTop,
-              _terminal.buffer.height,
-              _terminal.invisibleHeight,
-              _terminal.viewHeight,
-              _terminal.viewWidth,
-              _terminal.selection!,
-              _terminal.getSelectedText(),
-              _terminal.theme.background,
-              _terminal.cursorX,
-              _terminal.cursorY,
-              _terminal.showCursor,
-              _terminal.theme.cursor,
-              _terminal.getVisibleLines(),
-              _terminal.scrollOffset);
+            _terminal.buffer.scrollOffsetFromBottom,
+            _terminal.buffer.scrollOffsetFromTop,
+            _terminal.buffer.height,
+            _terminal.invisibleHeight,
+            _terminal.viewHeight,
+            _terminal.viewWidth,
+            _terminal.selection!,
+            _terminal.getSelectedText(),
+            _terminal.theme.background,
+            _terminal.cursorX,
+            _terminal.cursorY,
+            _terminal.showCursor,
+            _terminal.theme.cursor,
+            _terminal.getVisibleLines(),
+            _terminal.scrollOffset,
+          );
           port.send([_IsolateEvent.NewState, newState]);
           _needNotify = true;
         }
@@ -183,21 +184,22 @@ class TerminalState {
   bool consumed = false;
 
   TerminalState(
-      this.scrollOffsetFromBottom,
-      this.scrollOffsetFromTop,
-      this.bufferHeight,
-      this.invisibleHeight,
-      this.viewHeight,
-      this.viewWidth,
-      this.selection,
-      this.selectedText,
-      this.backgroundColor,
-      this.cursorX,
-      this.cursorY,
-      this.showCursor,
-      this.cursorColor,
-      this.visibleLines,
-      this.scrollOffset);
+    this.scrollOffsetFromBottom,
+    this.scrollOffsetFromTop,
+    this.bufferHeight,
+    this.invisibleHeight,
+    this.viewHeight,
+    this.viewWidth,
+    this.selection,
+    this.selectedText,
+    this.backgroundColor,
+    this.cursorX,
+    this.cursorY,
+    this.showCursor,
+    this.cursorColor,
+    this.visibleLines,
+    this.scrollOffset,
+  );
 }
 
 void _defaultBellHandler() {}
@@ -229,16 +231,16 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
     return _lastState;
   }
 
-  TerminalIsolate(
-      {this.backend,
-      this.onBell = _defaultBellHandler,
-      this.onTitleChange = _defaultTitleHandler,
-      this.onIconChange = _defaultIconHandler,
-      PlatformBehavior platform = PlatformBehaviors.unix,
-      this.theme = TerminalThemes.defaultTheme,
-      this.minRefreshDelay = const Duration(milliseconds: 16),
-      required this.maxLines})
-      : _platform = platform,
+  TerminalIsolate({
+    this.backend,
+    this.onBell = _defaultBellHandler,
+    this.onTitleChange = _defaultTitleHandler,
+    this.onIconChange = _defaultIconHandler,
+    PlatformBehavior platform = PlatformBehaviors.unix,
+    this.theme = TerminalThemes.defaultTheme,
+    this.minRefreshDelay = const Duration(milliseconds: 16),
+    required this.maxLines,
+  })   : _platform = platform,
         _refreshEventDebouncer = EventDebouncer(minRefreshDelay);
 
   @override
