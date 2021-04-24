@@ -45,6 +45,7 @@ void terminalMain(SendPort port) async {
   port.send(rp.sendPort);
 
   Terminal? _terminal;
+  var _needNotify = true;
 
   await for (var msg in rp) {
     final _IsolateCommand action = msg[0];
@@ -69,7 +70,10 @@ void terminalMain(SendPort port) async {
             theme: initData.theme,
             maxLines: initData.maxLines);
         _terminal.addListener(() {
-          port.send([_IsolateEvent.NotifyChange]);
+          if (_needNotify) {
+            port.send([_IsolateEvent.NotifyChange]);
+            _needNotify = false;
+          }
         });
         initData.backend?.exitCode
             .then((value) => port.send([_IsolateEvent.Exit, value]));
@@ -131,6 +135,7 @@ void terminalMain(SendPort port) async {
               _terminal.getVisibleLines(),
               _terminal.scrollOffset);
           port.send([_IsolateEvent.NewState, newState]);
+          _needNotify = true;
         }
         break;
       case _IsolateCommand.Paste:
