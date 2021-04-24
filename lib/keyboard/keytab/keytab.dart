@@ -1,7 +1,7 @@
-import 'package:xterm/input/keytab/keytab_default.dart';
-import 'package:xterm/input/keytab/keytab_parse.dart';
-import 'package:xterm/input/keytab/keytab_record.dart';
-import 'package:xterm/input/keytab/keytab_token.dart';
+import 'package:xterm/keyboard/keytab/keytab_default.dart';
+import 'package:xterm/keyboard/keytab/keytab_parse.dart';
+import 'package:xterm/keyboard/keytab/keytab_record.dart';
+import 'package:xterm/keyboard/keytab/keytab_token.dart';
 
 class Keytab {
   Keytab({

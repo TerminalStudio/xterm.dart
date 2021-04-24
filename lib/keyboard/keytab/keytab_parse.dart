@@ -1,7 +1,7 @@
-import 'package:xterm/input/keytab/keytab.dart';
-import 'package:xterm/input/keytab/keytab_record.dart';
-import 'package:xterm/input/keytab/keytab_token.dart';
-import 'package:xterm/input/keytab/qt_keyname.dart';
+import 'package:xterm/keyboard/keytab/keytab.dart';
+import 'package:xterm/keyboard/keytab/keytab_record.dart';
+import 'package:xterm/keyboard/keytab/keytab_token.dart';
+import 'package:xterm/keyboard/keytab/qt_keyname.dart';
 
 class ParseError {}
 
