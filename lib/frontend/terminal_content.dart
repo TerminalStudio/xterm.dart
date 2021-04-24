@@ -32,28 +32,37 @@ class TerminalContent extends StatefulWidget {
 class _TerminalContentState extends State<TerminalContent> {
   final blinkOscillator = Oscillator.ms(600);
 
-  void onTerminalChange() {
-    setState(() {});
+  var _needSetState = true;
+
+  void _onTerminalChange() {
+    if (_needSetState) {
+      setState(() {});
+      _needSetState = false;
+    }
+  }
+
+  void _onPaint() {
+    _needSetState = true;
   }
 
   @override
   void initState() {
     // measureCellSize is expensive so we cache the result.
-    widget.terminal.addListener(onTerminalChange);
+    widget.terminal.addListener(_onTerminalChange);
     super.initState();
   }
 
   @override
   void didUpdateWidget(TerminalContent oldWidget) {
-    oldWidget.terminal.removeListener(onTerminalChange);
-    widget.terminal.addListener(onTerminalChange);
+    oldWidget.terminal.removeListener(_onTerminalChange);
+    widget.terminal.addListener(_onTerminalChange);
     super.didUpdateWidget(oldWidget);
   }
 
   @override
   void dispose() {
     blinkOscillator.stop();
-    widget.terminal.removeListener(onTerminalChange);
+    widget.terminal.removeListener(_onTerminalChange);
     super.dispose();
   }
 
@@ -67,6 +76,7 @@ class _TerminalContentState extends State<TerminalContent> {
       child: CustomPaint(
         painter: TerminalPainter(
           terminal: widget.terminal,
+          onPaint: _onPaint,
           layers: [
             RenderText(
               terminal: widget.terminal,
@@ -91,13 +101,19 @@ class _TerminalContentState extends State<TerminalContent> {
 }
 
 class TerminalPainter extends CustomPainter {
-  TerminalPainter({required this.terminal, required this.layers});
+  TerminalPainter({
+    required this.terminal,
+    required this.layers,
+    this.onPaint,
+  });
 
   final Terminal terminal;
   final List<TerminalRenderer> layers;
+  final void Function()? onPaint;
 
   @override
   void paint(Canvas canvas, Size size) {
+    onPaint?.call();
     for (var layer in layers) {
       layer.paint(canvas, size);
     }
