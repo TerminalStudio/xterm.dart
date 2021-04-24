@@ -203,7 +203,6 @@ class Terminal with Observable implements TerminalUiInteraction {
 
   int get cursorX => buffer.cursorX;
   int get cursorY => buffer.cursorY;
-  int get scrollOffset => buffer.scrollOffsetFromBottom;
 
   void setScrollOffsetFromBottom(int scrollOffset) {
     final oldOffset = _buffer.scrollOffsetFromBottom;

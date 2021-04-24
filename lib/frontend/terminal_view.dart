@@ -531,7 +531,7 @@ class TerminalPainter extends CustomPainter {
   }
 
   void _paintCursor(Canvas canvas) {
-    final screenCursorY = terminal.cursorY + terminal.scrollOffset;
+    final screenCursorY = terminal.cursorY + terminal.scrollOffsetFromBottom;
     if (screenCursorY < 0 || screenCursorY >= terminal.terminalHeight) {
       return;
     }

@@ -41,6 +41,7 @@ enum _IsolateEvent {
   exit,
 }
 
+/// main entry for the terminal isolate
 void terminalMain(SendPort port) async {
   final rp = ReceivePort();
   port.send(rp.sendPort);
@@ -49,6 +50,7 @@ void terminalMain(SendPort port) async {
   var _needNotify = true;
 
   await for (var msg in rp) {
+    // process incoming commands
     final _IsolateCommand action = msg[0];
     switch (action) {
       case _IsolateCommand.sendPort:
@@ -117,8 +119,8 @@ void terminalMain(SendPort port) async {
         }
         if (_terminal.dirty) {
           final newState = TerminalState(
-            _terminal.buffer.scrollOffsetFromBottom,
-            _terminal.buffer.scrollOffsetFromTop,
+            _terminal.scrollOffsetFromBottom,
+            _terminal.scrollOffsetFromTop,
             _terminal.buffer.height,
             _terminal.invisibleHeight,
             _terminal.viewHeight,
@@ -131,7 +133,6 @@ void terminalMain(SendPort port) async {
             _terminal.showCursor,
             _terminal.theme.cursor,
             _terminal.getVisibleLines(),
-            _terminal.scrollOffset,
           );
           port.send([_IsolateEvent.newState, newState]);
           _needNotify = true;
@@ -146,6 +147,9 @@ void terminalMain(SendPort port) async {
   }
 }
 
+/// This class holds the initialization data needed for the Terminal.
+/// This data has to be passed from the UI Isolate where the TerminalIsolate
+/// class gets instantiated into the Isolate that will run the Terminal.
 class TerminalInitData {
   PlatformBehavior platform;
   TerminalTheme theme;
@@ -154,6 +158,9 @@ class TerminalInitData {
   TerminalInitData(this.backend, this.platform, this.theme, this.maxLines);
 }
 
+/// This class holds a complete TerminalState as needed by the UI.
+/// The state held here is self-contained and has no dependencies to the source
+/// Terminal. Therefore it can be safely transferred across Isolate boundaries.
 class TerminalState {
   int scrollOffsetFromTop;
   int scrollOffsetFromBottom;
@@ -176,8 +183,6 @@ class TerminalState {
 
   List<BufferLine> visibleLines;
 
-  int scrollOffset;
-
   bool consumed = false;
 
   TerminalState(
@@ -195,7 +200,6 @@ class TerminalState {
     this.showCursor,
     this.cursorColor,
     this.visibleLines,
-    this.scrollOffset,
   );
 }
 
@@ -203,6 +207,22 @@ void _defaultBellHandler() {}
 void _defaultTitleHandler(String _) {}
 void _defaultIconHandler(String _) {}
 
+/// The TerminalIsolate class hosts an Isolate that runs a Terminal.
+/// It handles all the communication with and from the Terminal and implements
+/// [TerminalUiInteraction] as well as the terminal and therefore can simply
+/// be exchanged with a Terminal.
+/// This class is the preferred use of a Terminal as the Terminal logic and all
+/// the communication with the backend are happening outside the UI thread.
+///
+/// There is a special constraints in using this class:
+/// The given backend has to be built so that it can be passed into an Isolate.
+///
+/// This means in particular that it is not allowed to have any closures in its
+/// object graph.
+/// It is a good idea to move as much instantiation as possible into the
+/// [TerminalBackend.init] method that gets called after the backend instance
+/// has been passed and is therefore allowed to instantiate parts of the object
+/// graph that do contain closures.
 class TerminalIsolate with Observable implements TerminalUiInteraction {
   final _receivePort = ReceivePort();
   SendPort? _sendPort;
@@ -243,9 +263,6 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
 
   @override
   int get scrollOffsetFromTop => _lastState!.scrollOffsetFromTop;
-
-  @override
-  int get scrollOffset => _lastState!.scrollOffset;
 
   @override
   int get bufferHeight => _lastState!.bufferHeight;
@@ -364,6 +381,7 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   }
 
   void stop() {
+    terminateBackend();
     _isolate.kill();
   }
 
