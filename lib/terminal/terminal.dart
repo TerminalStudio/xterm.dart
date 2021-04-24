@@ -44,8 +44,8 @@ class Terminal with Observable implements TerminalUiInteraction {
   }) : _maxLines = maxLines {
     backend?.init();
     backend?.out.listen(write);
-    _mainBuffer = Buffer(this);
-    _altBuffer = Buffer(this);
+    _mainBuffer = Buffer(terminal: this, isAltBuffer: false);
+    _altBuffer = Buffer(terminal: this, isAltBuffer: true);
     _buffer = _mainBuffer;
 
     cursor = Cursor(
@@ -362,7 +362,9 @@ class Terminal with Observable implements TerminalUiInteraction {
     _viewWidth = newWidth;
     _viewHeight = newHeight;
 
-    buffer.resize(oldWidth, oldHeight, newWidth, newHeight);
+    //we need to resize both buffers so that they are ready when we switch between them
+    _altBuffer.resize(oldWidth, oldHeight, newWidth, newHeight);
+    _mainBuffer.resize(oldWidth, oldHeight, newWidth, newHeight);
 
     // maybe reflow should happen here.
     if (buffer == _altBuffer) {

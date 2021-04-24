@@ -10,7 +10,10 @@ import 'package:xterm/util/scroll_range.dart';
 import 'package:xterm/util/unicode_v11.dart';
 
 class Buffer {
-  Buffer(this.terminal) {
+  Buffer({
+    required this.terminal,
+    required this.isAltBuffer,
+  }) {
     resetVerticalMargins();
 
     lines = CircularList(
@@ -22,6 +25,7 @@ class Buffer {
   }
 
   final Terminal terminal;
+  final bool isAltBuffer;
   final charset = Charset();
 
   /// lines of the buffer. the length of [lines] should always be equal or
@@ -524,7 +528,7 @@ class Buffer {
     _cursorX = _cursorX.clamp(0, newWidth - 1);
     _cursorY = _cursorY.clamp(0, newHeight - 1);
 
-    if (!terminal.isUsingAltBuffer()) {
+    if (!isAltBuffer) {
       final reflowStrategy = newWidth > oldWidth
           ? ReflowStrategyWider(this)
           : ReflowStrategyNarrower(this);

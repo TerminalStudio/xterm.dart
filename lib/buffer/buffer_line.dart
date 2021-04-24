@@ -147,6 +147,9 @@ class BufferLine {
   }
 
   int cellGetContent(int index) {
+    if (index > _maxCols) {
+      return 0;
+    }
     return _cells.getUint32(index * _cellSize + _cellContent);
   }
 
