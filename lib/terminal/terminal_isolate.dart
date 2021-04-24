@@ -369,58 +369,38 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   }
 
   void poll() {
-    if (_sendPort == null) {
-      return;
-    }
-    _sendPort!.send([_IsolateCommand.requestNewStateWhenDirty]);
+    _sendPort?.send([_IsolateCommand.requestNewStateWhenDirty]);
   }
 
   void refresh() {
-    if (_sendPort == null) {
-      return;
-    }
-    _sendPort!.send([_IsolateCommand.refresh]);
+    _sendPort?.send([_IsolateCommand.refresh]);
   }
 
   void clearSelection() {
-    if (_sendPort == null) {
-      return;
-    }
-    _sendPort!.send([_IsolateCommand.clearSelection]);
+    _sendPort?.send([_IsolateCommand.clearSelection]);
   }
 
   void onMouseTap(Position position) {
-    if (_sendPort == null) {
-      return;
-    }
-    _sendPort!.send([_IsolateCommand.mouseTap, position]);
+    _sendPort?.send([_IsolateCommand.mouseTap, position]);
   }
 
   void onPanStart(Position position) {
-    if (_sendPort == null) {
-      return;
-    }
-    _sendPort!.send([_IsolateCommand.mousePanStart, position]);
+    _sendPort?.send([_IsolateCommand.mousePanStart, position]);
   }
 
   void onPanUpdate(Position position) {
-    if (_sendPort == null) {
-      return;
-    }
-    _sendPort!.send([_IsolateCommand.mousePanUpdate, position]);
+    _sendPort?.send([_IsolateCommand.mousePanUpdate, position]);
   }
 
   void setScrollOffsetFromBottom(int offset) {
-    if (_sendPort == null) {
-      return;
-    }
-    _sendPort!.send([_IsolateCommand.setScrollOffsetFromTop, offset]);
+    _sendPort?.send([_IsolateCommand.setScrollOffsetFromTop, offset]);
   }
 
   int convertViewLineToRawLine(int viewLine) {
     if (_lastState == null) {
       return 0;
     }
+
     if (_lastState!.viewHeight > _lastState!.bufferHeight) {
       return viewLine;
     }
@@ -429,24 +409,15 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   }
 
   void write(String text) {
-    if (_sendPort == null) {
-      return;
-    }
-    _sendPort!.send([_IsolateCommand.write, text]);
+    _sendPort?.send([_IsolateCommand.write, text]);
   }
 
   void paste(String data) {
-    if (_sendPort == null) {
-      return;
-    }
-    _sendPort!.send([_IsolateCommand.paste, data]);
+    _sendPort?.send([_IsolateCommand.paste, data]);
   }
 
   void resize(int newWidth, int newHeight) {
-    if (_sendPort == null) {
-      return;
-    }
-    _sendPort!.send([_IsolateCommand.resize, newWidth, newHeight]);
+    _sendPort?.send([_IsolateCommand.resize, newWidth, newHeight]);
   }
 
   void raiseOnInput(String text) {
@@ -461,9 +432,6 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
     bool mac = false,
     // bool meta,
   }) {
-    if (_sendPort == null) {
-      return;
-    }
-    _sendPort!.send([_IsolateCommand.keyInput, key, ctrl, alt, shift, mac]);
+    _sendPort?.send([_IsolateCommand.keyInput, key, ctrl, alt, shift, mac]);
   }
 }
