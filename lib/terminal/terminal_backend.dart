@@ -25,4 +25,7 @@ abstract class TerminalBackend {
 
   /// terminates this backend
   void terminate();
+
+  /// acknowledges processing of a data junk
+  void ackProcessed();
 }

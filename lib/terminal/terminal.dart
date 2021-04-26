@@ -220,6 +220,7 @@ class Terminal with Observable implements TerminalUiInteraction {
   void write(String text) {
     _queue.addAll(text.runes);
     _processInput();
+    backend?.ackProcessed();
     refresh();
   }
 
