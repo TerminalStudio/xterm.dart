@@ -98,6 +98,11 @@ class SSHTerminalBackend implements TerminalBackend {
   void terminate() {
     client?.disconnect('terminate');
   }
+
+  @override
+  void ackProcessed() {
+    // NOOP
+  }
 }
 
 class _MyHomePageState extends State<MyHomePage> {

@@ -81,6 +81,11 @@ class FakeTerminalBackend implements TerminalBackend {
   void terminate() {
     //NOOP
   }
+
+  @override
+  void ackProcessed() {
+    //NOOP
+  }
 }
 
 class _MyHomePageState extends State<MyHomePage> {
