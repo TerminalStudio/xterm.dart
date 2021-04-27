@@ -342,6 +342,7 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
     var firstReceivePort = ReceivePort();
     _isolate = await Isolate.spawn(terminalMain, firstReceivePort.sendPort);
     _sendPort = await firstReceivePort.first;
+    firstReceivePort.close();
     _sendPort!.send([_IsolateCommand.sendPort, _receivePort.sendPort]);
     _receivePort.listen((message) {
       _IsolateEvent action = message[0];
