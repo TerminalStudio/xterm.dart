@@ -337,7 +337,7 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   @override
   bool get isReady => _lastState != null;
 
-  void start() async {
+  Future<void> start() async {
     final initialRefreshCompleted = Completer<bool>();
     var firstReceivePort = ReceivePort();
     _isolate = await Isolate.spawn(terminalMain, firstReceivePort.sendPort);
