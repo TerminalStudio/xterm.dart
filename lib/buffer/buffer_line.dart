@@ -124,8 +124,8 @@ class BufferLine {
   }
 
   void cellClear(int index) {
-    _cells.setInt64(index * _cellSize, 0x00);
-    _cells.setInt64(index * _cellSize + 8, 0x00);
+    _cells.setUint64(index * _cellSize, 0x00);
+    _cells.setUint64(index * _cellSize + 8, 0x00);
   }
 
   void cellInitialize(
@@ -135,11 +135,11 @@ class BufferLine {
     required Cursor cursor,
   }) {
     final cell = index * _cellSize;
-    _cells.setInt32(cell + _cellContent, content);
-    _cells.setInt32(cell + _cellFgColor, cursor.fg);
-    _cells.setInt32(cell + _cellBgColor, cursor.bg);
-    _cells.setInt8(cell + _cellWidth, width);
-    _cells.setInt8(cell + _cellFlags, cursor.flags);
+    _cells.setUint32(cell + _cellContent, content);
+    _cells.setUint32(cell + _cellFgColor, cursor.fg);
+    _cells.setUint32(cell + _cellBgColor, cursor.bg);
+    _cells.setUint8(cell + _cellWidth, width);
+    _cells.setUint8(cell + _cellFlags, cursor.flags);
   }
 
   bool cellHasContent(int index) {
@@ -161,44 +161,44 @@ class BufferLine {
     if (index >= _maxCols) {
       return 0;
     }
-    return _cells.getInt32(index * _cellSize + _cellFgColor);
+    return _cells.getUint32(index * _cellSize + _cellFgColor);
   }
 
   void cellSetFgColor(int index, int color) {
-    _cells.setInt32(index * _cellSize + _cellFgColor, color);
+    _cells.setUint32(index * _cellSize + _cellFgColor, color);
   }
 
   int cellGetBgColor(int index) {
     if (index >= _maxCols) {
       return 0;
     }
-    return _cells.getInt32(index * _cellSize + _cellBgColor);
+    return _cells.getUint32(index * _cellSize + _cellBgColor);
   }
 
   void cellSetBgColor(int index, int color) {
-    _cells.setInt32(index * _cellSize + _cellBgColor, color);
+    _cells.setUint32(index * _cellSize + _cellBgColor, color);
   }
 
   int cellGetFlags(int index) {
     if (index >= _maxCols) {
       return 0;
     }
-    return _cells.getInt8(index * _cellSize + _cellFlags);
+    return _cells.getUint8(index * _cellSize + _cellFlags);
   }
 
   void cellSetFlags(int index, int flags) {
-    _cells.setInt8(index * _cellSize + _cellFlags, flags);
+    _cells.setUint8(index * _cellSize + _cellFlags, flags);
   }
 
   int cellGetWidth(int index) {
     if (index >= _maxCols) {
       return 1;
     }
-    return _cells.getInt8(index * _cellSize + _cellWidth);
+    return _cells.getUint8(index * _cellSize + _cellWidth);
   }
 
   void cellSetWidth(int index, int width) {
-    _cells.setInt8(index * _cellSize + _cellWidth, width);
+    _cells.setUint8(index * _cellSize + _cellWidth, width);
   }
 
   void cellClearFlags(int index) {
