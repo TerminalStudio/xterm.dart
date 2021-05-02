@@ -374,6 +374,11 @@ class TerminalPainter extends CustomPainter {
           continue;
         }
 
+        // when a program reports black as background then it "really" means transparent
+        if (effectBgColor == 0xFF000000) {
+          continue;
+        }
+
         // final cellFlags = line.cellGetFlags(i);
         // final cell = line.getCell(i);
         // final attr = cell.attr;
