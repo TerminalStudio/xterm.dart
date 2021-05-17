@@ -16,18 +16,15 @@ import 'package:xterm/frontend/input_listener.dart';
 import 'package:xterm/frontend/oscillator.dart';
 import 'package:xterm/frontend/cache.dart';
 import 'package:xterm/mouse/position.dart';
-import 'package:xterm/terminal/terminal.dart';
+import 'package:xterm/terminal/terminal_ui_interaction.dart';
 import 'package:xterm/theme/terminal_style.dart';
 import 'package:xterm/util/bit_flags.dart';
 import 'package:xterm/util/hash_values.dart';
-
-typedef TerminalResizeHandler = void Function(int width, int height);
 
 class TerminalView extends StatefulWidget {
   TerminalView({
     Key? key,
     required this.terminal,
-    this.onResize,
     this.style = const TerminalStyle(),
     this.opacity = 1.0,
     FocusNode? focusNode,
@@ -39,8 +36,7 @@ class TerminalView extends StatefulWidget {
         inputBehavior = inputBehavior ?? InputBehaviors.platform,
         super(key: key ?? ValueKey(terminal));
 
-  final Terminal terminal;
-  final TerminalResizeHandler? onResize;
+  final TerminalUiInteraction terminal;
   final FocusNode focusNode;
   final bool autofocus;
   final ScrollController scrollController;
@@ -105,7 +101,7 @@ class _TerminalViewState extends State<TerminalView> {
 
   void onTerminalChange() {
     _terminalScrollExtent =
-        _cellSize.cellHeight * widget.terminal.buffer.scrollOffsetFromTop;
+        _cellSize.cellHeight * widget.terminal.scrollOffsetFromTop;
 
     if (mounted) {
       setState(() {});
@@ -184,20 +180,23 @@ class _TerminalViewState extends State<TerminalView> {
                 // set viewport height.
                 offset.applyViewportDimension(constraints.maxHeight);
 
-                final minScrollExtent = 0.0;
+                if (widget.terminal.isReady) {
+                  final minScrollExtent = 0.0;
 
-                final maxScrollExtent = math.max(
-                    0.0,
-                    _cellSize.cellHeight * widget.terminal.buffer.height -
-                        constraints.maxHeight);
+                  final maxScrollExtent = math.max(
+                      0.0,
+                      _cellSize.cellHeight * widget.terminal.bufferHeight -
+                          constraints.maxHeight);
 
-                // set how much the terminal can scroll
-                offset.applyContentDimensions(minScrollExtent, maxScrollExtent);
+                  // set how much the terminal can scroll
+                  offset.applyContentDimensions(
+                      minScrollExtent, maxScrollExtent);
 
-                // syncronize pending terminal scroll extent to ScrollController
-                if (_terminalScrollExtent != null) {
-                  position.correctPixels(_terminalScrollExtent!);
-                  _terminalScrollExtent = null;
+                  // syncronize pending terminal scroll extent to ScrollController
+                  if (_terminalScrollExtent != null) {
+                    position.correctPixels(_terminalScrollExtent!);
+                    _terminalScrollExtent = null;
+                  }
                 }
 
                 return buildTerminal(context);
@@ -217,26 +216,26 @@ class _TerminalViewState extends State<TerminalView> {
         print('details : $details');
       },
       onTapDown: (detail) {
-        if (widget.terminal.selection.isEmpty) {
+        if (widget.terminal.selection?.isEmpty ?? true) {
           InputListener.of(context)!.requestKeyboard();
         } else {
-          widget.terminal.selection.clear();
+          widget.terminal.clearSelection();
         }
         final pos = detail.localPosition;
         final offset = getMouseOffset(pos.dx, pos.dy);
-        widget.terminal.mouseMode.onTap(widget.terminal, offset);
+        widget.terminal.onMouseTap(offset);
         widget.terminal.refresh();
       },
       onPanStart: (detail) {
         final pos = detail.localPosition;
         final offset = getMouseOffset(pos.dx, pos.dy);
-        widget.terminal.mouseMode.onPanStart(widget.terminal, offset);
+        widget.terminal.onPanStart(offset);
         widget.terminal.refresh();
       },
       onPanUpdate: (detail) {
         final pos = detail.localPosition;
         final offset = getMouseOffset(pos.dx, pos.dy);
-        widget.terminal.mouseMode.onPanUpdate(widget.terminal, offset);
+        widget.terminal.onPanUpdate(offset);
         widget.terminal.refresh();
       },
       child: Container(
@@ -251,7 +250,7 @@ class _TerminalViewState extends State<TerminalView> {
           ),
         ),
         color:
-            Color(widget.terminal.theme.background).withOpacity(widget.opacity),
+            Color(widget.terminal.backgroundColor).withOpacity(widget.opacity),
       ),
     );
   }
@@ -262,8 +261,8 @@ class _TerminalViewState extends State<TerminalView> {
     final row = (py / _cellSize.cellHeight).floor();
 
     final x = col;
-    final y = widget.terminal.buffer.convertViewLineToRawLine(row) -
-        widget.terminal.buffer.scrollOffsetFromBottom;
+    final y = widget.terminal.convertViewLineToRawLine(row) -
+        widget.terminal.scrollOffsetFromBottom;
 
     return Position(x, y);
   }
@@ -272,6 +271,9 @@ class _TerminalViewState extends State<TerminalView> {
   int? _lastTerminalHeight;
 
   void onSize(double width, double height) {
+    if (!widget.terminal.isReady) {
+      return;
+    }
     final termWidth = (width / _cellSize.cellWidth).floor();
     final termHeight = (height / _cellSize.cellHeight).floor();
 
@@ -282,7 +284,6 @@ class _TerminalViewState extends State<TerminalView> {
     _lastTerminalWidth = termWidth;
     _lastTerminalHeight = termHeight;
 
-    widget.onResize?.call(termWidth, termHeight);
     widget.terminal.resize(termWidth, termHeight);
   }
 
@@ -293,7 +294,7 @@ class _TerminalViewState extends State<TerminalView> {
   void onKeyStroke(RawKeyEvent event) {
     // TODO: find a way to stop scrolling immediately after key stroke.
     widget.inputBehavior.onKeyStroke(event, widget.terminal);
-    widget.terminal.buffer.setScrollOffsetFromBottom(0);
+    widget.terminal.setScrollOffsetFromBottom(0);
   }
 
   void onFocus(bool focused) {
@@ -310,10 +311,7 @@ class _TerminalViewState extends State<TerminalView> {
   void onScroll(double offset) {
     final topOffset = (offset / _cellSize.cellHeight).ceil();
     final bottomOffset = widget.terminal.invisibleHeight - topOffset;
-
-    setState(() {
-      widget.terminal.buffer.setScrollOffsetFromBottom(bottomOffset);
-    });
+    widget.terminal.setScrollOffsetFromBottom(bottomOffset);
   }
 }
 
@@ -326,7 +324,7 @@ class TerminalPainter extends CustomPainter {
     required this.charSize,
   });
 
-  final Terminal terminal;
+  final TerminalUiInteraction terminal;
   final TerminalView view;
   final Oscillator oscillator;
   final bool focused;
@@ -334,6 +332,9 @@ class TerminalPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (!terminal.isReady) {
+      return;
+    }
     _paintBackground(canvas);
 
     // if (oscillator.value) {
@@ -355,7 +356,7 @@ class TerminalPainter extends CustomPainter {
       final line = lines[row];
       final offsetY = row * charSize.cellHeight;
       // final cellCount = math.min(terminal.viewWidth, line.length);
-      final cellCount = terminal.viewWidth;
+      final cellCount = terminal.terminalWidth;
 
       for (var col = 0; col < cellCount; col++) {
         final cellWidth = line.cellGetWidth(col);
@@ -370,6 +371,11 @@ class TerminalPainter extends CustomPainter {
             : cellBgColor;
 
         if (effectBgColor == 0x00) {
+          continue;
+        }
+
+        // when a program reports black as background then it "really" means transparent
+        if (effectBgColor == 0xFF000000) {
           continue;
         }
 
@@ -395,19 +401,22 @@ class TerminalPainter extends CustomPainter {
   }
 
   void _paintSelection(Canvas canvas) {
+    final selection = terminal.selection;
+    if (selection == null) {
+      return;
+    }
     final paint = Paint()..color = Colors.white.withOpacity(0.3);
 
-    for (var y = 0; y < terminal.viewHeight; y++) {
+    for (var y = 0; y < terminal.terminalHeight; y++) {
       final offsetY = y * charSize.cellHeight;
-      final absoluteY = terminal.buffer.convertViewLineToRawLine(y) -
-          terminal.buffer.scrollOffsetFromBottom;
+      final absoluteY = terminal.convertViewLineToRawLine(y) -
+          terminal.scrollOffsetFromBottom;
 
-      for (var x = 0; x < terminal.viewWidth; x++) {
+      for (var x = 0; x < terminal.terminalWidth; x++) {
         var cellCount = 0;
 
-        while (
-            terminal.selection.contains(Position(x + cellCount, absoluteY)) &&
-                x + cellCount < terminal.viewWidth) {
+        while (selection.contains(Position(x + cellCount, absoluteY)) &&
+            x + cellCount < terminal.terminalWidth) {
           cellCount++;
         }
 
@@ -436,7 +445,7 @@ class TerminalPainter extends CustomPainter {
       final line = lines[row];
       final offsetY = row * charSize.cellHeight;
       // final cellCount = math.min(terminal.viewWidth, line.length);
-      final cellCount = terminal.viewWidth;
+      final cellCount = terminal.terminalWidth;
 
       for (var col = 0; col < cellCount; col++) {
         final width = line.cellGetWidth(col);
@@ -527,18 +536,18 @@ class TerminalPainter extends CustomPainter {
   }
 
   void _paintCursor(Canvas canvas) {
-    final screenCursorY = terminal.cursorY + terminal.scrollOffset;
-    if (screenCursorY < 0 || screenCursorY >= terminal.viewHeight) {
+    final screenCursorY = terminal.cursorY + terminal.scrollOffsetFromBottom;
+    if (screenCursorY < 0 || screenCursorY >= terminal.terminalHeight) {
       return;
     }
 
     final width = charSize.cellWidth *
-        terminal.buffer.currentLine.cellGetWidth(terminal.cursorX).clamp(1, 2);
+        (terminal.currentLine?.cellGetWidth(terminal.cursorX).clamp(1, 2) ?? 1);
 
     final offsetX = charSize.cellWidth * terminal.cursorX;
     final offsetY = charSize.cellHeight * screenCursorY;
     final paint = Paint()
-      ..color = Color(terminal.theme.cursor)
+      ..color = Color(terminal.cursorColor)
       ..strokeWidth = focused ? 0.0 : 1.0
       ..style = focused ? PaintingStyle.fill : PaintingStyle.stroke;
 

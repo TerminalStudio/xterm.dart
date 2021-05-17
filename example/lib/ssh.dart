@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:dartssh/client.dart';
@@ -34,41 +35,85 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  Terminal terminal;
+class SSHTerminalBackend implements TerminalBackend {
   SSHClient client;
 
-  @override
-  void initState() {
-    super.initState();
-    terminal = Terminal(onInput: onInput);
-    connect();
+  String _host;
+  String _username;
+  String _password;
+
+  Completer<int> _exitCodeCompleter;
+  StreamController<String> _outStream;
+
+  SSHTerminalBackend(this._host, this._username, this._password);
+
+  void onWrite(String data) {
+    _outStream.sink.add(data);
   }
 
-  void connect() {
-    terminal.write('connecting $host...');
+  @override
+  Future<int> get exitCode => _exitCodeCompleter.future;
+
+  @override
+  void init() {
+    _exitCodeCompleter = Completer<int>();
+    _outStream = StreamController<String>();
+
+    onWrite('connecting $_host...');
     client = SSHClient(
-      hostport: Uri.parse(host),
-      login: username,
+      hostport: Uri.parse(_host),
+      login: _username,
       print: print,
       termWidth: 80,
       termHeight: 25,
       termvar: 'xterm-256color',
-      getPassword: () => utf8.encode(password),
+      getPassword: () => utf8.encode(_password),
       response: (transport, data) {
-        terminal.write(data);
+        onWrite(data);
       },
       success: () {
-        terminal.write('connected.\n');
+        onWrite('connected.\n');
       },
       disconnected: () {
-        terminal.write('disconnected.');
+        onWrite('disconnected.');
+        _outStream.close();
       },
     );
   }
 
-  void onInput(String input) {
+  @override
+  Stream<String> get out => _outStream.stream;
+
+  @override
+  void resize(int width, int height) {
+    client.setTerminalWindowSize(width, height);
+  }
+
+  @override
+  void write(String input) {
     client?.sendChannelData(utf8.encode(input));
+  }
+
+  @override
+  void terminate() {
+    client?.disconnect('terminate');
+  }
+
+  @override
+  void ackProcessed() {
+    // NOOP
+  }
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  Terminal terminal;
+  SSHTerminalBackend backend;
+
+  @override
+  void initState() {
+    super.initState();
+    backend = SSHTerminalBackend(host, username, password);
+    terminal = Terminal(backend: backend, maxLines: 10000);
   }
 
   @override
@@ -77,9 +122,6 @@ class _MyHomePageState extends State<MyHomePage> {
       body: SafeArea(
         child: TerminalView(
           terminal: terminal,
-          onResize: (width, height) {
-            client?.setTerminalWindowSize(width, height);
-          },
         ),
       ),
     );

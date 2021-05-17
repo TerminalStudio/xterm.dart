@@ -306,10 +306,11 @@ void csiDeviceStatusReportHandler(CSI csi, Terminal terminal) {
 
   switch (csi.params[0]) {
     case 5:
-      terminal.onInput("\x1b[0n");
+      terminal.backend?.write("\x1b[0n");
       break;
     case 6: // report cursor position
-      terminal.onInput("\x1b[${terminal.cursorX + 1};${terminal.cursorY + 1}R");
+      terminal.backend
+          ?.write("\x1b[${terminal.cursorX + 1};${terminal.cursorY + 1}R");
       break;
     default:
       terminal.debug
@@ -325,7 +326,7 @@ void csiSendDeviceAttributesHandler(CSI csi, Terminal terminal) {
     response = '>0;0;0';
   }
 
-  terminal.onInput('\x1b[${response}c');
+  terminal.backend?.write('\x1b[${response}c');
 }
 
 void csiCursorUpHandler(CSI csi, Terminal terminal) {
