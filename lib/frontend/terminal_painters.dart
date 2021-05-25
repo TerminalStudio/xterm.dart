@@ -3,12 +3,11 @@ import 'package:flutter/widgets.dart';
 import 'package:xterm/buffer/buffer_line.dart';
 import 'package:xterm/buffer/cell_flags.dart';
 import 'package:xterm/mouse/position.dart';
-import 'package:xterm/terminal/terminal.dart';
+import 'package:xterm/terminal/terminal_ui_interaction.dart';
 import 'package:xterm/theme/terminal_style.dart';
 import 'package:xterm/util/bit_flags.dart';
 
 import 'char_size.dart';
-import 'oscillator.dart';
 import 'cache.dart';
 
 class TerminalPainter extends CustomPainter {
@@ -18,7 +17,7 @@ class TerminalPainter extends CustomPainter {
     required this.charSize,
   });
 
-  final Terminal terminal;
+  final TerminalUiInteraction terminal;
   final TerminalStyle style;
   final CellSize charSize;
 
@@ -41,7 +40,7 @@ class TerminalPainter extends CustomPainter {
       final line = lines[row];
       final offsetY = row * charSize.cellHeight;
       // final cellCount = math.min(terminal.viewWidth, line.length);
-      final cellCount = terminal.viewWidth;
+      final cellCount = terminal.terminalWidth;
 
       for (var col = 0; col < cellCount; col++) {
         final cellWidth = line.cellGetWidth(col);
@@ -56,6 +55,11 @@ class TerminalPainter extends CustomPainter {
             : cellBgColor;
 
         if (effectBgColor == 0x00) {
+          continue;
+        }
+
+        // when a program reports black as background then it "really" means transparent
+        if (effectBgColor == 0xFF000000) {
           continue;
         }
 
@@ -83,17 +87,18 @@ class TerminalPainter extends CustomPainter {
   void _paintSelection(Canvas canvas) {
     final paint = Paint()..color = Colors.white.withOpacity(0.3);
 
-    for (var y = 0; y < terminal.viewHeight; y++) {
+    for (var y = 0; y < terminal.terminalHeight; y++) {
       final offsetY = y * charSize.cellHeight;
-      final absoluteY = terminal.buffer.convertViewLineToRawLine(y) -
-          terminal.buffer.scrollOffsetFromBottom;
+      final absoluteY = terminal.convertViewLineToRawLine(y) -
+          terminal.scrollOffsetFromBottom;
 
-      for (var x = 0; x < terminal.viewWidth; x++) {
+      for (var x = 0; x < terminal.terminalWidth; x++) {
         var cellCount = 0;
 
         while (
-            terminal.selection.contains(Position(x + cellCount, absoluteY)) &&
-                x + cellCount < terminal.viewWidth) {
+            (terminal.selection?.contains(Position(x + cellCount, absoluteY)) ??
+                    false) &&
+                x + cellCount < terminal.terminalWidth) {
           cellCount++;
         }
 
@@ -122,7 +127,7 @@ class TerminalPainter extends CustomPainter {
       final line = lines[row];
       final offsetY = row * charSize.cellHeight;
       // final cellCount = math.min(terminal.viewWidth, line.length);
-      final cellCount = terminal.viewWidth;
+      final cellCount = terminal.terminalWidth;
 
       for (var col = 0; col < cellCount; col++) {
         final width = line.cellGetWidth(col);

@@ -97,7 +97,7 @@ class _TerminalViewState extends State<TerminalView> {
   double? _pendingTerminalScrollExtent;
 
   void onTerminalChange() {
-    _terminalScrollExtent =
+    _pendingTerminalScrollExtent =
         _cellSize.cellHeight * widget.terminal.scrollOffsetFromTop;
 
     if (mounted) {
@@ -189,10 +189,10 @@ class _TerminalViewState extends State<TerminalView> {
                   offset.applyContentDimensions(
                       minScrollExtent, maxScrollExtent);
 
-                  // syncronize pending terminal scroll extent to ScrollController
-                  if (_terminalScrollExtent != null) {
-                    position.correctPixels(_terminalScrollExtent!);
-                    _terminalScrollExtent = null;
+                  // synchronize pending terminal scroll extent to ScrollController
+                  if (_pendingTerminalScrollExtent != null) {
+                    position.correctPixels(_pendingTerminalScrollExtent!);
+                    _pendingTerminalScrollExtent = null;
                   }
                 }
 
@@ -267,8 +267,7 @@ class _TerminalViewState extends State<TerminalView> {
   }
 
   Offset _getCursorOffset() {
-    final screenCursorY =
-        widget.terminal.cursorY + widget.terminal.scrollOffset;
+    final screenCursorY = widget.terminal.cursorY;
     final offsetX = _cellSize.cellWidth * widget.terminal.cursorX;
     final offsetY = _cellSize.cellHeight * screenCursorY;
 
@@ -337,7 +336,7 @@ class _TerminalViewState extends State<TerminalView> {
 
 class CursorView extends StatefulWidget {
   final CellSize cellSize;
-  final Terminal terminal;
+  final TerminalUiInteraction terminal;
   final FocusNode? focusNode;
   final Oscillator blinkOscillator;
   CursorView({
@@ -376,15 +375,14 @@ class _CursorViewState extends State<CursorView> {
         focused: focused,
         charSize: widget.cellSize,
         blinkVisible: widget.blinkOscillator.value,
-        cursorColor: widget.terminal.theme.cursor,
+        cursorColor: widget.terminal.cursorColor,
       ),
     );
   }
 
   bool _isCursorVisible() {
-    final screenCursorY =
-        widget.terminal.cursorY + widget.terminal.scrollOffset;
-    if (screenCursorY < 0 || screenCursorY >= widget.terminal.viewHeight) {
+    final screenCursorY = widget.terminal.cursorY;
+    if (screenCursorY < 0 || screenCursorY >= widget.terminal.terminalHeight) {
       return false;
     }
     return widget.terminal.showCursor;
@@ -402,56 +400,6 @@ class _CursorViewState extends State<CursorView> {
     if (!mounted) {
       return;
     }
-
-    final cellColor = flags.hasFlag(CellFlags.inverse) ? bgColor : fgColor;
-
-    var color = Color(cellColor);
-
-    if (flags & CellFlags.faint != 0) {
-      color = color.withOpacity(0.5);
-    }
-
-    final style = (view.style.textStyleProvider != null)
-        ? view.style.textStyleProvider!(
-            color: color,
-            fontSize: view.style.fontSize,
-            fontWeight: flags.hasFlag(CellFlags.bold)
-                ? FontWeight.bold
-                : FontWeight.normal,
-            fontStyle: flags.hasFlag(CellFlags.italic)
-                ? FontStyle.italic
-                : FontStyle.normal,
-            decoration: flags.hasFlag(CellFlags.underline)
-                ? TextDecoration.underline
-                : TextDecoration.none,
-          )
-        : TextStyle(
-            color: color,
-            fontSize: view.style.fontSize,
-            fontWeight: flags.hasFlag(CellFlags.bold)
-                ? FontWeight.bold
-                : FontWeight.normal,
-            fontStyle: flags.hasFlag(CellFlags.italic)
-                ? FontStyle.italic
-                : FontStyle.normal,
-            decoration: flags.hasFlag(CellFlags.underline)
-                ? TextDecoration.underline
-                : TextDecoration.none,
-            fontFamily: 'monospace',
-            fontFamilyFallback: view.style.fontFamily,
-          );
-
-    final span = TextSpan(
-      text: String.fromCharCode(codePoint),
-      // text: codePointCache.getOrConstruct(cell.codePoint),
-      style: style,
-    );
-
-    // final tp = textLayoutCache.getOrPerformLayout(span);
-    tp = textLayoutCache.performAndCacheLayout(span, cellHash);
-
-    tp.paint(canvas, Offset(offsetX, offsetY));
-  }
 
     setState(() {
       if (_isCursorVisible() /*&& widget.terminal.blinkingCursor*/ && focused) {
