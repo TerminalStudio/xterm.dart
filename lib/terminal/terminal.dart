@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:collection';
 import 'dart:math' show max, min;
 
 import 'package:xterm/buffer/buffer.dart';
 import 'package:xterm/buffer/buffer_line.dart';
+import 'package:xterm/mouse/position.dart';
 import 'package:xterm/mouse/selection.dart';
 import 'package:xterm/input/keys.dart';
 import 'package:xterm/input/keytab/keytab.dart';
@@ -14,6 +16,8 @@ import 'package:xterm/terminal/cursor.dart';
 import 'package:xterm/terminal/platform.dart';
 import 'package:xterm/terminal/sbc.dart';
 import 'package:xterm/terminal/tabs.dart';
+import 'package:xterm/terminal/terminal_backend.dart';
+import 'package:xterm/terminal/terminal_ui_interaction.dart';
 import 'package:xterm/theme/terminal_color.dart';
 import 'package:xterm/theme/terminal_theme.dart';
 import 'package:xterm/theme/terminal_themes.dart';
@@ -25,14 +29,13 @@ typedef BellHandler = void Function();
 typedef TitleChangeHandler = void Function(String);
 typedef IconChangeHandler = void Function(String);
 
-void _defaultInputHandler(String _) {}
 void _defaultBellHandler() {}
 void _defaultTitleHandler(String _) {}
 void _defaultIconHandler(String _) {}
 
-class Terminal with Observable {
+class Terminal with Observable implements TerminalUiInteraction {
   Terminal({
-    this.onInput = _defaultInputHandler,
+    this.backend,
     this.onBell = _defaultBellHandler,
     this.onTitleChange = _defaultTitleHandler,
     this.onIconChange = _defaultIconHandler,
@@ -40,8 +43,14 @@ class Terminal with Observable {
     this.theme = TerminalThemes.defaultTheme,
     required int maxLines,
   }) : _maxLines = maxLines {
-    _mainBuffer = Buffer(this);
-    _altBuffer = Buffer(this);
+    backend?.init();
+    backend?.exitCode.then((value) {
+      _isTerminated = true;
+      _backendExited.complete(value);
+    });
+    backend?.out.listen(write);
+    _mainBuffer = Buffer(terminal: this, isAltBuffer: false);
+    _altBuffer = Buffer(terminal: this, isAltBuffer: true);
     _buffer = _mainBuffer;
 
     cursor = Cursor(
@@ -178,11 +187,11 @@ class Terminal with Observable {
   late final Cursor cursor;
 
   final keytab = Keytab.defaultKeytab();
-  final selection = Selection();
+  final _selection = Selection();
   final tabs = Tabs();
   final debug = DebugHandler();
 
-  final TerminalInputHandler onInput;
+  final TerminalBackend? backend;
   final BellHandler onBell;
   final TitleChangeHandler onTitleChange;
   final IconChangeHandler onIconChange;
@@ -194,7 +203,15 @@ class Terminal with Observable {
 
   int get cursorX => buffer.cursorX;
   int get cursorY => buffer.cursorY;
-  int get scrollOffset => buffer.scrollOffsetFromBottom;
+
+  void setScrollOffsetFromBottom(int scrollOffset) {
+    final oldOffset = _buffer.scrollOffsetFromBottom;
+    _buffer.setScrollOffsetFromBottom(scrollOffset);
+    if (oldOffset != scrollOffset) {
+      _dirty = true;
+      refresh();
+    }
+  }
 
   /// Writes data to the terminal. Terminal sequences and special characters are
   /// interpreted.
@@ -203,6 +220,7 @@ class Terminal with Observable {
   void write(String text) {
     _queue.addAll(text.runes);
     _processInput();
+    backend?.ackProcessed();
     refresh();
   }
 
@@ -340,6 +358,7 @@ class Terminal with Observable {
   /// than 0. Text reflow is currently not implemented and will be avaliable in
   /// the future.
   void resize(int newWidth, int newHeight) {
+    backend?.resize(newWidth, newHeight);
     newWidth = max(newWidth, 1);
     newHeight = max(newHeight, 1);
 
@@ -348,7 +367,9 @@ class Terminal with Observable {
     _viewWidth = newWidth;
     _viewHeight = newHeight;
 
-    buffer.resize(oldWidth, oldHeight, newWidth, newHeight);
+    //we need to resize both buffers so that they are ready when we switch between them
+    _altBuffer.resize(oldWidth, oldHeight, newWidth, newHeight);
+    _mainBuffer.resize(oldWidth, oldHeight, newWidth, newHeight);
 
     // maybe reflow should happen here.
     if (buffer == _altBuffer) {
@@ -420,7 +441,7 @@ class Terminal with Observable {
       if (record.action.type == KeytabActionType.input) {
         debug.onMsg('input: ${record.action.value}');
         final input = keytabUnescape(record.action.value);
-        onInput(input);
+        backend?.write(input);
         return;
       }
     }
@@ -429,7 +450,7 @@ class Terminal with Observable {
       if (key.index >= TerminalKey.keyA.index &&
           key.index <= TerminalKey.keyZ.index) {
         final input = key.index - TerminalKey.keyA.index + 1;
-        onInput(String.fromCharCode(input));
+        backend?.write(String.fromCharCode(input));
         return;
       }
     }
@@ -438,20 +459,20 @@ class Terminal with Observable {
       if (key.index >= TerminalKey.keyA.index &&
           key.index <= TerminalKey.keyZ.index) {
         final input = [0x1b, key.index - TerminalKey.keyA.index + 65];
-        onInput(String.fromCharCodes(input));
+        backend?.write(String.fromCharCodes(input));
         return;
       }
     }
   }
 
   String? getSelectedText() {
-    if (selection.isEmpty) {
+    if (_selection.isEmpty) {
       return null;
     }
 
     final builder = StringBuffer();
 
-    for (var row = selection.start!.y; row <= selection.end!.y; row++) {
+    for (var row = _selection.start!.y; row <= _selection.end!.y; row++) {
       if (row >= buffer.height) {
         break;
       }
@@ -461,14 +482,14 @@ class Terminal with Observable {
       var xStart = 0;
       var xEnd = viewWidth - 1;
 
-      if (row == selection.start!.y) {
-        xStart = selection.start!.x;
+      if (row == _selection.start!.y) {
+        xStart = _selection.start!.x;
       } else if (!line.isWrapped) {
         builder.write("\n");
       }
 
-      if (row == selection.end!.y) {
-        xEnd = selection.end!.x;
+      if (row == _selection.end!.y) {
+        xEnd = _selection.end!.x;
       }
 
       for (var col = xStart; col <= xEnd; col++) {
@@ -499,7 +520,7 @@ class Terminal with Observable {
       data = '\x1b[200~$data\x1b[201~';
     }
 
-    onInput(data);
+    backend?.write(data);
   }
 
   void selectWord(int x, int y) {}
@@ -531,4 +552,89 @@ class Terminal with Observable {
       }
     }
   }
+
+  @override
+  int get backgroundColor => theme.background;
+
+  @override
+  int get bufferHeight => buffer.height;
+
+  @override
+  void clearSelection() {
+    selection?.clear();
+  }
+
+  @override
+  int convertViewLineToRawLine(int viewLine) {
+    if (viewHeight > buffer.height) {
+      return viewLine;
+    }
+
+    return viewLine + (buffer.height - viewHeight);
+  }
+
+  @override
+  BufferLine? get currentLine => buffer.currentLine;
+
+  @override
+  int get cursorColor => theme.cursor;
+
+  @override
+  String? get selectedText => getSelectedText();
+
+  @override
+  bool get isReady => true;
+
+  @override
+  void onMouseTap(Position position) {
+    mouseMode.onTap(this, position);
+  }
+
+  @override
+  void onPanStart(Position position) {
+    mouseMode.onPanStart(this, position);
+  }
+
+  @override
+  void onPanUpdate(Position position) {
+    mouseMode.onPanUpdate(this, position);
+  }
+
+  @override
+  int get scrollOffsetFromBottom => buffer.scrollOffsetFromBottom;
+
+  @override
+  int get scrollOffsetFromTop => buffer.scrollOffsetFromTop;
+
+  @override
+  int get terminalHeight => viewHeight;
+
+  @override
+  int get terminalWidth => viewWidth;
+
+  @override
+  Selection? get selection => _selection;
+
+  @override
+  void raiseOnInput(String input) {
+    backend?.write(input);
+  }
+
+  final _backendExited = Completer<int>();
+  @override
+  Future<int> get backendExited => _backendExited.future;
+
+  var _isTerminated = false;
+
+  @override
+  void terminateBackend() {
+    if (_isTerminated) {
+      return;
+    }
+    _isTerminated = true;
+    backend?.terminate();
+  }
+
+  @override
+  bool get isTerminated => _isTerminated;
 }

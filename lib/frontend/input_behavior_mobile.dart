@@ -14,9 +14,10 @@ class InputBehaviorMobile extends InputBehaviorDefault {
     selection: TextSelection.collapsed(offset: 1),
   );
 
-  TextEditingValue onTextEdit(TextEditingValue value, Terminal terminal) {
+  TextEditingValue onTextEdit(
+      TextEditingValue value, TerminalUiInteraction terminal) {
     if (value.text.length > initEditingState.text.length) {
-      terminal.onInput(value.text.substring(1, value.text.length - 1));
+      terminal.raiseOnInput(value.text.substring(1, value.text.length - 1));
     } else if (value.text.length < initEditingState.text.length) {
       terminal.keyInput(TerminalKey.backspace);
     } else {
@@ -30,7 +31,7 @@ class InputBehaviorMobile extends InputBehaviorDefault {
     return initEditingState;
   }
 
-  void onAction(TextInputAction action, Terminal terminal) {
+  void onAction(TextInputAction action, TerminalUiInteraction terminal) {
     print('action $action');
     switch (action) {
       case TextInputAction.done:

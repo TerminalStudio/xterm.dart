@@ -24,12 +24,12 @@ class MouseModeNone extends MouseMode {
 
   @override
   void onPanStart(Terminal terminal, Position offset) {
-    terminal.selection.init(offset);
+    terminal.selection!.init(offset);
   }
 
   @override
   void onPanUpdate(Terminal terminal, Position offset) {
-    terminal.selection.update(offset);
+    terminal.selection!.update(offset);
   }
 }
 
@@ -49,6 +49,6 @@ class MouseModeX10 extends MouseMode {
     buffer.writeCharCode(btn + 32);
     buffer.writeCharCode(px + 32);
     buffer.writeCharCode(py + 32);
-    terminal.onInput(buffer.toString());
+    terminal.backend?.write(buffer.toString());
   }
 }
