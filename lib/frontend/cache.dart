@@ -8,6 +8,10 @@ class TextLayoutCache {
   final LruMap<int, TextPainter> _cache;
   final TextDirection textDirection;
 
+  void clear() {
+    _cache.clear();
+  }
+
   TextPainter? getLayoutFromCache(int key) {
     return _cache[key];
   }
@@ -36,6 +40,7 @@ class TextLayoutCache {
 }
 
 final textLayoutCache = TextLayoutCache(TextDirection.ltr, 10240);
+double textLayoutCacheFontSize = 0;
 
 // class CodePointCache {
 //   CodePointCache(int maximumSize)

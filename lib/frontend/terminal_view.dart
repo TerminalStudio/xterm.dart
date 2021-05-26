@@ -51,11 +51,9 @@ class TerminalView extends StatefulWidget {
   CellSize measureCellSize(double fontSize) {
     final testString = 'xxxxxxxxxx' * 1000;
 
-    //TODO: remove me
-    print('Measuring for font size $fontSize');
-
     final text = Text(
       testString,
+      maxLines: 1,
       style: (style.textStyleProvider != null)
           ? style.textStyleProvider!(
               fontSize: fontSize,
@@ -68,10 +66,6 @@ class TerminalView extends StatefulWidget {
     );
 
     final size = textSize(text);
-
-    //TODO: remove me
-    print('Text height: ${size.height}');
-    print('Text width: ${size.width}');
 
     final charWidth = (size.width / testString.length);
     final charHeight = size.height;
@@ -533,7 +527,11 @@ class TerminalPainter extends CustomPainter {
 
     // final cellHash = line.cellGetHash(cell);
     final fontSize = view.style.fontSize + fontSizeCorrection;
-    final cellHash = hashValues(codePoint, fgColor, bgColor, flags, fontSize);
+    if (textLayoutCacheFontSize != fontSize) {
+      textLayoutCache.clear();
+      textLayoutCacheFontSize = fontSize;
+    }
+    final cellHash = hashValues(codePoint, fgColor, bgColor, flags);
 
     var tp = textLayoutCache.getLayoutFromCache(cellHash);
     if (tp != null) {
