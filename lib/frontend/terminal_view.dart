@@ -99,6 +99,9 @@ class _TerminalViewState extends State<TerminalView> {
 
   double _fontSizeCorrection = 0;
 
+  final minFontSize = 4;
+  final maxFontSize = 40;
+
   /// Scroll position from the terminal. Not null if terminal scroll extent has
   /// been updated and needs to be syncronized to flutter side.
   double? _terminalScrollExtent;
@@ -113,7 +116,12 @@ class _TerminalViewState extends State<TerminalView> {
   }
 
   void _changeFontSizeCorrection(double correction) {
-    _fontSizeCorrection += correction;
+    final newFontSizeCorrection = _fontSizeCorrection + correction;
+    final newFontSize = widget.style.fontSize + newFontSizeCorrection;
+    if (newFontSize < minFontSize || newFontSize > maxFontSize) {
+      return;
+    }
+    _fontSizeCorrection = newFontSizeCorrection;
     _resetCellSize();
     onSize(_width!, _height!);
   }
