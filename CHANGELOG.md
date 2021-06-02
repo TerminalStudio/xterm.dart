@@ -1,3 +1,6 @@
+## [2.3.1-pre] - 2021-6-1
+* Export `theme/terminal_style.dart`
+
 ## [2.3.0-pre] - 2021-6-1
 * Add `import 'package:xterm/isolate.dart';`
 
