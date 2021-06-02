@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:xterm/flutter.dart';
 import 'package:xterm/xterm.dart';
+import 'package:xterm/isolate.dart';
 
 void main() {
   runApp(MyApp());
