@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:xterm/buffer/line/line.dart';
 import 'package:xterm/terminal/cursor.dart';
 
 /// Line layout:
@@ -34,8 +35,10 @@ int _nextLength(int lengthRequirement) {
   return nextLength;
 }
 
-class BufferLine {
-  BufferLine({int length = 64, this.isWrapped = false}) {
+/// [ByteData] based [BufferLine], used in non-web platforms to minimize memory
+/// footprint,
+class ByteDataBufferLine with BufferLine {
+  ByteDataBufferLine(int length, this.isWrapped) {
     _maxCols = _nextLength(length);
     _cells = ByteData(_maxCols * _cellSize);
   }
@@ -241,7 +244,7 @@ class BufferLine {
     return 0;
   }
 
-  void copyCellsFrom(BufferLine src, int srcCol, int dstCol, int len) {
+  void copyCellsFrom(ByteDataBufferLine src, int srcCol, int dstCol, int len) {
     ensure(dstCol + len);
 
     final intsToCopy = len * _cellSize64Bit;
@@ -281,23 +284,6 @@ class BufferLine {
       final code = cellGetContent(i);
       if (code == 0) {
         continue;
-      }
-      result.writeCharCode(code);
-    }
-    return result.toString();
-  }
-
-  String toDebugString(int cols) {
-    final result = StringBuffer();
-    final length = getTrimmedLength();
-    for (int i = 0; i < max(cols, length); i++) {
-      var code = cellGetContent(i);
-      if (code == 0) {
-        if (cellGetWidth(i) == 0) {
-          code = '_'.runes.first;
-        } else {
-          code = cellGetWidth(i).toString().runes.first;
-        }
       }
       result.writeCharCode(code);
     }
