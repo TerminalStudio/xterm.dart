@@ -20,13 +20,11 @@ abstract class BufferLine {
 
   void ensure(int length);
 
-  void insert(int index) {
-    insertN(index, 1);
-  }
-
-  void removeN(int index, int count);
+  void insert(int index);
 
   void insertN(int index, int count);
+
+  void removeN(int index, int count);
 
   void clear();
 
