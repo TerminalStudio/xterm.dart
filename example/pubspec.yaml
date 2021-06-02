@@ -81,3 +81,7 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+  fonts:
+    - family: Cascadia Mono
+      fonts:
+        - asset: fonts/CascadiaMonoPL.ttf
