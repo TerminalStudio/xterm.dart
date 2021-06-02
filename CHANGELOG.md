@@ -1,4 +1,7 @@
-## [2.2.1-pre] - 2021-4-12
+## [2.3.0-pre] - 2021-6-1
+* Add `import 'package:xterm/isolate.dart';`
+
+## [2.2.1-pre] - 2021-6-1
 * Make BufferLine work on web.
 
 ## [2.2.0-pre] - 2021-4-12
