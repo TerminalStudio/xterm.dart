@@ -3,7 +3,7 @@ import 'dart:collection';
 import 'dart:math' show max, min;
 
 import 'package:xterm/buffer/buffer.dart';
-import 'package:xterm/buffer/buffer_line.dart';
+import 'package:xterm/buffer/line/line.dart';
 import 'package:xterm/mouse/position.dart';
 import 'package:xterm/mouse/selection.dart';
 import 'package:xterm/input/keys.dart';

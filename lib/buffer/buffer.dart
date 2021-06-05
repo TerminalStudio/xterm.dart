@@ -1,6 +1,6 @@
 import 'dart:math' show max, min;
 
-import 'package:xterm/buffer/buffer_line.dart';
+import 'package:xterm/buffer/line/line.dart';
 import 'package:xterm/buffer/reflow_strategy_narrower.dart';
 import 'package:xterm/buffer/reflow_strategy_wider.dart';
 import 'package:xterm/terminal/charset.dart';

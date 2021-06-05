@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:isolate';
 
-import 'package:xterm/buffer/buffer_line.dart';
+import 'package:xterm/buffer/line/line.dart';
 import 'package:xterm/input/keys.dart';
 import 'package:xterm/mouse/position.dart';
 import 'package:xterm/mouse/selection.dart';
@@ -255,7 +255,7 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
     this.theme = TerminalThemes.defaultTheme,
     this.minRefreshDelay = const Duration(milliseconds: 16),
     required this.maxLines,
-  })   : _platform = platform,
+  })  : _platform = platform,
         _refreshEventDebouncer = EventDebouncer(minRefreshDelay);
 
   @override

@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
-import 'package:xterm/buffer/buffer_line.dart';
+import 'package:xterm/buffer/line/line.dart';
 import 'package:xterm/buffer/cell_flags.dart';
 import 'package:xterm/frontend/char_size.dart';
 import 'package:xterm/frontend/helpers.dart';

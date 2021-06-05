@@ -1,5 +1,3 @@
-import 'package:xterm/terminal/terminal_isolate.dart';
-
 /// interface for every Terminal backend
 abstract class TerminalBackend {
   /// initializes the backend

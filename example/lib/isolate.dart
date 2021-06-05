@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:xterm/flutter.dart';
 import 'package:xterm/xterm.dart';
+import 'package:xterm/isolate.dart';
 
 void main() {
   runApp(MyApp());
@@ -89,15 +90,16 @@ class FakeTerminalBackend implements TerminalBackend {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  Terminal terminal;
+  TerminalIsolate terminal;
 
   @override
   void initState() {
     super.initState();
-    terminal = Terminal(
+    terminal = TerminalIsolate(
       backend: FakeTerminalBackend(),
       maxLines: 10000,
     );
+    terminal.start();
   }
 
   void onInput(String input) {}
@@ -106,10 +108,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: TerminalView(
-          terminal: terminal,
-          style: TerminalStyle(fontFamily: ['Cascadia Mono']),
-        ),
+        child: TerminalView(terminal: terminal),
       ),
     );
   }
