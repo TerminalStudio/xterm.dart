@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui';
 
@@ -47,7 +48,7 @@ class TerminalView extends StatefulWidget {
   final InputBehavior inputBehavior;
 
   // get the dimensions of a rendered character
-  CellSize measureCellSize() {
+  CellSize measureCellSize(double fontSize) {
     final testString = 'xxxxxxxxxx' * 1000;
 
     final text = Text(
@@ -55,12 +56,12 @@ class TerminalView extends StatefulWidget {
       maxLines: 1,
       style: (style.textStyleProvider != null)
           ? style.textStyleProvider!(
-              fontSize: style.fontSize,
+              fontSize: fontSize,
             )
           : TextStyle(
               fontFamily: 'monospace',
               fontFamilyFallback: style.fontFamily,
-              fontSize: style.fontSize,
+              fontSize: fontSize,
             ),
     );
 
@@ -120,7 +121,7 @@ class _TerminalViewState extends State<TerminalView> {
     // oscillator.addListener(onTick);
 
     // measureCellSize is expensive so we cache the result.
-    _cellSize = widget.measureCellSize();
+    _cellSize = widget.measureCellSize(widget.style.fontSize);
 
     widget.terminal.addListener(onTerminalChange);
 
@@ -131,6 +132,12 @@ class _TerminalViewState extends State<TerminalView> {
   void didUpdateWidget(TerminalView oldWidget) {
     oldWidget.terminal.removeListener(onTerminalChange);
     widget.terminal.addListener(onTerminalChange);
+
+    if (oldWidget.style != widget.style) {
+      _cellSize = widget.measureCellSize(widget.style.fontSize);
+      updateTerminalSize();
+    }
+
     super.didUpdateWidget(oldWidget);
   }
 
@@ -157,7 +164,7 @@ class _TerminalViewState extends State<TerminalView> {
       child: MouseRegion(
         cursor: SystemMouseCursors.text,
         child: LayoutBuilder(builder: (context, constraints) {
-          onSize(constraints.maxWidth, constraints.maxHeight);
+          onWidgetSize(constraints.maxWidth, constraints.maxHeight);
           // use flutter's Scrollable to manage scrolling to better integrate
           // with widgets such as Scrollbar.
           return NotificationListener<ScrollNotification>(
@@ -250,8 +257,9 @@ class _TerminalViewState extends State<TerminalView> {
             charSize: _cellSize,
           ),
         ),
-        color:
-            Color(widget.terminal.backgroundColor).withOpacity(widget.opacity),
+        color: Color(widget.terminal.backgroundColor).withOpacity(
+          widget.opacity,
+        ),
       ),
     );
   }
@@ -268,15 +276,29 @@ class _TerminalViewState extends State<TerminalView> {
     return Position(x, y);
   }
 
-  int? _lastTerminalWidth;
-  int? _lastTerminalHeight;
+  double? _width;
+  double? _height;
 
-  void onSize(double width, double height) {
+  void onWidgetSize(double width, double height) {
     if (!widget.terminal.isReady) {
       return;
     }
-    final termWidth = (width / _cellSize.cellWidth).floor();
-    final termHeight = (height / _cellSize.cellHeight).floor();
+
+    _width = width;
+    _height = height;
+
+    updateTerminalSize();
+  }
+
+  int? _lastTerminalWidth;
+  int? _lastTerminalHeight;
+
+  void updateTerminalSize() {
+    assert(_width != null);
+    assert(_height != null);
+
+    final termWidth = (_width! / _cellSize.cellWidth).floor();
+    final termHeight = (_height! / _cellSize.cellHeight).floor();
 
     if (_lastTerminalWidth == termWidth && _lastTerminalHeight == termHeight) {
       return;
@@ -478,6 +500,11 @@ class TerminalPainter extends CustomPainter {
     }
 
     // final cellHash = line.cellGetHash(cell);
+    final fontSize = view.style.fontSize;
+    if (textLayoutCacheFontSize != fontSize) {
+      textLayoutCache.clear();
+      textLayoutCacheFontSize = fontSize;
+    }
     final cellHash = hashValues(codePoint, fgColor, bgColor, flags);
 
     var tp = textLayoutCache.getLayoutFromCache(cellHash);
@@ -497,7 +524,7 @@ class TerminalPainter extends CustomPainter {
     final style = (view.style.textStyleProvider != null)
         ? view.style.textStyleProvider!(
             color: color,
-            fontSize: view.style.fontSize,
+            fontSize: fontSize,
             fontWeight: flags.hasFlag(CellFlags.bold)
                 ? FontWeight.bold
                 : FontWeight.normal,
@@ -510,7 +537,7 @@ class TerminalPainter extends CustomPainter {
           )
         : TextStyle(
             color: color,
-            fontSize: view.style.fontSize,
+            fontSize: fontSize,
             fontWeight: flags.hasFlag(CellFlags.bold)
                 ? FontWeight.bold
                 : FontWeight.normal,

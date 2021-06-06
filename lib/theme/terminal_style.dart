@@ -1,7 +1,8 @@
 import 'dart:ui' as ui;
+import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
-class TerminalStyle {
+class TerminalStyle with EquatableMixin {
   static const defaultFontFamily = [
     'Monaco',
     'Droid Sans Mono',
@@ -41,6 +42,17 @@ class TerminalStyle {
   final double fontWidthScaleFactor;
   final double fontHeightScaleFactor;
   final TextStyleProvider? textStyleProvider;
+
+  @override
+  List<Object?> get props {
+    return [
+      fontFamily,
+      fontSize,
+      fontWidthScaleFactor,
+      fontHeightScaleFactor,
+      textStyleProvider,
+    ];
+  }
 }
 
 typedef TextStyleProvider = Function({
