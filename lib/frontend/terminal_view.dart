@@ -97,11 +97,6 @@ class _TerminalViewState extends State<TerminalView> {
 
   late CellSize _cellSize;
 
-  double _fontSizeCorrection = 0;
-
-  final minFontSize = 4;
-  final maxFontSize = 40;
-
   /// Scroll position from the terminal. Not null if terminal scroll extent has
   /// been updated and needs to be syncronized to flutter side.
   double? _terminalScrollExtent;
@@ -115,25 +110,6 @@ class _TerminalViewState extends State<TerminalView> {
     }
   }
 
-  void _changeFontSizeCorrection(double correction) {
-    final newFontSizeCorrection = _fontSizeCorrection + correction;
-    final newFontSize = widget.style.fontSize + newFontSizeCorrection;
-    if (newFontSize < minFontSize || newFontSize > maxFontSize) {
-      return;
-    }
-    _fontSizeCorrection = newFontSizeCorrection;
-    _resetCellSize();
-    onSize(_width!, _height!);
-  }
-
-  void _resetCellSize() {
-    final newCellSize =
-        widget.measureCellSize(widget.style.fontSize + _fontSizeCorrection);
-    setState(() {
-      _cellSize = newCellSize;
-    });
-  }
-
   // listen to oscillator to update mouse blink etc.
   // void onTick() {
   //   widget.terminal.refresh();
@@ -145,8 +121,7 @@ class _TerminalViewState extends State<TerminalView> {
     // oscillator.addListener(onTick);
 
     // measureCellSize is expensive so we cache the result.
-    _cellSize =
-        widget.measureCellSize(widget.style.fontSize + _fontSizeCorrection);
+    _cellSize = widget.measureCellSize(widget.style.fontSize);
 
     widget.terminal.addListener(onTerminalChange);
 
@@ -157,6 +132,12 @@ class _TerminalViewState extends State<TerminalView> {
   void didUpdateWidget(TerminalView oldWidget) {
     oldWidget.terminal.removeListener(onTerminalChange);
     widget.terminal.addListener(onTerminalChange);
+
+    if (oldWidget.style != widget.style) {
+      _cellSize = widget.measureCellSize(widget.style.fontSize);
+      updateTerminalSize();
+    }
+
     super.didUpdateWidget(oldWidget);
   }
 
@@ -183,7 +164,7 @@ class _TerminalViewState extends State<TerminalView> {
       child: MouseRegion(
         cursor: SystemMouseCursors.text,
         child: LayoutBuilder(builder: (context, constraints) {
-          onSize(constraints.maxWidth, constraints.maxHeight);
+          onWidgetSize(constraints.maxWidth, constraints.maxHeight);
           // use flutter's Scrollable to manage scrolling to better integrate
           // with widgets such as Scrollbar.
           return NotificationListener<ScrollNotification>(
@@ -274,11 +255,11 @@ class _TerminalViewState extends State<TerminalView> {
             oscillator: oscillator,
             focused: focused,
             charSize: _cellSize,
-            fontSizeCorrection: _fontSizeCorrection,
           ),
         ),
-        color:
-            Color(widget.terminal.backgroundColor).withOpacity(widget.opacity),
+        color: Color(widget.terminal.backgroundColor).withOpacity(
+          widget.opacity,
+        ),
       ),
     );
   }
@@ -298,17 +279,26 @@ class _TerminalViewState extends State<TerminalView> {
   double? _width;
   double? _height;
 
-  int? _lastTerminalWidth;
-  int? _lastTerminalHeight;
-
-  void onSize(double width, double height) {
+  void onWidgetSize(double width, double height) {
     if (!widget.terminal.isReady) {
       return;
     }
+
     _width = width;
     _height = height;
-    final termWidth = (width / _cellSize.cellWidth).floor();
-    final termHeight = (height / _cellSize.cellHeight).floor();
+
+    updateTerminalSize();
+  }
+
+  int? _lastTerminalWidth;
+  int? _lastTerminalHeight;
+
+  void updateTerminalSize() {
+    assert(_width != null);
+    assert(_height != null);
+
+    final termWidth = (_width! / _cellSize.cellWidth).floor();
+    final termHeight = (_height! / _cellSize.cellHeight).floor();
 
     if (_lastTerminalWidth == termWidth && _lastTerminalHeight == termHeight) {
       return;
@@ -325,28 +315,6 @@ class _TerminalViewState extends State<TerminalView> {
   }
 
   void onKeyStroke(RawKeyEvent event) {
-    if (Platform.isMacOS) {
-      // for Mac we have META + x triggering special functions
-      if (event.isMetaPressed) {
-        // detect Zoom
-        if (event.character == '+') {
-          _changeFontSizeCorrection(1);
-        }
-        if (event.character == '-') {
-          _changeFontSizeCorrection(-1);
-        }
-      }
-    } else {
-      // for Windows and Linux we have CTRL + SHIFT + x triggering special functions
-      if (event.isControlPressed && event.isShiftPressed) {
-        if (event.character == '+') {
-          _changeFontSizeCorrection(1);
-        }
-        if (event.character == '-') {
-          _changeFontSizeCorrection(-1);
-        }
-      }
-    }
     // TODO: find a way to stop scrolling immediately after key stroke.
     widget.inputBehavior.onKeyStroke(event, widget.terminal);
     widget.terminal.setScrollOffsetFromBottom(0);
@@ -377,7 +345,6 @@ class TerminalPainter extends CustomPainter {
     required this.oscillator,
     required this.focused,
     required this.charSize,
-    required this.fontSizeCorrection,
   });
 
   final TerminalUiInteraction terminal;
@@ -385,7 +352,6 @@ class TerminalPainter extends CustomPainter {
   final Oscillator oscillator;
   final bool focused;
   final CellSize charSize;
-  final double fontSizeCorrection;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -534,7 +500,7 @@ class TerminalPainter extends CustomPainter {
     }
 
     // final cellHash = line.cellGetHash(cell);
-    final fontSize = view.style.fontSize + fontSizeCorrection;
+    final fontSize = view.style.fontSize;
     if (textLayoutCacheFontSize != fontSize) {
       textLayoutCache.clear();
       textLayoutCacheFontSize = fontSize;
