@@ -501,15 +501,11 @@ class TerminalPainter extends CustomPainter {
 
     // final cellHash = line.cellGetHash(cell);
     final fontSize = view.style.fontSize;
-    if (textLayoutCacheFontSize != fontSize) {
-      textLayoutCache.clear();
-      textLayoutCacheFontSize = fontSize;
-    }
     final cellHash = hashValues(codePoint, fgColor, bgColor, flags);
 
-    var tp = textLayoutCache.getLayoutFromCache(cellHash);
-    if (tp != null) {
-      tp.paint(canvas, Offset(offsetX, offsetY));
+    var character = textLayoutCache.getLayoutFromCache(cellHash);
+    if (character != null) {
+      canvas.drawParagraph(character, Offset(offsetX, offsetY));
       return;
     }
 
@@ -551,16 +547,11 @@ class TerminalPainter extends CustomPainter {
             fontFamilyFallback: view.style.fontFamily,
           );
 
-    final span = TextSpan(
-      text: String.fromCharCode(codePoint),
-      // text: codePointCache.getOrConstruct(cell.codePoint),
-      style: style,
-    );
-
     // final tp = textLayoutCache.getOrPerformLayout(span);
-    tp = textLayoutCache.performAndCacheLayout(span, cellHash);
+    character = textLayoutCache.performAndCacheLayout(
+        String.fromCharCode(codePoint), style, cellHash);
 
-    tp.paint(canvas, Offset(offsetX, offsetY));
+    canvas.drawParagraph(character, Offset(offsetX, offsetY));
   }
 
   void _paintCursor(Canvas canvas) {
