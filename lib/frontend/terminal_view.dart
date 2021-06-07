@@ -91,6 +91,8 @@ class _TerminalViewState extends State<TerminalView> {
   /// blinking cursor and blinking character
   final oscillator = Oscillator.ms(600);
 
+  final textLayoutCache = TextLayoutCache(TextDirection.ltr, 10240);
+
   bool get focused {
     return widget.focusNode.hasFocus;
   }
@@ -135,6 +137,7 @@ class _TerminalViewState extends State<TerminalView> {
 
     if (oldWidget.style != widget.style) {
       _cellSize = widget.measureCellSize(widget.style.fontSize);
+      textLayoutCache.clear();
       updateTerminalSize();
     }
 
@@ -255,6 +258,7 @@ class _TerminalViewState extends State<TerminalView> {
             oscillator: oscillator,
             focused: focused,
             charSize: _cellSize,
+            textLayoutCache: textLayoutCache,
           ),
         ),
         color: Color(widget.terminal.backgroundColor).withOpacity(
@@ -345,6 +349,7 @@ class TerminalPainter extends CustomPainter {
     required this.oscillator,
     required this.focused,
     required this.charSize,
+    required this.textLayoutCache,
   });
 
   final TerminalUiInteraction terminal;
@@ -352,6 +357,7 @@ class TerminalPainter extends CustomPainter {
   final Oscillator oscillator;
   final bool focused;
   final CellSize charSize;
+  final TextLayoutCache textLayoutCache;
 
   @override
   void paint(Canvas canvas, Size size) {

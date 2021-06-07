@@ -13,7 +13,7 @@ class TextLayoutCache {
   void clear() {
     _cache.clear();
   }
-  
+
   Paragraph? getLayoutFromCache(int key) {
     return _cache[key];
   }
@@ -34,5 +34,3 @@ class TextLayoutCache {
     return _cache.length;
   }
 }
-
-final textLayoutCache = TextLayoutCache(TextDirection.ltr, 10240);
