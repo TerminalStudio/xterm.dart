@@ -104,7 +104,7 @@ void terminalMain(SendPort port) async {
         _terminal?.setScrollOffsetFromBottom(msg[1]);
         break;
       case _IsolateCommand.resize:
-        _terminal?.resize(msg[1], msg[2]);
+        _terminal?.resize(msg[1], msg[2], msg[3], msg[4]);
         break;
       case _IsolateCommand.onInput:
         _terminal?.backend?.write(msg[1]);
@@ -155,6 +155,7 @@ class TerminalInitData {
   TerminalTheme theme;
   int maxLines;
   TerminalBackend? backend;
+
   TerminalInitData(this.backend, this.platform, this.theme, this.maxLines);
 }
 
@@ -204,7 +205,9 @@ class TerminalState {
 }
 
 void _defaultBellHandler() {}
+
 void _defaultTitleHandler(String _) {}
+
 void _defaultIconHandler(String _) {}
 
 /// The TerminalIsolate class hosts an Isolate that runs a Terminal.
@@ -434,8 +437,15 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
     _sendPort?.send([_IsolateCommand.paste, data]);
   }
 
-  void resize(int newWidth, int newHeight) {
-    _sendPort?.send([_IsolateCommand.resize, newWidth, newHeight]);
+  void resize(
+      int newWidth, int newHeight, int newPixelWidth, int newPixelHeight) {
+    _sendPort?.send([
+      _IsolateCommand.resize,
+      newWidth,
+      newHeight,
+      newPixelWidth,
+      newPixelHeight
+    ]);
   }
 
   void raiseOnInput(String text) {
@@ -456,6 +466,7 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   var _isTerminated = false;
 
   final _backendExited = Completer<int>();
+
   @override
   Future<int> get backendExited => _backendExited.future;
 
