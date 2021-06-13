@@ -52,7 +52,7 @@ class FakeTerminalBackend extends TerminalBackend {
   Stream<String> get out => _outStream.stream;
 
   @override
-  void resize(int width, int height) {
+  void resize(int width, int height, int pixelWidth, int pixelHeight) {
     // NOOP
   }
 

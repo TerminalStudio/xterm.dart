@@ -359,7 +359,7 @@ class Terminal with Observable implements TerminalUiInteraction {
   /// the future.
   void resize(
       int newWidth, int newHeight, int newPixelWidth, int newPixelHeight) {
-    backend?.resizeFull(newWidth, newHeight, newPixelWidth, newPixelHeight);
+    backend?.resize(newWidth, newHeight, newPixelWidth, newPixelHeight);
     newWidth = max(newWidth, 1);
     newHeight = max(newHeight, 1);
 
