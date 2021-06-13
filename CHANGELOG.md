@@ -1,3 +1,8 @@
+
+## [2.4.0-pre] - 2021-6-13
+* Update the signature of TerminalBackend.resize() to also receive dimensions in
+ pixels[(#39)](https://github.com/TerminalStudio/xterm.dart/pull/39). Thanks [@michaellee8](https://github.com/michaellee8).
+
 ## [2.3.1-pre] - 2021-6-1
 * Export `theme/terminal_style.dart`
 
