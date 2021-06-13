@@ -19,7 +19,7 @@ abstract class TerminalBackend {
   void write(String input);
 
   /// notifies the backend about a view port resize that happened
-  void resize(int width, int height);
+  void resize(int width, int height, int pixelWidth, int pixelHeight);
 
   /// terminates this backend
   void terminate();

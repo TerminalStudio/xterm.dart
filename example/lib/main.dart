@@ -29,7 +29,7 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class FakeTerminalBackend implements TerminalBackend {
+class FakeTerminalBackend extends TerminalBackend {
   Completer<int> _exitCodeCompleter;
   // ignore: close_sinks
   StreamController<String> _outStream;
@@ -52,7 +52,7 @@ class FakeTerminalBackend implements TerminalBackend {
   Stream<String> get out => _outStream.stream;
 
   @override
-  void resize(int width, int height) {
+  void resize(int width, int height, int pixelWidth, int pixelHeight) {
     // NOOP
   }
 

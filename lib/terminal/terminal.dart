@@ -4,13 +4,13 @@ import 'dart:math' show max, min;
 
 import 'package:xterm/buffer/buffer.dart';
 import 'package:xterm/buffer/line/line.dart';
-import 'package:xterm/mouse/position.dart';
-import 'package:xterm/mouse/selection.dart';
 import 'package:xterm/input/keys.dart';
 import 'package:xterm/input/keytab/keytab.dart';
 import 'package:xterm/input/keytab/keytab_escape.dart';
 import 'package:xterm/input/keytab/keytab_record.dart';
 import 'package:xterm/mouse/mouse_mode.dart';
+import 'package:xterm/mouse/position.dart';
+import 'package:xterm/mouse/selection.dart';
 import 'package:xterm/terminal/ansi.dart';
 import 'package:xterm/terminal/cursor.dart';
 import 'package:xterm/terminal/platform.dart';
@@ -357,8 +357,9 @@ class Terminal with Observable implements TerminalUiInteraction {
   /// Resize the terminal screen. [newWidth] and [newHeight] should be greater
   /// than 0. Text reflow is currently not implemented and will be avaliable in
   /// the future.
-  void resize(int newWidth, int newHeight) {
-    backend?.resize(newWidth, newHeight);
+  void resize(
+      int newWidth, int newHeight, int newPixelWidth, int newPixelHeight) {
+    backend?.resize(newWidth, newHeight, newPixelWidth, newPixelHeight);
     newWidth = max(newWidth, 1);
     newHeight = max(newHeight, 1);
 

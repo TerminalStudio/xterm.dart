@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui';
 
@@ -7,15 +6,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
-import 'package:xterm/buffer/line/line.dart';
 import 'package:xterm/buffer/cell_flags.dart';
+import 'package:xterm/buffer/line/line.dart';
+import 'package:xterm/frontend/cache.dart';
 import 'package:xterm/frontend/char_size.dart';
 import 'package:xterm/frontend/helpers.dart';
 import 'package:xterm/frontend/input_behavior.dart';
 import 'package:xterm/frontend/input_behaviors.dart';
 import 'package:xterm/frontend/input_listener.dart';
 import 'package:xterm/frontend/oscillator.dart';
-import 'package:xterm/frontend/cache.dart';
 import 'package:xterm/mouse/position.dart';
 import 'package:xterm/terminal/terminal_ui_interaction.dart';
 import 'package:xterm/theme/terminal_style.dart';
@@ -311,7 +310,12 @@ class _TerminalViewState extends State<TerminalView> {
     _lastTerminalWidth = termWidth;
     _lastTerminalHeight = termHeight;
 
-    widget.terminal.resize(termWidth, termHeight);
+    widget.terminal.resize(
+      termWidth,
+      termHeight,
+      (termWidth * _cellSize.cellWidth).floor(),
+      (termHeight * _cellSize.cellHeight).floor(),
+    );
   }
 
   TextEditingValue? onInput(TextEditingValue value) {

@@ -95,7 +95,8 @@ abstract class TerminalUiInteraction with Observable {
 
   /// notifies the Terminal about a resize that happened. The Terminal will
   /// do any resize / reflow logic and notify the backend about the resize
-  void resize(int newWidth, int newHeight);
+  void resize(
+      int newWidth, int newHeight, int newPixelWidth, int newPixelHeight);
 
   /// notifies the Terminal about key input
   void keyInput(

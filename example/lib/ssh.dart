@@ -35,7 +35,7 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class SSHTerminalBackend implements TerminalBackend {
+class SSHTerminalBackend extends TerminalBackend {
   SSHClient client;
 
   String _host;
