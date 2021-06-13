@@ -310,8 +310,12 @@ class _TerminalViewState extends State<TerminalView> {
     _lastTerminalWidth = termWidth;
     _lastTerminalHeight = termHeight;
 
-    widget.terminal
-        .resize(termWidth, termHeight, _width!.floor(), _height!.floor());
+    widget.terminal.resize(
+      termWidth,
+      termHeight,
+      (termWidth * _cellSize.cellWidth).floor(),
+      (termHeight * _cellSize.cellHeight).floor(),
+    );
   }
 
   TextEditingValue? onInput(TextEditingValue value) {
