@@ -71,6 +71,9 @@ abstract class TerminalUiInteraction with Observable {
   /// notify the Terminal about a mouse tap
   void onMouseTap(Position position);
 
+  /// notify the Terminal about a mouse double tap
+  void onMouseDoubleTap(Position position);
+
   /// notify the Terminal about a pan start
   void onPanStart(Position position);
 

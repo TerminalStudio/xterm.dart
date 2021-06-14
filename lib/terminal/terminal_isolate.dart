@@ -21,6 +21,7 @@ enum _IsolateCommand {
   refresh,
   clearSelection,
   mouseTap,
+  mouseDoubleTap,
   mousePanStart,
   mousePanUpdate,
   setScrollOffsetFromTop,
@@ -93,6 +94,9 @@ void terminalMain(SendPort port) async {
         break;
       case _IsolateCommand.mouseTap:
         _terminal?.mouseMode.onTap(_terminal, msg[1]);
+        break;
+      case _IsolateCommand.mouseDoubleTap:
+        _terminal?.mouseMode.onDoubleTap(_terminal, msg[1]);
         break;
       case _IsolateCommand.mousePanStart:
         _terminal?.mouseMode.onPanStart(_terminal, msg[1]);
@@ -403,6 +407,10 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
 
   void onMouseTap(Position position) {
     _sendPort?.send([_IsolateCommand.mouseTap, position]);
+  }
+
+  void onMouseDoubleTap(Position position) {
+    _sendPort?.send([_IsolateCommand.mouseDoubleTap, position]);
   }
 
   void onPanStart(Position position) {

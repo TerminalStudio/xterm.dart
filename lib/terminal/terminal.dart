@@ -466,6 +466,53 @@ class Terminal with Observable implements TerminalUiInteraction {
     }
   }
 
+  void selectWordOrRow(Position position) {
+    if (position.y > buffer.lines.length) {
+      return;
+    }
+
+    final row = position.y;
+
+    final line = buffer.lines[row];
+
+    if (_selection.contains(position)) {
+      // select area on an already existing selection extends it to the full line
+      _selection.clear();
+      _selection.init(Position(0, row));
+      _selection.update(Position(terminalWidth, row));
+    } else {
+      // select the word that is under position
+
+      var start = position.x;
+      var end = position.x;
+
+      do {
+        if (start == 0) {
+          break;
+        }
+        final content = line.cellGetContent(start - 1);
+        if (content == 0 || content == ' '.runes.first) {
+          break;
+        }
+        start--;
+      } while (true);
+      do {
+        if (end >= terminalWidth - 1) {
+          break;
+        }
+        final content = line.cellGetContent(end + 1);
+        if (content == 0 || content == ' '.runes.first) {
+          break;
+        }
+        end++;
+      } while (true);
+
+      _selection.clear();
+      _selection.init(Position(start, row));
+      _selection.update(Position(end, row));
+    }
+  }
+
   String? getSelectedText() {
     if (_selection.isEmpty) {
       return null;
@@ -589,6 +636,11 @@ class Terminal with Observable implements TerminalUiInteraction {
   @override
   void onMouseTap(Position position) {
     mouseMode.onTap(this, position);
+  }
+
+  @override
+  onMouseDoubleTap(Position position) {
+    mouseMode.onDoubleTap(this, position);
   }
 
   @override

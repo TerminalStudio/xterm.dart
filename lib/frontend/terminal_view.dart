@@ -222,9 +222,14 @@ class _TerminalViewState extends State<TerminalView> {
     return GestureDetector(
       behavior: HitTestBehavior.deferToChild,
       dragStartBehavior: DragStartBehavior.down,
-      onDoubleTapDown: (details) {
-        print('details : $details');
+      onDoubleTapDown: (detail) {
+        final pos = detail.localPosition;
+        final offset = getMouseOffset(pos.dx, pos.dy);
+        widget.terminal.onMouseDoubleTap(offset);
+        widget.terminal.refresh();
       },
+      // this is needed to activate double tap
+      onDoubleTap: () {},
       onTapDown: (detail) {
         if (widget.terminal.selection?.isEmpty ?? true) {
           InputListener.of(context)!.requestKeyboard();
