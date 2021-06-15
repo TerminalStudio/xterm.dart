@@ -97,6 +97,7 @@ class _TerminalViewState extends State<TerminalView> {
   }
 
   late CellSize _cellSize;
+  Position? _tapPosition;
 
   /// Scroll position from the terminal. Not null if terminal scroll extent has
   /// been updated and needs to be syncronized to flutter side.
@@ -224,22 +225,28 @@ class _TerminalViewState extends State<TerminalView> {
       dragStartBehavior: DragStartBehavior.down,
       onDoubleTapDown: (detail) {
         final pos = detail.localPosition;
-        final offset = getMouseOffset(pos.dx, pos.dy);
-        widget.terminal.onMouseDoubleTap(offset);
-        widget.terminal.refresh();
+        _tapPosition = getMouseOffset(pos.dx, pos.dy);
       },
-      // this is needed to activate double tap
-      onDoubleTap: () {},
       onTapDown: (detail) {
+        final pos = detail.localPosition;
+        _tapPosition = getMouseOffset(pos.dx, pos.dy);
+      },
+      onDoubleTap: () {
+        if (_tapPosition != null) {
+          widget.terminal.onMouseDoubleTap(_tapPosition!);
+          widget.terminal.refresh();
+        }
+      },
+      onTap: () {
         if (widget.terminal.selection?.isEmpty ?? true) {
           InputListener.of(context)!.requestKeyboard();
         } else {
           widget.terminal.clearSelection();
         }
-        final pos = detail.localPosition;
-        final offset = getMouseOffset(pos.dx, pos.dy);
-        widget.terminal.onMouseTap(offset);
-        widget.terminal.refresh();
+        if (_tapPosition != null) {
+          widget.terminal.onMouseTap(_tapPosition!);
+          widget.terminal.refresh();
+        }
       },
       onPanStart: (detail) {
         final pos = detail.localPosition;

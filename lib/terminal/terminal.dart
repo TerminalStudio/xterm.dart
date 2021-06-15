@@ -466,6 +466,14 @@ class Terminal with Observable implements TerminalUiInteraction {
     }
   }
 
+  final wordSeparatorCodes = <String>[
+    String.fromCharCode(0),
+    ' ',
+    '.',
+    ':',
+    '/'
+  ];
+
   void selectWordOrRow(Position position) {
     if (position.y > buffer.lines.length) {
       return;
@@ -475,7 +483,11 @@ class Terminal with Observable implements TerminalUiInteraction {
 
     final line = buffer.lines[row];
 
-    if (_selection.contains(position)) {
+    final positionIsInSelection = _selection.contains(position);
+    final completeLineIsSelected =
+        _selection.start?.x == 0 && _selection.end?.x == terminalWidth;
+
+    if (positionIsInSelection && !completeLineIsSelected) {
       // select area on an already existing selection extends it to the full line
       _selection.clear();
       _selection.init(Position(0, row));
@@ -491,7 +503,7 @@ class Terminal with Observable implements TerminalUiInteraction {
           break;
         }
         final content = line.cellGetContent(start - 1);
-        if (content == 0 || content == ' '.runes.first) {
+        if (wordSeparatorCodes.contains(String.fromCharCode(content))) {
           break;
         }
         start--;
@@ -501,7 +513,7 @@ class Terminal with Observable implements TerminalUiInteraction {
           break;
         }
         final content = line.cellGetContent(end + 1);
-        if (content == 0 || content == ' '.runes.first) {
+        if (wordSeparatorCodes.contains(String.fromCharCode(content))) {
           break;
         }
         end++;
