@@ -10,6 +10,7 @@ abstract class MouseMode {
   // static const buttonEvent = MouseModeX10();
 
   void onTap(Terminal terminal, Position offset);
+  void onDoubleTap(Terminal terminal, Position offset) {}
   void onPanStart(Terminal terminal, Position offset) {}
   void onPanUpdate(Terminal terminal, Position offset) {}
 }
@@ -20,6 +21,11 @@ class MouseModeNone extends MouseMode {
   @override
   void onTap(Terminal terminal, Position offset) {
     terminal.debug.onMsg('tap: $offset');
+  }
+
+  @override
+  void onDoubleTap(Terminal terminal, Position offset) {
+    terminal.selectWordOrRow(offset);
   }
 
   @override

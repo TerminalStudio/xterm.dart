@@ -466,6 +466,65 @@ class Terminal with Observable implements TerminalUiInteraction {
     }
   }
 
+  final wordSeparatorCodes = <String>[
+    String.fromCharCode(0),
+    ' ',
+    '.',
+    ':',
+    '/'
+  ];
+
+  void selectWordOrRow(Position position) {
+    if (position.y > buffer.lines.length) {
+      return;
+    }
+
+    final row = position.y;
+
+    final line = buffer.lines[row];
+
+    final positionIsInSelection = _selection.contains(position);
+    final completeLineIsSelected =
+        _selection.start?.x == 0 && _selection.end?.x == terminalWidth;
+
+    if (positionIsInSelection && !completeLineIsSelected) {
+      // select area on an already existing selection extends it to the full line
+      _selection.clear();
+      _selection.init(Position(0, row));
+      _selection.update(Position(terminalWidth, row));
+    } else {
+      // select the word that is under position
+
+      var start = position.x;
+      var end = position.x;
+
+      do {
+        if (start == 0) {
+          break;
+        }
+        final content = line.cellGetContent(start - 1);
+        if (wordSeparatorCodes.contains(String.fromCharCode(content))) {
+          break;
+        }
+        start--;
+      } while (true);
+      do {
+        if (end >= terminalWidth - 1) {
+          break;
+        }
+        final content = line.cellGetContent(end + 1);
+        if (wordSeparatorCodes.contains(String.fromCharCode(content))) {
+          break;
+        }
+        end++;
+      } while (true);
+
+      _selection.clear();
+      _selection.init(Position(start, row));
+      _selection.update(Position(end, row));
+    }
+  }
+
   String? getSelectedText() {
     if (_selection.isEmpty) {
       return null;
@@ -589,6 +648,11 @@ class Terminal with Observable implements TerminalUiInteraction {
   @override
   void onMouseTap(Position position) {
     mouseMode.onTap(this, position);
+  }
+
+  @override
+  onMouseDoubleTap(Position position) {
+    mouseMode.onDoubleTap(this, position);
   }
 
   @override
