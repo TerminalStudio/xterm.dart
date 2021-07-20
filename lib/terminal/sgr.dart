@@ -172,13 +172,15 @@ void sgrHandler(CSI csi, Terminal terminal) {
         terminal.cursor.bg = terminal.theme.brightWhite;
         break;
       case 38: // set foreground
-        final color = parseAnsiColour(params, i, terminal);
-        terminal.cursor.fg = color;
-        return;
+        final colorResult = parseAnsiColour(params, i, terminal);
+        terminal.cursor.fg = colorResult[0];
+        i += colorResult[1];
+        break;
       case 48: // set background
-        final color = parseAnsiColour(params, i, terminal);
-        terminal.cursor.bg = color;
-        return;
+        final colorResult = parseAnsiColour(params, i, terminal);
+        terminal.cursor.bg = colorResult[0];
+        i += colorResult[1];
+        break;
       default:
         terminal.debug.onError('unknown SGR: $param');
     }
@@ -186,7 +188,8 @@ void sgrHandler(CSI csi, Terminal terminal) {
 }
 
 /// parse a color from [params] starting from [offset].
-int parseAnsiColour(List<int> params, int offset, Terminal terminal) {
+/// Returns a list with 2 entries. Index 0 = color, Index 1 = number of params used
+List<int> parseAnsiColour(List<int> params, int offset, Terminal terminal) {
   final length = params.length - offset;
 
   if (length > 2) {
@@ -196,14 +199,14 @@ int parseAnsiColour(List<int> params, int offset, Terminal terminal) {
         final colNum = params[offset + 2];
 
         if (colNum >= 256 || colNum < 0) {
-          return TerminalColor.empty();
+          return [TerminalColor.empty(), 2];
         }
 
-        return parse8BitSgrColour(colNum, terminal);
+        return [parse8BitSgrColour(colNum, terminal), 2];
 
       case 2:
         if (length < 4) {
-          return TerminalColor.empty();
+          return [TerminalColor.empty(), 0];
         }
 
         // 24 bit colour
@@ -211,7 +214,7 @@ int parseAnsiColour(List<int> params, int offset, Terminal terminal) {
           final r = params[offset + 2];
           final g = params[offset + 3];
           final b = params[offset + 4];
-          return TerminalColor.fromARGB(0xff, r, g, b);
+          return [TerminalColor.fromARGB(0xff, r, g, b), 4];
         }
 
         if (length > 5) {
@@ -219,12 +222,12 @@ int parseAnsiColour(List<int> params, int offset, Terminal terminal) {
           final r = params[offset + 3];
           final g = params[offset + 4];
           final b = params[offset + 5];
-          return TerminalColor.fromARGB(0xff, r, g, b);
+          return [TerminalColor.fromARGB(0xff, r, g, b), 5];
         }
     }
   }
 
-  return TerminalColor.empty();
+  return [TerminalColor.empty(), 0];
 }
 
 final grayscaleColors = FastLookupTable({
