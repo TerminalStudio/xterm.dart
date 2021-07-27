@@ -425,7 +425,9 @@ class _CursorViewState extends State<CursorView> {
   }
 
   bool _isCursorVisible() {
-    final screenCursorY = widget.terminal.cursorY;
+    final screenCursorY =
+        widget.terminal.cursorY + widget.terminal.scrollOffsetFromBottom;
+
     if (screenCursorY < 0 || screenCursorY >= widget.terminal.terminalHeight) {
       return false;
     }
