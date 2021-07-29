@@ -99,7 +99,8 @@ class Terminal with Observable implements TerminalUiInteraction {
   /// You can set or reset insert/replace mode as follows.
   bool _replaceMode = true; // ignore: unused_field
 
-  bool _screenMode = false; // ignore: unused_field, // DECSCNM (black on white background)
+  bool _screenMode =
+      false; // ignore: unused_field, // DECSCNM (black on white background)
   bool _autoWrapMode = true;
   bool get autoWrapMode => _autoWrapMode;
 
@@ -718,7 +719,7 @@ class Terminal with Observable implements TerminalUiInteraction {
 
   @override
   void selectAll() {
-    _selection.init(Position(0,0));
+    _selection.init(Position(0, 0));
     _selection.update(Position(terminalWidth, bufferHeight));
   }
 }
