@@ -25,46 +25,46 @@ void sgrHandler(CSI csi, Terminal terminal) {
         terminal.cursor.flags = 0x00;
         break;
       case 1:
-        terminal.cursor.fg |= CellFlags.bold;
+        terminal.cursor.flags |= CellFlags.bold;
         break;
       case 2:
-        terminal.cursor.fg |= CellFlags.faint;
+        terminal.cursor.flags |= CellFlags.faint;
         break;
       case 3:
-        terminal.cursor.fg |= CellFlags.italic;
+        terminal.cursor.flags |= CellFlags.italic;
         break;
       case 4:
-        terminal.cursor.fg |= CellFlags.underline;
+        terminal.cursor.flags |= CellFlags.underline;
         break;
       case 5:
-        terminal.cursor.fg |= CellFlags.blink;
+        terminal.cursor.flags |= CellFlags.blink;
         break;
       case 7:
-        terminal.cursor.fg |= CellFlags.inverse;
+        terminal.cursor.flags |= CellFlags.inverse;
         break;
       case 8:
-        terminal.cursor.fg |= CellFlags.invisible;
+        terminal.cursor.flags |= CellFlags.invisible;
         break;
       case 21:
-        terminal.cursor.fg &= ~CellFlags.bold;
+        terminal.cursor.flags &= ~CellFlags.bold;
         break;
       case 22:
-        terminal.cursor.fg &= ~CellFlags.faint;
+        terminal.cursor.flags &= ~CellFlags.faint;
         break;
       case 23:
-        terminal.cursor.fg &= ~CellFlags.italic;
+        terminal.cursor.flags &= ~CellFlags.italic;
         break;
       case 24:
-        terminal.cursor.fg &= ~CellFlags.underline;
+        terminal.cursor.flags &= ~CellFlags.underline;
         break;
       case 25:
-        terminal.cursor.fg &= ~CellFlags.blink;
+        terminal.cursor.flags &= ~CellFlags.blink;
         break;
       case 27:
-        terminal.cursor.fg &= ~CellFlags.inverse;
+        terminal.cursor.flags &= ~CellFlags.inverse;
         break;
       case 28:
-        terminal.cursor.fg &= ~CellFlags.invisible;
+        terminal.cursor.flags &= ~CellFlags.invisible;
         break;
       case 29:
         // not strikethrough
