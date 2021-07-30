@@ -384,12 +384,12 @@ class Terminal with Observable implements TerminalUiInteraction {
     _altBuffer.resize(oldWidth, oldHeight, newWidth, newHeight);
     _mainBuffer.resize(oldWidth, oldHeight, newWidth, newHeight);
 
-    // maybe reflow should happen here.
     if (buffer == _altBuffer) {
       buffer.clearScrollback();
     }
 
-    buffer.resetVerticalMargins();
+    _altBuffer.resetVerticalMargins();
+    _mainBuffer.resetVerticalMargins();
   }
 
   @override
