@@ -63,6 +63,7 @@ class Terminal with Observable implements TerminalUiInteraction {
   }
 
   bool _dirty = false;
+  @override
   bool get dirty {
     if (_dirty) {
       _dirty = false;
@@ -84,6 +85,7 @@ class Terminal with Observable implements TerminalUiInteraction {
   int get viewHeight => _viewHeight;
 
   int get visibleHeight => min(_viewHeight, buffer.height);
+  @override
   int get invisibleHeight => buffer.height - visibleHeight;
 
   /// ### Insert/Replace Mode (IRM)
@@ -95,9 +97,10 @@ class Terminal with Observable implements TerminalUiInteraction {
   /// replacing the character at the cursor position.
   ///
   /// You can set or reset insert/replace mode as follows.
-  bool _replaceMode = true;
+  bool _replaceMode = true; // ignore: unused_field
 
-  bool _screenMode = false; // DECSCNM (black on white background)
+  bool _screenMode =
+      false; // ignore: unused_field, // DECSCNM (black on white background)
   bool _autoWrapMode = true;
   bool get autoWrapMode => _autoWrapMode;
 
@@ -151,6 +154,7 @@ class Terminal with Observable implements TerminalUiInteraction {
   bool _bracketedPasteMode = false;
 
   bool _showCursor = true;
+  @override
   bool get showCursor => _showCursor;
 
   /// DECCKM – Cursor Keys Mode (DEC Private)
@@ -195,15 +199,19 @@ class Terminal with Observable implements TerminalUiInteraction {
   final BellHandler onBell;
   final TitleChangeHandler onTitleChange;
   final IconChangeHandler onIconChange;
+  @override
   final PlatformBehavior platform;
 
   Buffer get buffer {
     return _buffer;
   }
 
+  @override
   int get cursorX => buffer.cursorX;
+  @override
   int get cursorY => buffer.cursorY;
 
+  @override
   void setScrollOffsetFromBottom(int scrollOffset) {
     final oldOffset = _buffer.scrollOffsetFromBottom;
     _buffer.setScrollOffsetFromBottom(scrollOffset);
@@ -217,6 +225,7 @@ class Terminal with Observable implements TerminalUiInteraction {
   /// interpreted.
   ///
   /// See also: [Buffer.write]
+  @override
   void write(String text) {
     _queue.addAll(text.runes);
     _processInput();
@@ -233,6 +242,7 @@ class Terminal with Observable implements TerminalUiInteraction {
     refresh();
   }
 
+  @override
   List<BufferLine> getVisibleLines() {
     return _buffer.getVisibleLines();
   }
@@ -280,6 +290,7 @@ class Terminal with Observable implements TerminalUiInteraction {
     }
   }
 
+  @override
   void refresh() {
     _dirty = true;
     notifyListeners();
@@ -357,6 +368,7 @@ class Terminal with Observable implements TerminalUiInteraction {
   /// Resize the terminal screen. [newWidth] and [newHeight] should be greater
   /// than 0. Text reflow is currently not implemented and will be avaliable in
   /// the future.
+  @override
   void resize(
       int newWidth, int newHeight, int newPixelWidth, int newPixelHeight) {
     backend?.resize(newWidth, newHeight, newPixelWidth, newPixelHeight);
@@ -380,6 +392,7 @@ class Terminal with Observable implements TerminalUiInteraction {
     buffer.resetVerticalMargins();
   }
 
+  @override
   void keyInput(
     TerminalKey key, {
     bool ctrl = false,
@@ -575,6 +588,7 @@ class Terminal with Observable implements TerminalUiInteraction {
     return builder.toString();
   }
 
+  @override
   void paste(String data) {
     if (bracketedPasteMode) {
       data = '\x1b[200~$data\x1b[201~';
@@ -702,4 +716,10 @@ class Terminal with Observable implements TerminalUiInteraction {
 
   @override
   bool get isTerminated => _isTerminated;
+
+  @override
+  void selectAll() {
+    _selection.init(Position(0, 0));
+    _selection.update(Position(terminalWidth, bufferHeight));
+  }
 }

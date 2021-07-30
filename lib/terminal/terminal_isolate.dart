@@ -20,11 +20,12 @@ enum _IsolateCommand {
   write,
   refresh,
   clearSelection,
+  selectAll,
   mouseTap,
   mouseDoubleTap,
   mousePanStart,
   mousePanUpdate,
-  setScrollOffsetFromTop,
+  setScrollOffsetFromBottom,
   resize,
   onInput,
   keyInput,
@@ -90,21 +91,24 @@ void terminalMain(SendPort port) async {
         _terminal?.refresh();
         break;
       case _IsolateCommand.clearSelection:
-        _terminal?.selection!.clear();
+        _terminal?.clearSelection();
+        break;
+      case _IsolateCommand.selectAll:
+        _terminal?.selectAll();
         break;
       case _IsolateCommand.mouseTap:
-        _terminal?.mouseMode.onTap(_terminal, msg[1]);
+        _terminal?.onMouseTap(msg[1]);
         break;
       case _IsolateCommand.mouseDoubleTap:
-        _terminal?.mouseMode.onDoubleTap(_terminal, msg[1]);
+        _terminal?.onMouseDoubleTap(msg[1]);
         break;
       case _IsolateCommand.mousePanStart:
-        _terminal?.mouseMode.onPanStart(_terminal, msg[1]);
+        _terminal?.onPanStart(msg[1]);
         break;
       case _IsolateCommand.mousePanUpdate:
-        _terminal?.mouseMode.onPanUpdate(_terminal, msg[1]);
+        _terminal?.onPanUpdate(msg[1]);
         break;
-      case _IsolateCommand.setScrollOffsetFromTop:
+      case _IsolateCommand.setScrollOffsetFromBottom:
         _terminal?.setScrollOffsetFromBottom(msg[1]);
         break;
       case _IsolateCommand.resize:
@@ -405,26 +409,37 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
     _sendPort?.send([_IsolateCommand.clearSelection]);
   }
 
+  @override
+  void selectAll() {
+    _sendPort?.send([_IsolateCommand.selectAll]);
+  }
+
+  @override
   void onMouseTap(Position position) {
     _sendPort?.send([_IsolateCommand.mouseTap, position]);
   }
 
+  @override
   void onMouseDoubleTap(Position position) {
     _sendPort?.send([_IsolateCommand.mouseDoubleTap, position]);
   }
 
+  @override
   void onPanStart(Position position) {
     _sendPort?.send([_IsolateCommand.mousePanStart, position]);
   }
 
+  @override
   void onPanUpdate(Position position) {
     _sendPort?.send([_IsolateCommand.mousePanUpdate, position]);
   }
 
+  @override
   void setScrollOffsetFromBottom(int offset) {
-    _sendPort?.send([_IsolateCommand.setScrollOffsetFromTop, offset]);
+    _sendPort?.send([_IsolateCommand.setScrollOffsetFromBottom, offset]);
   }
 
+  @override
   int convertViewLineToRawLine(int viewLine) {
     if (_lastState == null) {
       return 0;
@@ -437,14 +452,17 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
     return viewLine + (_lastState!.bufferHeight - _lastState!.viewHeight);
   }
 
+  @override
   void write(String text) {
     _sendPort?.send([_IsolateCommand.write, text]);
   }
 
+  @override
   void paste(String data) {
     _sendPort?.send([_IsolateCommand.paste, data]);
   }
 
+  @override
   void resize(
       int newWidth, int newHeight, int newPixelWidth, int newPixelHeight) {
     _sendPort?.send([
@@ -456,10 +474,12 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
     ]);
   }
 
+  @override
   void raiseOnInput(String text) {
     _sendPort?.send([_IsolateCommand.onInput, text]);
   }
 
+  @override
   void keyInput(
     TerminalKey key, {
     bool ctrl = false,

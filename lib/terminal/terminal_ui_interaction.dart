@@ -68,6 +68,9 @@ abstract class TerminalUiInteraction with Observable {
   /// clears the selection
   void clearSelection();
 
+  /// select the whole buffer
+  void selectAll();
+
   /// notify the Terminal about a mouse tap
   void onMouseTap(Position position);
 
