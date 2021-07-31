@@ -2,7 +2,6 @@ import 'package:flutter/services.dart';
 import 'package:xterm/input/keys.dart';
 
 final _idKeyMap = {
-  LogicalKeyboardKey.none.keyId: TerminalKey.none,
   LogicalKeyboardKey.hyper.keyId: TerminalKey.hyper,
   LogicalKeyboardKey.superKey.keyId: TerminalKey.superKey,
   LogicalKeyboardKey.fnLock.keyId: TerminalKey.fnLock,
