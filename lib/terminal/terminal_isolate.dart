@@ -31,7 +31,8 @@ enum _IsolateCommand {
   keyInput,
   requestNewStateWhenDirty,
   paste,
-  terminateBackend
+  terminateBackend,
+  updateComposingString
 }
 
 enum _IsolateEvent {
@@ -141,6 +142,7 @@ void terminalMain(SendPort port) async {
             _terminal.showCursor,
             _terminal.theme.cursor,
             _terminal.getVisibleLines(),
+            _terminal.composingString,
           );
           port.send([_IsolateEvent.newState, newState]);
           _needNotify = true;
@@ -151,6 +153,10 @@ void terminalMain(SendPort port) async {
         break;
       case _IsolateCommand.terminateBackend:
         _terminal?.terminateBackend();
+        break;
+      case _IsolateCommand.updateComposingString:
+        _terminal?.updateComposingString(msg[1]);
+        break;
     }
   }
 }
@@ -194,6 +200,8 @@ class TerminalState {
 
   bool consumed = false;
 
+  String composingString;
+
   TerminalState(
     this.scrollOffsetFromBottom,
     this.scrollOffsetFromTop,
@@ -209,6 +217,7 @@ class TerminalState {
     this.showCursor,
     this.cursorColor,
     this.visibleLines,
+    this.composingString,
   );
 }
 
@@ -509,4 +518,12 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
 
   @override
   bool get isTerminated => _isTerminated;
+
+  @override
+  String get composingString => _lastState?.composingString ?? '';
+
+  @override
+  void updateComposingString(String value) {
+    _sendPort?.send([_IsolateCommand.updateComposingString, value]);
+  }
 }

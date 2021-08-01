@@ -18,7 +18,7 @@ class TextLayoutCache {
     return _cache[key];
   }
 
-  Paragraph performAndCacheLayout(String text, TextStyle style, int key) {
+  Paragraph performAndCacheLayout(String text, TextStyle style, int? key) {
     final builder = ParagraphBuilder(style.getParagraphStyle());
     builder.pushStyle(style.getTextStyle());
     builder.addText(text);
@@ -26,7 +26,9 @@ class TextLayoutCache {
     final paragraph = builder.build();
     paragraph.layout(ParagraphConstraints(width: double.infinity));
 
-    _cache[key] = paragraph;
+    if (key != null) {
+      _cache[key] = paragraph;
+    }
     return paragraph;
   }
 

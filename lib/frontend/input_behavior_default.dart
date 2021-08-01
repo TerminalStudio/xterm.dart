@@ -5,7 +5,7 @@ import 'package:xterm/frontend/input_map.dart';
 import 'package:xterm/xterm.dart';
 
 class InputBehaviorDefault extends InputBehavior {
-  const InputBehaviorDefault();
+  InputBehaviorDefault();
 
   @override
   bool get acceptKeyStroke => true;
@@ -32,11 +32,28 @@ class InputBehaviorDefault extends InputBehavior {
     }
   }
 
+  String? _composingString = null;
+
   @override
   TextEditingValue? onTextEdit(
       TextEditingValue value, TerminalUiInteraction terminal) {
-    terminal.raiseOnInput(value.text);
-    if (value == TextEditingValue.empty) {
+    var inputText = value.text;
+    // we just want to detect if a composing is going on and notify the terminal
+    // about it
+    if (value.composing.start != value.composing.end) {
+      _composingString = inputText;
+      terminal.updateComposingString(_composingString!);
+      return null;
+    }
+    //when we reach this point the composing state is over
+    if (_composingString != null) {
+      _composingString = null;
+      terminal.updateComposingString('');
+    }
+
+    terminal.raiseOnInput(inputText);
+
+    if (value == TextEditingValue.empty || inputText == '') {
       return null;
     } else {
       return TextEditingValue.empty;

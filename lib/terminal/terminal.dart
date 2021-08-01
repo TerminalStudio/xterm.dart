@@ -722,4 +722,15 @@ class Terminal with Observable implements TerminalUiInteraction {
     _selection.init(Position(0, 0));
     _selection.update(Position(terminalWidth, bufferHeight));
   }
+
+  String _composingString = '';
+
+  @override
+  String get composingString => _composingString;
+
+  @override
+  void updateComposingString(String value) {
+    _composingString = value;
+    refresh();
+  }
 }
