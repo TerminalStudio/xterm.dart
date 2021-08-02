@@ -177,35 +177,13 @@ class TerminalPainter extends CustomPainter {
       color = color.withOpacity(0.5);
     }
 
-    final styleToUse = (style.textStyleProvider != null)
-        ? style.textStyleProvider!(
-            color: color,
-            fontSize: style.fontSize,
-            fontWeight: flags.hasFlag(CellFlags.bold)
-                ? FontWeight.bold
-                : FontWeight.normal,
-            fontStyle: flags.hasFlag(CellFlags.italic)
-                ? FontStyle.italic
-                : FontStyle.normal,
-            decoration: flags.hasFlag(CellFlags.underline)
-                ? TextDecoration.underline
-                : TextDecoration.none,
-          )
-        : TextStyle(
-            color: color,
-            fontSize: style.fontSize,
-            fontWeight: flags.hasFlag(CellFlags.bold)
-                ? FontWeight.bold
-                : FontWeight.normal,
-            fontStyle: flags.hasFlag(CellFlags.italic)
-                ? FontStyle.italic
-                : FontStyle.normal,
-            decoration: flags.hasFlag(CellFlags.underline)
-                ? TextDecoration.underline
-                : TextDecoration.none,
-            fontFamily: 'monospace',
-            fontFamilyFallback: style.fontFamily,
-          );
+    final styleToUse = PaintHelper.getStyleToUse(
+      style,
+      color,
+      bold: flags.hasFlag(CellFlags.bold),
+      italic: flags.hasFlag(CellFlags.italic),
+      underline: flags.hasFlag(CellFlags.underline),
+    );
 
     character = textLayoutCache.performAndCacheLayout(
         String.fromCharCode(codePoint), styleToUse, cellHash);
@@ -226,6 +204,10 @@ class CursorPainter extends CustomPainter {
   final bool focused;
   final bool blinkVisible;
   final int cursorColor;
+  final int textColor;
+  final String composingString;
+  final TextLayoutCache textLayoutCache;
+  final TerminalStyle style;
 
   CursorPainter({
     required this.visible,
@@ -233,11 +215,16 @@ class CursorPainter extends CustomPainter {
     required this.focused,
     required this.blinkVisible,
     required this.cursorColor,
+    required this.textColor,
+    required this.composingString,
+    required this.textLayoutCache,
+    required this.style,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (blinkVisible && visible) {
+    bool isVisible = visible && (blinkVisible || composingString != '');
+    if (isVisible) {
       _paintCursor(canvas);
     }
   }
@@ -249,7 +236,8 @@ class CursorPainter extends CustomPainter {
           focused != oldDelegate.focused ||
           visible != oldDelegate.visible ||
           charSize.cellWidth != oldDelegate.charSize.cellWidth ||
-          charSize.cellHeight != oldDelegate.charSize.cellHeight;
+          charSize.cellHeight != oldDelegate.charSize.cellHeight ||
+          composingString != oldDelegate.composingString;
     }
     return true;
   }
@@ -262,5 +250,42 @@ class CursorPainter extends CustomPainter {
 
     canvas.drawRect(
         Rect.fromLTWH(0, 0, charSize.cellWidth, charSize.cellHeight), paint);
+
+    if (composingString != '') {
+      final styleToUse = PaintHelper.getStyleToUse(style, Color(textColor));
+      final character = textLayoutCache.performAndCacheLayout(
+          composingString, styleToUse, null);
+      canvas.drawParagraph(character, Offset(0, 0));
+    }
+  }
+}
+
+class PaintHelper {
+  static TextStyle getStyleToUse(
+    TerminalStyle style,
+    Color color, {
+    bool bold = false,
+    bool italic = false,
+    bool underline = false,
+  }) {
+    return (style.textStyleProvider != null)
+        ? style.textStyleProvider!(
+            color: color,
+            fontSize: style.fontSize,
+            fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+            fontStyle: italic ? FontStyle.italic : FontStyle.normal,
+            decoration:
+                underline ? TextDecoration.underline : TextDecoration.none,
+          )
+        : TextStyle(
+            color: color,
+            fontSize: style.fontSize,
+            fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+            fontStyle: italic ? FontStyle.italic : FontStyle.normal,
+            decoration:
+                underline ? TextDecoration.underline : TextDecoration.none,
+            fontFamily: 'monospace',
+            fontFamilyFallback: style.fontFamily,
+          );
   }
 }

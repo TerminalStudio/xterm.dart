@@ -154,6 +154,8 @@ class _TerminalViewState extends State<TerminalView> {
     super.dispose();
   }
 
+  GlobalKey _keyCursor = GlobalKey();
+
   @override
   Widget build(BuildContext context) {
     return InputListener(
@@ -170,6 +172,22 @@ class _TerminalViewState extends State<TerminalView> {
         child: LayoutBuilder(builder: (context, constraints) {
           onWidgetSize(constraints.maxWidth - widget.padding * 2,
               constraints.maxHeight - widget.padding * 2);
+
+          if (_keyCursor.currentContext != null) {
+            /// this gets set so that the accent selection menu on MacOS pops up
+            /// at the right spot
+            final RenderBox cursorRenderObj =
+                _keyCursor.currentContext!.findRenderObject() as RenderBox;
+            final offset = cursorRenderObj.localToGlobal(Offset.zero);
+            InputListener.of(context)!.setCaretRect(
+              Rect.fromLTWH(
+                offset.dx,
+                offset.dy,
+                _cellSize.cellWidth,
+                _cellSize.cellHeight,
+              ),
+            );
+          }
 
           // use flutter's Scrollable to manage scrolling to better integrate
           // with widgets such as Scrollbar.
@@ -282,11 +300,14 @@ class _TerminalViewState extends State<TerminalView> {
                 ),
               ),
               Positioned(
+                key: _keyCursor,
                 child: CursorView(
                   terminal: widget.terminal,
                   cellSize: _cellSize,
                   focusNode: widget.focusNode,
                   blinkOscillator: blinkOscillator,
+                  style: widget.style,
+                  textLayoutCache: textLayoutCache,
                 ),
                 width: _cellSize.cellWidth,
                 height: _cellSize.cellHeight,
@@ -367,6 +388,7 @@ class _TerminalViewState extends State<TerminalView> {
   }
 
   void onKeyStroke(RawKeyEvent event) {
+    blinkOscillator.restart();
     // TODO: find a way to stop scrolling immediately after key stroke.
     widget.inputBehavior.onKeyStroke(event, widget.terminal);
     widget.terminal.setScrollOffsetFromBottom(0);
@@ -395,11 +417,16 @@ class CursorView extends StatefulWidget {
   final TerminalUiInteraction terminal;
   final FocusNode? focusNode;
   final Oscillator blinkOscillator;
+  final TerminalStyle style;
+  final TextLayoutCache textLayoutCache;
+
   CursorView({
     required this.terminal,
     required this.cellSize,
     required this.focusNode,
     required this.blinkOscillator,
+    required this.style,
+    required this.textLayoutCache,
   });
 
   @override
@@ -432,6 +459,10 @@ class _CursorViewState extends State<CursorView> {
         charSize: widget.cellSize,
         blinkVisible: widget.blinkOscillator.value,
         cursorColor: widget.terminal.cursorColor,
+        textColor: widget.terminal.backgroundColor,
+        style: widget.style,
+        composingString: widget.terminal.composingString,
+        textLayoutCache: widget.textLayoutCache,
       ),
     );
   }

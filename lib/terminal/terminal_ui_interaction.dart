@@ -122,4 +122,11 @@ abstract class TerminalUiInteraction with Observable {
 
   /// flag that indicates if the backend is already terminated
   bool get isTerminated;
+
+  /// returns the current composing string. '' when there is no composing going on
+  String get composingString;
+
+  /// update the composing string. This gets called by the input handling
+  /// part of the terminal
+  void updateComposingString(String value);
 }

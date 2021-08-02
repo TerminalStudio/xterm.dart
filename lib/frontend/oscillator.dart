@@ -36,7 +36,13 @@ class Oscillator with Observable {
     return _value;
   }
 
+  void restart() {
+    stop();
+    start();
+  }
+
   void start() {
+    _value = true;
     _shouldRun = true;
     // only start right away when anyone is listening.
     // the moment a listener gets registered the Oscillator will start

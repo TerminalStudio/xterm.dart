@@ -4,9 +4,9 @@ import 'package:xterm/frontend/input_behavior_desktop.dart';
 import 'package:xterm/frontend/input_behavior_mobile.dart';
 
 class InputBehaviors {
-  static const desktop = InputBehaviorDesktop();
+  static final desktop = InputBehaviorDesktop();
 
-  static const mobile = InputBehaviorMobile();
+  static final mobile = InputBehaviorMobile();
 
   static InputBehavior get platform {
     if (Platform.I.isMobile) {

@@ -10,6 +10,7 @@ typedef FocusHandler = void Function(bool);
 
 abstract class InputListenerController {
   void requestKeyboard();
+  void setCaretRect(Rect rect);
 }
 
 class InputListener extends StatefulWidget {
@@ -123,12 +124,18 @@ class InputListenerState extends State<InputListener>
     );
   }
 
+  @override
   void requestKeyboard() {
     if (widget.focusNode.hasFocus) {
       openInputConnection();
     } else {
       widget.focusNode.requestFocus();
     }
+  }
+
+  @override
+  void setCaretRect(Rect rect) {
+    _conn?.setCaretRect(rect);
   }
 
   void onFocusChange() {
@@ -184,6 +191,8 @@ class InputListenerState extends State<InputListener>
 
     if (newValue != null) {
       _conn?.setEditingState(newValue);
+    } else {
+      _conn?.setEditingState(TextEditingValue.empty);
     }
   }
 
@@ -211,14 +220,9 @@ class TerminalTextInputClient extends TextInputClient {
   void updateEditingValue(TextEditingValue value) {
     // print('updateEditingValue $value');
 
-    onInput(value);
-
-    // if (_savedValue == null || _savedValue.text == '') {
-    //   onInput(value.text);
-    // } else if (_savedValue.text.length < value.text.length) {
-    //   final diff = value.text.substring(_savedValue.text.length);
-    //   onInput(diff);
-    // }
+    if (value.text != '') {
+      onInput(value);
+    }
 
     _savedValue = value;
     // print('updateEditingValue $value');
