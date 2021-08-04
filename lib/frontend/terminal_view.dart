@@ -203,7 +203,8 @@ class _TerminalViewState extends State<TerminalView> {
 
                 /// use [_EmptyScrollActivity] to suppress unexpected behaviors
                 /// that come from [applyViewportDimension].
-                if (position is ScrollActivityDelegate) {
+                if (InputBehaviors.platform == InputBehaviors.desktop &&
+                    position is ScrollActivityDelegate) {
                   position.beginActivity(
                     _EmptyScrollActivity(position as ScrollActivityDelegate),
                   );
