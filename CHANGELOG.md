@@ -1,4 +1,15 @@
 
+## [2.5.0-pre] - 2021-8-4
+* Support select word / whole row via double tap [#40]. Thanks [@devmil].
+* Adds "selectAll" to TerminalUiInteraction [#43]. Thanks [@devmil].
+* Fixes sgr processing [#44],[#45]. Thanks [@devmil].
+* Adds blinking Cursor support [#46]. Thanks [@devmil].
+* Fixes Zoom adaptions on non active buffer [#47]. Thanks [@devmil].
+* Adds Padding option to TerminalView  [#48]. Thanks [@devmil].
+* Removes no longer supported LogicalKeyboardKey  [#49]. Thanks [@devmil].
+* Adds the composing state [#50]. Thanks [@devmil].
+* Fix scroll problem in mobile device [#51]. Thanks [@linhanyu].
+
 ## [2.4.0-pre] - 2021-6-13
 * Update the signature of TerminalBackend.resize() to also receive dimensions in
  pixels[(#39)](https://github.com/TerminalStudio/xterm.dart/pull/39). Thanks [@michaellee8](https://github.com/michaellee8).
@@ -85,3 +96,19 @@
 ## [0.0.1] - 2020-8-1
 
 * First version
+
+
+[@devmil]: https://github.com/devmil
+[@michaellee8]: https://github.com/michaellee8
+[@linhanyu]: https://github.com/linhanyu
+
+[#40]: https://github.com/TerminalStudio/xterm.dart/pull/40
+[#43]: https://github.com/TerminalStudio/xterm.dart/pull/43
+[#44]: https://github.com/TerminalStudio/xterm.dart/pull/44
+[#45]: https://github.com/TerminalStudio/xterm.dart/pull/45
+[#46]: https://github.com/TerminalStudio/xterm.dart/pull/46
+[#47]: https://github.com/TerminalStudio/xterm.dart/pull/47
+[#48]: https://github.com/TerminalStudio/xterm.dart/pull/48
+[#49]: https://github.com/TerminalStudio/xterm.dart/pull/49
+[#50]: https://github.com/TerminalStudio/xterm.dart/pull/50
+[#51]: https://github.com/TerminalStudio/xterm.dart/pull/51
