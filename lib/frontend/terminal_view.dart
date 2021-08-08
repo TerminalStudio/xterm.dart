@@ -29,6 +29,7 @@ class TerminalView extends StatefulWidget {
     this.autofocus = false,
     ScrollController? scrollController,
     InputBehavior? inputBehavior,
+    this.scrollBehavior,
     this.padding = 0.0,
   })  : focusNode = focusNode ?? FocusNode(),
         scrollController = scrollController ?? ScrollController(),
@@ -46,6 +47,8 @@ class TerminalView extends StatefulWidget {
   final double padding;
 
   final InputBehavior inputBehavior;
+
+  final ScrollBehavior? scrollBehavior;
 
   // get the dimensions of a rendered character
   CellSize measureCellSize(double fontSize) {
@@ -196,48 +199,52 @@ class _TerminalViewState extends State<TerminalView> {
               onScroll(notification.metrics.pixels);
               return false;
             },
-            child: Scrollable(
-              controller: widget.scrollController,
-              viewportBuilder: (context, offset) {
-                final position = widget.scrollController.position;
+            child: ScrollConfiguration(
+              behavior: widget.scrollBehavior ??
+                  ScrollConfiguration.of(context).copyWith(scrollbars: false),
+              child: Scrollable(
+                controller: widget.scrollController,
+                viewportBuilder: (context, offset) {
+                  final position = widget.scrollController.position;
 
-                /// use [_EmptyScrollActivity] to suppress unexpected behaviors
-                /// that come from [applyViewportDimension].
-                if (InputBehaviors.platform == InputBehaviors.desktop &&
-                    position is ScrollActivityDelegate) {
-                  position.beginActivity(
-                    _EmptyScrollActivity(position as ScrollActivityDelegate),
-                  );
-                }
-
-                final viewPortHeight =
-                    constraints.maxHeight - widget.padding * 2;
-
-                // set viewport height.
-                offset.applyViewportDimension(viewPortHeight);
-
-                if (widget.terminal.isReady) {
-                  final minScrollExtent = 0.0;
-
-                  final maxScrollExtent = math.max(
-                      0.0,
-                      _cellSize.cellHeight *
-                          (widget.terminal.bufferHeight -
-                              widget.terminal.terminalHeight));
-
-                  // set how much the terminal can scroll
-                  offset.applyContentDimensions(
-                      minScrollExtent, maxScrollExtent);
-
-                  // synchronize pending terminal scroll extent to ScrollController
-                  if (_pendingTerminalScrollExtent != null) {
-                    position.correctPixels(_pendingTerminalScrollExtent!);
-                    _pendingTerminalScrollExtent = null;
+                  /// use [_EmptyScrollActivity] to suppress unexpected behaviors
+                  /// that come from [applyViewportDimension].
+                  if (InputBehaviors.platform == InputBehaviors.desktop &&
+                      position is ScrollActivityDelegate) {
+                    position.beginActivity(
+                      _EmptyScrollActivity(position as ScrollActivityDelegate),
+                    );
                   }
-                }
 
-                return buildTerminal(context);
-              },
+                  final viewPortHeight =
+                      constraints.maxHeight - widget.padding * 2;
+
+                  // set viewport height.
+                  offset.applyViewportDimension(viewPortHeight);
+
+                  if (widget.terminal.isReady) {
+                    final minScrollExtent = 0.0;
+
+                    final maxScrollExtent = math.max(
+                        0.0,
+                        _cellSize.cellHeight *
+                            (widget.terminal.bufferHeight -
+                                widget.terminal.terminalHeight));
+
+                    // set how much the terminal can scroll
+                    offset.applyContentDimensions(
+                        minScrollExtent, maxScrollExtent);
+
+                    // synchronize pending terminal scroll extent to ScrollController
+                    if (_pendingTerminalScrollExtent != null) {
+                      position.correctPixels(_pendingTerminalScrollExtent!);
+                      _pendingTerminalScrollExtent = null;
+                    }
+                  }
+
+                  return buildTerminal(context);
+                },
+              ),
             ),
           );
         }),
