@@ -223,7 +223,8 @@ class CursorPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    bool isVisible = visible && (blinkVisible || composingString != '');
+    bool isVisible =
+        visible && (blinkVisible || composingString != '' || !focused);
     if (isVisible) {
       _paintCursor(canvas);
     }
