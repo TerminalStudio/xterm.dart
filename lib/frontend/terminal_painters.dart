@@ -7,8 +7,8 @@ import 'package:xterm/terminal/terminal_ui_interaction.dart';
 import 'package:xterm/theme/terminal_style.dart';
 import 'package:xterm/util/bit_flags.dart';
 
-import 'char_size.dart';
 import 'cache.dart';
+import 'char_size.dart';
 
 class TerminalPainter extends CustomPainter {
   TerminalPainter({
@@ -273,7 +273,9 @@ class PaintHelper {
         ? style.textStyleProvider!(
             color: color,
             fontSize: style.fontSize,
-            fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+            fontWeight: bold && !style.ignoreBoldFlag
+                ? FontWeight.bold
+                : FontWeight.normal,
             fontStyle: italic ? FontStyle.italic : FontStyle.normal,
             decoration:
                 underline ? TextDecoration.underline : TextDecoration.none,
@@ -281,7 +283,9 @@ class PaintHelper {
         : TextStyle(
             color: color,
             fontSize: style.fontSize,
-            fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+            fontWeight: bold && !style.ignoreBoldFlag
+                ? FontWeight.bold
+                : FontWeight.normal,
             fontStyle: italic ? FontStyle.italic : FontStyle.normal,
             decoration:
                 underline ? TextDecoration.underline : TextDecoration.none,
