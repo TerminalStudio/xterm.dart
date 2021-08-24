@@ -141,7 +141,10 @@ void terminalMain(SendPort port) async {
             _terminal.cursorY,
             _terminal.showCursor,
             _terminal.theme.cursor,
-            _terminal.getVisibleLines(),
+            _terminal
+                .getVisibleLines()
+                .map((bl) => BufferLine.withDataFrom(bl))
+                .toList(growable: false),
             _terminal.composingString,
           );
           port.send([_IsolateEvent.newState, newState]);
