@@ -17,12 +17,14 @@ class BufferLine {
   }
 
   late BufferLineData _data;
-  var _isSearchDirty = true;
+  final _nonDirtyTags = Set<String>();
 
-  bool get isSearchDirty => _isSearchDirty;
+  void markTagAsNonDirty(String tag) {
+    _nonDirtyTags.add(tag);
+  }
 
-  void markSearchDone() {
-    _isSearchDirty = false;
+  bool isTagDirty(String tag) {
+    return !_nonDirtyTags.contains(tag);
   }
 
   BufferLineData get data => _data;
@@ -141,7 +143,7 @@ class BufferLine {
 
   void _invalidateCaches() {
     _searchStringCache = null;
-    _isSearchDirty = true;
+    _nonDirtyTags.clear();
   }
 
   String? _searchStringCache;

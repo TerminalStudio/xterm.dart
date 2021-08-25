@@ -45,8 +45,7 @@ class Terminal with Observable implements TerminalUiInteraction {
     required int maxLines,
   }) : _maxLines = maxLines {
     _search = TerminalSearch(this);
-    _userSearchTask = _search.createSearchTask(
-        (line) => line.markSearchDone(), (line) => line.isSearchDirty);
+    _userSearchTask = _search.createSearchTask("UserSearch");
     //TODO: remove and tie to the API
     _userSearchTask.pattern = "test";
     backend?.init();

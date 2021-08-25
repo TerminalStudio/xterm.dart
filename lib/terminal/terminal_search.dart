@@ -1,4 +1,3 @@
-import 'package:meta/meta.dart';
 import 'package:xterm/buffer/line/line.dart';
 import 'package:xterm/terminal/terminal.dart';
 
@@ -64,20 +63,15 @@ class TerminalSearchHit {
   }
 }
 
-typedef MarkSearchDoneFunc = void Function(BufferLine line);
-typedef IsSearchDirtyFunc = bool Function(BufferLine line);
-
 class TerminalSearchTask {
-  TerminalSearchTask(this._search, this._terminal, this._markSearchDoneFunc,
-      this._isSearchDirtyFunc);
+  TerminalSearchTask(this._search, this._terminal, this._dirtyTagName);
 
   final TerminalSearch _search;
   final Terminal _terminal;
   String? _pattern = null;
   bool _isPatternDirty = true;
   RegExp? _searchRegexp = null;
-  final MarkSearchDoneFunc _markSearchDoneFunc;
-  final IsSearchDirtyFunc _isSearchDirtyFunc;
+  final String _dirtyTagName;
 
   bool? _hasBeenUsingAltBuffer;
   TerminalSearchResult? _lastSearchResult = null;
@@ -85,11 +79,18 @@ class TerminalSearchTask {
   bool _isAnyLineDirty() {
     final bufferLength = _terminal.buffer.lines.length;
     for (var i = 0; i < bufferLength; i++) {
-      if (_isSearchDirtyFunc(_terminal.buffer.lines[i])) {
+      if (_terminal.buffer.lines[i].isTagDirty(_dirtyTagName)) {
         return true;
       }
     }
     return false;
+  }
+
+  void _markLinesForSearchDone() {
+    final bufferLength = _terminal.buffer.lines.length;
+    for (var i = 0; i < bufferLength; i++) {
+      _terminal.buffer.lines[i].markTagAsNonDirty(_dirtyTagName);
+    }
   }
 
   bool _isTerminalStateDirty() {
@@ -103,7 +104,7 @@ class TerminalSearchTask {
     return false;
   }
 
-  bool get isDirty {
+  bool get _isDirty {
     if (_isPatternDirty) {
       return true;
     }
@@ -123,10 +124,9 @@ class TerminalSearchTask {
     if (_pattern == null) {
       return TerminalSearchResult.empty();
     }
-    if (_lastSearchResult != null && !isDirty) {
+    if (_lastSearchResult != null && !_isDirty) {
       return _lastSearchResult!;
     }
-    _isPatternDirty = false;
 
     final terminalWidth = _terminal.terminalWidth;
 
@@ -156,6 +156,9 @@ class TerminalSearchTask {
       );
     }
 
+    _markLinesForSearchDone();
+
+    _isPatternDirty = false;
     _lastSearchResult = TerminalSearchResult.fromHits(hits);
     _hasBeenUsingAltBuffer = _terminal.isUsingAltBuffer();
     return _lastSearchResult!;
@@ -169,10 +172,8 @@ class TerminalSearch {
   String? _cachedSearchString;
   int? _lastTerminalWidth;
 
-  TerminalSearchTask createSearchTask(MarkSearchDoneFunc markSearchDoneFunc,
-      IsSearchDirtyFunc isSearchDirtyFunc) {
-    return TerminalSearchTask(
-        this, _terminal, markSearchDoneFunc, isSearchDirtyFunc);
+  TerminalSearchTask createSearchTask(String dirtyTagName) {
+    return TerminalSearchTask(this, _terminal, dirtyTagName);
   }
 
   String get terminalSearchString {
