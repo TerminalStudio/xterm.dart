@@ -741,5 +741,5 @@ class Terminal with Observable implements TerminalUiInteraction {
     refresh();
   }
 
-  TerminalSearchResult get searchHits => _userSearchTask.searchResult;
+  TerminalSearchResult get userSearchResult => _userSearchTask.searchResult;
 }

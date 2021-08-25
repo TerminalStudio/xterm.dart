@@ -147,7 +147,7 @@ void terminalMain(SendPort port) async {
                   .map((bl) => BufferLine.withDataFrom(bl))
                   .toList(growable: false),
               _terminal.composingString,
-              _terminal.searchHits);
+              _terminal.userSearchResult);
           port.send([_IsolateEvent.newState, newState]);
           _needNotify = true;
         }
@@ -535,6 +535,6 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   }
 
   @override
-  TerminalSearchResult get searchHits =>
+  TerminalSearchResult get userSearchResult =>
       _lastState?.searchResult ?? TerminalSearchResult.empty();
 }

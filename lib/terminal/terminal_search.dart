@@ -3,8 +3,10 @@ import 'package:xterm/terminal/terminal.dart';
 
 class TerminalSearchResult {
   final _hitsByLine = Map<int, List<TerminalSearchHit>>();
+  late final _allHits;
 
   TerminalSearchResult.fromHits(List<TerminalSearchHit> hits) {
+    _allHits = hits;
     for (final hit in hits) {
       if (!_hitsByLine.containsKey(hit.startLineIndex)) {
         _hitsByLine[hit.startLineIndex] =
@@ -22,6 +24,8 @@ class TerminalSearchResult {
   }
 
   TerminalSearchResult.empty();
+
+  List<TerminalSearchHit> get allHits => _allHits;
 
   bool hasEntriesForLine(int line) {
     return _hitsByLine.containsKey(line);

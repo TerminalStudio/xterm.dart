@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:xterm/buffer/cell_flags.dart';
 import 'package:xterm/buffer/line/line.dart';
 import 'package:xterm/mouse/position.dart';
+import 'package:xterm/terminal/terminal_search.dart';
 import 'package:xterm/terminal/terminal_ui_interaction.dart';
 import 'package:xterm/theme/terminal_style.dart';
 import 'package:xterm/util/bit_flags.dart';
@@ -29,6 +30,8 @@ class TerminalPainter extends CustomPainter {
 
     // if (oscillator.value) {
     // }
+
+    _paintUserSearchResult(canvas);
 
     _paintText(canvas);
 
@@ -86,6 +89,74 @@ class TerminalPainter extends CustomPainter {
     }
   }
 
+  void _paintUserSearchResult(Canvas canvas) {
+    final searchResult = terminal.userSearchResult;
+
+    for (final hit in searchResult.allHits) {
+      _paintSearchHit(canvas, hit);
+    }
+  }
+
+  void _paintSearchHit(Canvas canvas, TerminalSearchHit hit) {
+    //check if the hit is visible
+    if (hit.startLineIndex >=
+            terminal.scrollOffsetFromTop + terminal.terminalHeight ||
+        hit.endLineIndex < terminal.scrollOffsetFromTop) {
+      return;
+    }
+    final paint = Paint()
+      ..color = Colors.yellowAccent.withOpacity(0.8)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3;
+
+    if (hit.startLineIndex == hit.endLineIndex) {
+      final double y =
+          (hit.startLineIndex.toDouble() - terminal.scrollOffsetFromTop) *
+              charSize.cellHeight;
+      final startX = charSize.cellWidth * hit.startIndex;
+      final endX = charSize.cellWidth * hit.endIndex;
+
+      canvas.drawRect(
+          Rect.fromLTRB(startX, y, endX, y + charSize.cellHeight), paint);
+    } else {
+      //draw first row: start - line end
+      final double yFirstRow =
+          (hit.startLineIndex.toDouble() - terminal.scrollOffsetFromTop) *
+              charSize.cellHeight;
+      final startXFirstRow = charSize.cellWidth * hit.startIndex;
+      final endXFirstRow = charSize.cellWidth * terminal.terminalWidth;
+      canvas.drawRect(
+          Rect.fromLTRB(startXFirstRow, yFirstRow, endXFirstRow,
+              yFirstRow + charSize.cellHeight),
+          paint);
+      //draw middle rows
+      final middleRowCount = hit.endLineIndex - hit.startLineIndex - 1;
+      if (middleRowCount > 0) {
+        final startYMiddleRows =
+            (hit.startLineIndex + 1 - terminal.scrollOffsetFromTop) *
+                charSize.cellHeight;
+        final startXMiddleRows = 0.toDouble();
+        final endYMiddleRows =
+            (hit.endLineIndex - terminal.scrollOffsetFromTop) *
+                charSize.cellHeight;
+        final endXMiddleRows = terminal.terminalWidth * charSize.cellWidth;
+        canvas.drawRect(
+            Rect.fromLTRB(startXMiddleRows, startYMiddleRows, endXMiddleRows,
+                endYMiddleRows),
+            paint);
+      }
+      //draw end row: line start - end
+      final startXEndRow = 0.toDouble();
+      final startYEndRow = (hit.endLineIndex - terminal.scrollOffsetFromTop) *
+          charSize.cellHeight;
+      final endXEndRow = hit.endIndex * charSize.cellWidth;
+      final endYEndRow = startYEndRow + charSize.cellHeight;
+      canvas.drawRect(
+          Rect.fromLTRB(startXEndRow, startYEndRow, endXEndRow, endYEndRow),
+          paint);
+    }
+  }
+
   void _paintSelection(Canvas canvas) {
     final paint = Paint()..color = Colors.white.withOpacity(0.3);
 
@@ -124,7 +195,6 @@ class TerminalPainter extends CustomPainter {
 
   void _paintText(Canvas canvas) {
     final lines = terminal.getVisibleLines();
-    final searchResult = terminal.searchHits;
 
     for (var row = 0; row < lines.length; row++) {
       final line = lines[row];
@@ -140,10 +210,7 @@ class TerminalPainter extends CustomPainter {
         }
 
         final offsetX = col * charSize.cellWidth;
-        final absoluteY = terminal.convertViewLineToRawLine(row) -
-            terminal.scrollOffsetFromBottom;
-        _paintCell(canvas, line, col, offsetX, offsetY,
-            searchResult.contains(absoluteY, col));
+        _paintCell(canvas, line, col, offsetX, offsetY);
       }
     }
   }
@@ -154,7 +221,6 @@ class TerminalPainter extends CustomPainter {
     int cell,
     double offsetX,
     double offsetY,
-    bool isInSearchResult,
   ) {
     final codePoint = line.cellGetContent(cell);
     var fgColor = line.cellGetFgColor(cell);
@@ -163,10 +229,6 @@ class TerminalPainter extends CustomPainter {
 
     if (codePoint == 0 || flags.hasFlag(CellFlags.invisible)) {
       return;
-    }
-
-    if (isInSearchResult) {
-      fgColor = Color.fromARGB(255, 255, 0, 0).value;
     }
 
     // final cellHash = line.cellGetHash(cell);

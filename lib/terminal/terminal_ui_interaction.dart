@@ -132,5 +132,5 @@ abstract class TerminalUiInteraction with Observable {
   void updateComposingString(String value);
 
   /// returns the list of search hits
-  TerminalSearchResult get searchHits;
+  TerminalSearchResult get userSearchResult;
 }
