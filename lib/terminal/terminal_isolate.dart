@@ -129,25 +129,27 @@ void terminalMain(SendPort port) async {
         }
         if (_terminal.dirty) {
           final newState = TerminalState(
-              _terminal.scrollOffsetFromBottom,
-              _terminal.scrollOffsetFromTop,
-              _terminal.buffer.height,
-              _terminal.invisibleHeight,
-              _terminal.viewHeight,
-              _terminal.viewWidth,
-              _terminal.selection!,
-              _terminal.getSelectedText(),
-              _terminal.theme.background,
-              _terminal.cursorX,
-              _terminal.cursorY,
-              _terminal.showCursor,
-              _terminal.theme.cursor,
-              _terminal
-                  .getVisibleLines()
-                  .map((bl) => BufferLine.withDataFrom(bl))
-                  .toList(growable: false),
-              _terminal.composingString,
-              _terminal.userSearchResult);
+            _terminal.scrollOffsetFromBottom,
+            _terminal.scrollOffsetFromTop,
+            _terminal.buffer.height,
+            _terminal.invisibleHeight,
+            _terminal.viewHeight,
+            _terminal.viewWidth,
+            _terminal.selection!,
+            _terminal.getSelectedText(),
+            _terminal.theme.background,
+            _terminal.cursorX,
+            _terminal.cursorY,
+            _terminal.showCursor,
+            _terminal.theme.cursor,
+            _terminal
+                .getVisibleLines()
+                .map((bl) => BufferLine.withDataFrom(bl))
+                .toList(growable: false),
+            _terminal.composingString,
+            _terminal.userSearchResult,
+            _terminal.userSearchPattern,
+          );
           port.send([_IsolateEvent.newState, newState]);
           _needNotify = true;
         }
@@ -207,6 +209,7 @@ class TerminalState {
   String composingString;
 
   TerminalSearchResult searchResult;
+  String? userSearchPattern;
 
   TerminalState(
     this.scrollOffsetFromBottom,
@@ -225,6 +228,7 @@ class TerminalState {
     this.visibleLines,
     this.composingString,
     this.searchResult,
+    this.userSearchPattern,
   );
 }
 
@@ -261,6 +265,7 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   final IconChangeHandler onIconChange;
   final PlatformBehavior _platform;
 
+  @override
   final TerminalTheme theme;
   final int maxLines;
 
@@ -537,4 +542,7 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   @override
   TerminalSearchResult get userSearchResult =>
       _lastState?.searchResult ?? TerminalSearchResult.empty();
+
+  @override
+  String? get userSearchPattern => _lastState?.userSearchPattern;
 }

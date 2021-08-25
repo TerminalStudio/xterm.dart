@@ -104,10 +104,10 @@ class TerminalPainter extends CustomPainter {
         hit.endLineIndex < terminal.scrollOffsetFromTop) {
       return;
     }
+
     final paint = Paint()
-      ..color = Colors.yellowAccent.withOpacity(0.8)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3;
+      ..color = Color(terminal.theme.searchHitBackground)
+      ..style = PaintingStyle.fill;
 
     if (hit.startLineIndex == hit.endLineIndex) {
       final double y =
@@ -195,6 +195,8 @@ class TerminalPainter extends CustomPainter {
 
   void _paintText(Canvas canvas) {
     final lines = terminal.getVisibleLines();
+    final searchResult = terminal.userSearchResult;
+    final userSearchRunning = terminal.userSearchPattern != null;
 
     for (var row = 0; row < lines.length; row++) {
       final line = lines[row];
@@ -205,12 +207,37 @@ class TerminalPainter extends CustomPainter {
       for (var col = 0; col < cellCount; col++) {
         final width = line.cellGetWidth(col);
 
-        if (width == 0) {
-          continue;
+        final absoluteY = terminal.convertViewLineToRawLine(row) -
+            terminal.scrollOffsetFromBottom;
+        final offsetX = col * charSize.cellWidth;
+        var isInSearchHit = false;
+        if (width != 0) {
+          if (userSearchRunning) {
+            isInSearchHit = searchResult.contains(absoluteY, col);
+          }
+          _paintCell(
+            canvas,
+            line,
+            col,
+            offsetX,
+            offsetY,
+            isInSearchHit,
+          );
         }
 
-        final offsetX = col * charSize.cellWidth;
-        _paintCell(canvas, line, col, offsetX, offsetY);
+        // if (userSearchRunning && !isInSearchHit) {
+        //   // Fade out all cells that are not a search hit when a user search is ongoing
+        //   final effectWidth = cellCount * charSize.cellWidth;
+        //   final effectHeight = charSize.cellHeight;
+        //
+        //   final fadePaint = Paint()
+        //     ..color = Color(terminal.theme.background).withAlpha(80);
+        //
+        //   canvas.drawRect(
+        //     Rect.fromLTWH(offsetX, offsetY, effectWidth, effectHeight),
+        //     fadePaint,
+        //   );
+        // }
       }
     }
   }
@@ -221,6 +248,7 @@ class TerminalPainter extends CustomPainter {
     int cell,
     double offsetX,
     double offsetY,
+    bool isInSearchResult,
   ) {
     final codePoint = line.cellGetContent(cell);
     var fgColor = line.cellGetFgColor(cell);
@@ -235,7 +263,7 @@ class TerminalPainter extends CustomPainter {
     final cellHash = hashValues(codePoint, fgColor, bgColor, flags);
 
     var character = textLayoutCache.getLayoutFromCache(cellHash);
-    if (character != null) {
+    if (!isInSearchResult && character != null) {
       canvas.drawParagraph(character, Offset(offsetX, offsetY));
       return;
     }
@@ -248,6 +276,10 @@ class TerminalPainter extends CustomPainter {
       color = color.withOpacity(0.5);
     }
 
+    if (isInSearchResult) {
+      color = Color(terminal.theme.searchHitForeground);
+    }
+
     final styleToUse = PaintHelper.getStyleToUse(
       style,
       color,
@@ -257,7 +289,9 @@ class TerminalPainter extends CustomPainter {
     );
 
     character = textLayoutCache.performAndCacheLayout(
-        String.fromCharCode(codePoint), styleToUse, cellHash);
+        String.fromCharCode(codePoint),
+        styleToUse,
+        isInSearchResult ? null : cellHash);
 
     canvas.drawParagraph(character, Offset(offsetX, offsetY));
   }

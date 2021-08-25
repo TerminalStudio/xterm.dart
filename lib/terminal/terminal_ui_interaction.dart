@@ -4,10 +4,14 @@ import 'package:xterm/mouse/position.dart';
 import 'package:xterm/mouse/selection.dart';
 import 'package:xterm/terminal/platform.dart';
 import 'package:xterm/terminal/terminal_search.dart';
+import 'package:xterm/theme/terminal_theme.dart';
 import 'package:xterm/util/observable.dart';
 
 /// this interface describes what a Terminal UI needs from a Terminal
 abstract class TerminalUiInteraction with Observable {
+  /// The theme associated with this Terminal
+  TerminalTheme get theme;
+
   /// the ViewPort scroll offset from the bottom
   int get scrollOffsetFromBottom;
 
@@ -133,4 +137,7 @@ abstract class TerminalUiInteraction with Observable {
 
   /// returns the list of search hits
   TerminalSearchResult get userSearchResult;
+
+  /// the search pattern of a currently active search or [null]
+  String? get userSearchPattern;
 }

@@ -194,6 +194,7 @@ class Terminal with Observable implements TerminalUiInteraction {
   MouseMode _mouseMode = MouseMode.none;
   MouseMode get mouseMode => _mouseMode;
 
+  @override
   final TerminalTheme theme;
 
   // final cellAttr = CellAttrTemplate();
@@ -741,5 +742,9 @@ class Terminal with Observable implements TerminalUiInteraction {
     refresh();
   }
 
+  @override
   TerminalSearchResult get userSearchResult => _userSearchTask.searchResult;
+
+  @override
+  String? get userSearchPattern => _userSearchTask.pattern;
 }
