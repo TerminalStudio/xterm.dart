@@ -44,11 +44,11 @@ class Terminal with Observable implements TerminalUiInteraction {
     this.theme = TerminalThemes.defaultTheme,
     required int maxLines,
   }) : _maxLines = maxLines {
-    _search = TerminalSearch(
-      this,
-      (line) => line.markSearchDone(),
-      (line) => line.isSearchDirty,
-    );
+    _search = TerminalSearch(this);
+    _userSearchTask = _search.createSearchTask(
+        (line) => line.markSearchDone(), (line) => line.isSearchDirty);
+    //TODO: remove and tie to the API
+    _userSearchTask.pattern = "test";
     backend?.init();
     backend?.exitCode.then((value) {
       _isTerminated = true;
@@ -69,6 +69,7 @@ class Terminal with Observable implements TerminalUiInteraction {
   }
 
   late TerminalSearch _search;
+  late TerminalSearchTask _userSearchTask;
 
   bool _dirty = false;
   @override
@@ -741,12 +742,5 @@ class Terminal with Observable implements TerminalUiInteraction {
     refresh();
   }
 
-  String? _searchPattern = "test";
-
-  TerminalSearchResult get searchHits {
-    if (_searchPattern == null) {
-      return TerminalSearchResult.empty();
-    }
-    return _search.doSearch(_searchPattern!);
-  }
+  TerminalSearchResult get searchHits => _userSearchTask.searchResult;
 }

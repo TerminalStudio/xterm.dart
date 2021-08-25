@@ -1,3 +1,4 @@
+import 'package:meta/meta.dart';
 import 'package:xterm/buffer/line/line.dart';
 import 'package:xterm/terminal/terminal.dart';
 
@@ -66,63 +67,78 @@ class TerminalSearchHit {
 typedef MarkSearchDoneFunc = void Function(BufferLine line);
 typedef IsSearchDirtyFunc = bool Function(BufferLine line);
 
-class TerminalSearch {
-  TerminalSearch(
-      this._terminal, this._markSearchDoneFunc, this._isSearchDirtyFunc);
+class TerminalSearchTask {
+  TerminalSearchTask(this._search, this._terminal, this._markSearchDoneFunc,
+      this._isSearchDirtyFunc);
 
+  final TerminalSearch _search;
   final Terminal _terminal;
+  String? _pattern = null;
+  bool _isPatternDirty = true;
+  RegExp? _searchRegexp = null;
   final MarkSearchDoneFunc _markSearchDoneFunc;
   final IsSearchDirtyFunc _isSearchDirtyFunc;
 
-  String? _lastSearchPattern = null;
-  TerminalSearchResult? _lastSearchResult = null;
   bool? _hasBeenUsingAltBuffer;
+  TerminalSearchResult? _lastSearchResult = null;
 
-  TerminalSearchResult doSearch(String searchPattern) {
+  bool _isAnyLineDirty() {
     final bufferLength = _terminal.buffer.lines.length;
-    final terminalWidth = _terminal.terminalWidth;
-
-    var isSearchDirty = false;
-    //check if the search is dirty and return if not
-    if (_lastSearchPattern != null &&
-        _lastSearchPattern == searchPattern &&
-        _lastSearchResult != null &&
-        _hasBeenUsingAltBuffer != null &&
-        _hasBeenUsingAltBuffer! == _terminal.isUsingAltBuffer()) {
-      for (var i = 0; i < bufferLength; i++) {
-        if (_isSearchDirtyFunc(_terminal.buffer.lines[i])) {
-          isSearchDirty = true;
-          break;
-        }
+    for (var i = 0; i < bufferLength; i++) {
+      if (_isSearchDirtyFunc(_terminal.buffer.lines[i])) {
+        return true;
       }
-    } else {
-      isSearchDirty = true;
     }
+    return false;
+  }
 
-    if (!isSearchDirty) {
+  bool _isTerminalStateDirty() {
+    if (_isAnyLineDirty()) {
+      return true;
+    }
+    if (_hasBeenUsingAltBuffer != null &&
+        _hasBeenUsingAltBuffer! != _terminal.isUsingAltBuffer()) {
+      return true;
+    }
+    return false;
+  }
+
+  bool get isDirty {
+    if (_isPatternDirty) {
+      return true;
+    }
+    return _isTerminalStateDirty();
+  }
+
+  String? get pattern => _pattern;
+  void set pattern(String? newPattern) {
+    if (newPattern != _pattern) {
+      _pattern = newPattern;
+      _isPatternDirty = true;
+      _searchRegexp = null;
+    }
+  }
+
+  TerminalSearchResult get searchResult {
+    if (_pattern == null) {
+      return TerminalSearchResult.empty();
+    }
+    if (_lastSearchResult != null && !isDirty) {
       return _lastSearchResult!;
     }
+    _isPatternDirty = false;
+
+    final terminalWidth = _terminal.terminalWidth;
 
     //TODO: make caseSensitive an option
-    final searchRegex =
-        RegExp(searchPattern, caseSensitive: false, multiLine: false);
-
-    final result = List<TerminalSearchHit>.empty(growable: true);
-
-    final bufferContent = StringBuffer();
-    for (var i = 0; i < bufferLength; i++) {
-      final BufferLine line = _terminal.buffer.lines[i];
-      final searchString = line.toSearchString(terminalWidth);
-      _markSearchDoneFunc(line);
-      bufferContent.write(searchString);
-      if (searchString.length < terminalWidth) {
-        // fill up so that the row / col can be mapped back later on
-        bufferContent.writeAll(
-            List<String>.filled(terminalWidth - searchString.length, ' '));
-      }
+    if (_searchRegexp == null) {
+      _searchRegexp = RegExp(_pattern!, caseSensitive: false, multiLine: false);
     }
 
-    for (final match in searchRegex.allMatches(bufferContent.toString())) {
+    final hits = List<TerminalSearchHit>.empty(growable: true);
+
+    for (final match
+        in _searchRegexp!.allMatches(_search.terminalSearchString)) {
       final startLineIndex = (match.start / terminalWidth).floor();
       final endLineIndex = (match.end / terminalWidth).floor();
 
@@ -130,7 +146,7 @@ class TerminalSearch {
       final startIndex = match.start - startLineIndex * terminalWidth;
       final endIndex = match.end - endLineIndex * terminalWidth;
 
-      result.add(
+      hits.add(
         TerminalSearchHit(
           startLineIndex,
           startIndex,
@@ -139,9 +155,60 @@ class TerminalSearch {
         ),
       );
     }
-    _lastSearchPattern = searchPattern;
-    _lastSearchResult = TerminalSearchResult.fromHits(result);
+
+    _lastSearchResult = TerminalSearchResult.fromHits(hits);
     _hasBeenUsingAltBuffer = _terminal.isUsingAltBuffer();
     return _lastSearchResult!;
+  }
+}
+
+class TerminalSearch {
+  TerminalSearch(this._terminal);
+
+  final Terminal _terminal;
+  String? _cachedSearchString;
+  int? _lastTerminalWidth;
+
+  TerminalSearchTask createSearchTask(MarkSearchDoneFunc markSearchDoneFunc,
+      IsSearchDirtyFunc isSearchDirtyFunc) {
+    return TerminalSearchTask(
+        this, _terminal, markSearchDoneFunc, isSearchDirtyFunc);
+  }
+
+  String get terminalSearchString {
+    final bufferLength = _terminal.buffer.lines.length;
+    final terminalWidth = _terminal.terminalWidth;
+
+    var isAnySearchStringInvalid = false;
+    for (var i = 0; i < bufferLength; i++) {
+      if (!_terminal.buffer.lines[i].hasCachedSearchString) {
+        isAnySearchStringInvalid = true;
+      }
+    }
+
+    late String completeSearchString;
+    if (_cachedSearchString != null &&
+        _lastTerminalWidth != null &&
+        _lastTerminalWidth! == terminalWidth &&
+        !isAnySearchStringInvalid) {
+      completeSearchString = _cachedSearchString!;
+    } else {
+      final bufferContent = StringBuffer();
+      for (var i = 0; i < bufferLength; i++) {
+        final BufferLine line = _terminal.buffer.lines[i];
+        final searchString = line.toSearchString(terminalWidth);
+        bufferContent.write(searchString);
+        if (searchString.length < terminalWidth) {
+          // fill up so that the row / col can be mapped back later on
+          bufferContent.writeAll(
+              List<String>.filled(terminalWidth - searchString.length, ' '));
+        }
+      }
+      completeSearchString = bufferContent.toString();
+      _cachedSearchString = completeSearchString;
+      _lastTerminalWidth = terminalWidth;
+    }
+
+    return completeSearchString;
   }
 }

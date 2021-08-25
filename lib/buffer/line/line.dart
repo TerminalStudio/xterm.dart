@@ -145,6 +145,7 @@ class BufferLine {
   }
 
   String? _searchStringCache;
+  bool get hasCachedSearchString => _searchStringCache != null;
 
   String toSearchString(int cols) {
     if (_searchStringCache != null) {
