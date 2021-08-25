@@ -8,6 +8,7 @@ import 'package:xterm/mouse/selection.dart';
 import 'package:xterm/terminal/platform.dart';
 import 'package:xterm/terminal/terminal.dart';
 import 'package:xterm/terminal/terminal_backend.dart';
+import 'package:xterm/terminal/terminal_search.dart';
 import 'package:xterm/terminal/terminal_ui_interaction.dart';
 import 'package:xterm/theme/terminal_theme.dart';
 import 'package:xterm/theme/terminal_themes.dart';
@@ -128,25 +129,25 @@ void terminalMain(SendPort port) async {
         }
         if (_terminal.dirty) {
           final newState = TerminalState(
-            _terminal.scrollOffsetFromBottom,
-            _terminal.scrollOffsetFromTop,
-            _terminal.buffer.height,
-            _terminal.invisibleHeight,
-            _terminal.viewHeight,
-            _terminal.viewWidth,
-            _terminal.selection!,
-            _terminal.getSelectedText(),
-            _terminal.theme.background,
-            _terminal.cursorX,
-            _terminal.cursorY,
-            _terminal.showCursor,
-            _terminal.theme.cursor,
-            _terminal
-                .getVisibleLines()
-                .map((bl) => BufferLine.withDataFrom(bl))
-                .toList(growable: false),
-            _terminal.composingString,
-          );
+              _terminal.scrollOffsetFromBottom,
+              _terminal.scrollOffsetFromTop,
+              _terminal.buffer.height,
+              _terminal.invisibleHeight,
+              _terminal.viewHeight,
+              _terminal.viewWidth,
+              _terminal.selection!,
+              _terminal.getSelectedText(),
+              _terminal.theme.background,
+              _terminal.cursorX,
+              _terminal.cursorY,
+              _terminal.showCursor,
+              _terminal.theme.cursor,
+              _terminal
+                  .getVisibleLines()
+                  .map((bl) => BufferLine.withDataFrom(bl))
+                  .toList(growable: false),
+              _terminal.composingString,
+              _terminal.searchHits);
           port.send([_IsolateEvent.newState, newState]);
           _needNotify = true;
         }
@@ -205,6 +206,8 @@ class TerminalState {
 
   String composingString;
 
+  TerminalSearchResult searchResult;
+
   TerminalState(
     this.scrollOffsetFromBottom,
     this.scrollOffsetFromTop,
@@ -221,6 +224,7 @@ class TerminalState {
     this.cursorColor,
     this.visibleLines,
     this.composingString,
+    this.searchResult,
   );
 }
 
@@ -529,4 +533,8 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   void updateComposingString(String value) {
     _sendPort?.send([_IsolateCommand.updateComposingString, value]);
   }
+
+  @override
+  TerminalSearchResult get searchHits =>
+      _lastState?.searchResult ?? TerminalSearchResult.empty();
 }

@@ -17,6 +17,13 @@ class BufferLine {
   }
 
   late BufferLineData _data;
+  var _isSearchDirty = true;
+
+  bool get isSearchDirty => _isSearchDirty;
+
+  void markSearchDone() {
+    _isSearchDirty = false;
+  }
 
   BufferLineData get data => _data;
 
@@ -134,6 +141,7 @@ class BufferLine {
 
   void _invalidateCaches() {
     _searchStringCache = null;
+    _isSearchDirty = true;
   }
 
   String? _searchStringCache;

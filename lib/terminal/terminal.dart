@@ -17,6 +17,7 @@ import 'package:xterm/terminal/platform.dart';
 import 'package:xterm/terminal/sbc.dart';
 import 'package:xterm/terminal/tabs.dart';
 import 'package:xterm/terminal/terminal_backend.dart';
+import 'package:xterm/terminal/terminal_search.dart';
 import 'package:xterm/terminal/terminal_ui_interaction.dart';
 import 'package:xterm/theme/terminal_color.dart';
 import 'package:xterm/theme/terminal_theme.dart';
@@ -43,6 +44,11 @@ class Terminal with Observable implements TerminalUiInteraction {
     this.theme = TerminalThemes.defaultTheme,
     required int maxLines,
   }) : _maxLines = maxLines {
+    _search = TerminalSearch(
+      this,
+      (line) => line.markSearchDone(),
+      (line) => line.isSearchDirty,
+    );
     backend?.init();
     backend?.exitCode.then((value) {
       _isTerminated = true;
@@ -61,6 +67,8 @@ class Terminal with Observable implements TerminalUiInteraction {
 
     tabs.reset();
   }
+
+  late TerminalSearch _search;
 
   bool _dirty = false;
   @override
@@ -97,10 +105,11 @@ class Terminal with Observable implements TerminalUiInteraction {
   /// replacing the character at the cursor position.
   ///
   /// You can set or reset insert/replace mode as follows.
-  bool _replaceMode = true; // ignore: unused_field
+  // ignore: unused_field
+  bool _replaceMode = true;
 
-  bool _screenMode =
-      false; // ignore: unused_field, // DECSCNM (black on white background)
+  // ignore: unused_field
+  bool _screenMode = false; // DECSCNM (black on white background)
   bool _autoWrapMode = true;
   bool get autoWrapMode => _autoWrapMode;
 
@@ -597,8 +606,6 @@ class Terminal with Observable implements TerminalUiInteraction {
     backend?.write(data);
   }
 
-  void selectWord(int x, int y) {}
-
   int get _tabIndexFromCursor {
     var index = buffer.cursorX;
 
@@ -732,5 +739,14 @@ class Terminal with Observable implements TerminalUiInteraction {
   void updateComposingString(String value) {
     _composingString = value;
     refresh();
+  }
+
+  String? _searchPattern = "test";
+
+  TerminalSearchResult get searchHits {
+    if (_searchPattern == null) {
+      return TerminalSearchResult.empty();
+    }
+    return _search.doSearch(_searchPattern!);
   }
 }

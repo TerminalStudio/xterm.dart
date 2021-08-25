@@ -3,6 +3,7 @@ import 'package:xterm/input/keys.dart';
 import 'package:xterm/mouse/position.dart';
 import 'package:xterm/mouse/selection.dart';
 import 'package:xterm/terminal/platform.dart';
+import 'package:xterm/terminal/terminal_search.dart';
 import 'package:xterm/util/observable.dart';
 
 /// this interface describes what a Terminal UI needs from a Terminal
@@ -129,4 +130,7 @@ abstract class TerminalUiInteraction with Observable {
   /// update the composing string. This gets called by the input handling
   /// part of the terminal
   void updateComposingString(String value);
+
+  /// returns the list of search hits
+  TerminalSearchResult get searchHits;
 }

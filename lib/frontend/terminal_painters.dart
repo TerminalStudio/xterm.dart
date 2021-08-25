@@ -124,6 +124,7 @@ class TerminalPainter extends CustomPainter {
 
   void _paintText(Canvas canvas) {
     final lines = terminal.getVisibleLines();
+    final searchResult = terminal.searchHits;
 
     for (var row = 0; row < lines.length; row++) {
       final line = lines[row];
@@ -139,7 +140,10 @@ class TerminalPainter extends CustomPainter {
         }
 
         final offsetX = col * charSize.cellWidth;
-        _paintCell(canvas, line, col, offsetX, offsetY);
+        final absoluteY = terminal.convertViewLineToRawLine(row) -
+            terminal.scrollOffsetFromBottom;
+        _paintCell(canvas, line, col, offsetX, offsetY,
+            searchResult.contains(absoluteY, col));
       }
     }
   }
@@ -150,14 +154,19 @@ class TerminalPainter extends CustomPainter {
     int cell,
     double offsetX,
     double offsetY,
+    bool isInSearchResult,
   ) {
     final codePoint = line.cellGetContent(cell);
-    final fgColor = line.cellGetFgColor(cell);
+    var fgColor = line.cellGetFgColor(cell);
     final bgColor = line.cellGetBgColor(cell);
     final flags = line.cellGetFlags(cell);
 
     if (codePoint == 0 || flags.hasFlag(CellFlags.invisible)) {
       return;
+    }
+
+    if (isInSearchResult) {
+      fgColor = Color.fromARGB(255, 255, 0, 0).value;
     }
 
     // final cellHash = line.cellGetHash(cell);
