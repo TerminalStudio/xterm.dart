@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:xterm/buffer/cell_flags.dart';
@@ -28,12 +30,9 @@ class TerminalPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     _paintBackground(canvas);
 
-    // if (oscillator.value) {
-    // }
-
-    _paintUserSearchResult(canvas);
-
     _paintText(canvas);
+
+    _paintUserSearchResult(canvas, size);
 
     _paintSelection(canvas);
   }
@@ -44,7 +43,6 @@ class TerminalPainter extends CustomPainter {
     for (var row = 0; row < lines.length; row++) {
       final line = lines[row];
       final offsetY = row * charSize.cellHeight;
-      // final cellCount = math.min(terminal.viewWidth, line.length);
       final cellCount = terminal.terminalWidth;
 
       for (var col = 0; col < cellCount; col++) {
@@ -68,10 +66,6 @@ class TerminalPainter extends CustomPainter {
           continue;
         }
 
-        // final cellFlags = line.cellGetFlags(i);
-        // final cell = line.getCell(i);
-        // final attr = cell.attr;
-
         final offsetX = col * charSize.cellWidth;
         final effectWidth = charSize.cellWidth * cellWidth + 1;
         final effectHeight = charSize.cellHeight + 1;
@@ -89,8 +83,20 @@ class TerminalPainter extends CustomPainter {
     }
   }
 
-  void _paintUserSearchResult(Canvas canvas) {
+  void _paintUserSearchResult(Canvas canvas, Size size) {
     final searchResult = terminal.userSearchResult;
+
+    //when there is no ongoing user search then directly return
+    if (terminal.userSearchPattern == null) {
+      return;
+    }
+
+    //make everything dim so that the search result can be seen better
+    final dimPaint = Paint()
+      ..color = Color(terminal.theme.background).withAlpha(128)
+      ..style = PaintingStyle.fill;
+
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), dimPaint);
 
     for (final hit in searchResult.allHits) {
       _paintSearchHit(canvas, hit);
@@ -136,9 +142,10 @@ class TerminalPainter extends CustomPainter {
             (hit.startLineIndex + 1 - terminal.scrollOffsetFromTop) *
                 charSize.cellHeight;
         final startXMiddleRows = 0.toDouble();
-        final endYMiddleRows =
-            (hit.endLineIndex - terminal.scrollOffsetFromTop) *
-                charSize.cellHeight;
+        final endYMiddleRows = min(
+                hit.endLineIndex - terminal.scrollOffsetFromTop,
+                terminal.terminalHeight) *
+            charSize.cellHeight;
         final endXMiddleRows = terminal.terminalWidth * charSize.cellWidth;
         canvas.drawRect(
             Rect.fromLTRB(startXMiddleRows, startYMiddleRows, endXMiddleRows,
@@ -146,14 +153,51 @@ class TerminalPainter extends CustomPainter {
             paint);
       }
       //draw end row: line start - end
-      final startXEndRow = 0.toDouble();
-      final startYEndRow = (hit.endLineIndex - terminal.scrollOffsetFromTop) *
-          charSize.cellHeight;
-      final endXEndRow = hit.endIndex * charSize.cellWidth;
-      final endYEndRow = startYEndRow + charSize.cellHeight;
-      canvas.drawRect(
-          Rect.fromLTRB(startXEndRow, startYEndRow, endXEndRow, endYEndRow),
-          paint);
+      if (hit.endLineIndex - terminal.scrollOffsetFromTop <
+          terminal.terminalHeight) {
+        final startXEndRow = 0.toDouble();
+        final startYEndRow = (hit.endLineIndex - terminal.scrollOffsetFromTop) *
+            charSize.cellHeight;
+        final endXEndRow = hit.endIndex * charSize.cellWidth;
+        final endYEndRow = startYEndRow + charSize.cellHeight;
+        canvas.drawRect(
+            Rect.fromLTRB(startXEndRow, startYEndRow, endXEndRow, endYEndRow),
+            paint);
+      }
+    }
+
+    final visibleLines = terminal.getVisibleLines();
+
+    //paint text
+    for (var rawRow = hit.startLineIndex;
+        rawRow <= hit.endLineIndex;
+        rawRow++) {
+      final start = rawRow == hit.startLineIndex ? hit.startIndex : 0;
+      final end =
+          rawRow == hit.endLineIndex ? hit.endIndex : terminal.terminalWidth;
+
+      final row = rawRow - terminal.scrollOffsetFromTop;
+
+      final offsetY = row * charSize.cellHeight;
+
+      if (row >= visibleLines.length) {
+        continue;
+      }
+
+      final line = visibleLines[row];
+
+      for (var col = start; col < end; col++) {
+        final offsetX = col * charSize.cellWidth;
+        _paintCell(
+          canvas,
+          line,
+          col,
+          offsetX,
+          offsetY,
+          fgColorOverride: terminal.theme.searchHitForeground,
+          bgColorOverride: terminal.theme.searchHitForeground,
+        );
+      }
     }
   }
 
@@ -195,8 +239,6 @@ class TerminalPainter extends CustomPainter {
 
   void _paintText(Canvas canvas) {
     final lines = terminal.getVisibleLines();
-    final searchResult = terminal.userSearchResult;
-    final userSearchRunning = terminal.userSearchPattern != null;
 
     for (var row = 0; row < lines.length; row++) {
       final line = lines[row];
@@ -207,37 +249,17 @@ class TerminalPainter extends CustomPainter {
       for (var col = 0; col < cellCount; col++) {
         final width = line.cellGetWidth(col);
 
-        final absoluteY = terminal.convertViewLineToRawLine(row) -
-            terminal.scrollOffsetFromBottom;
-        final offsetX = col * charSize.cellWidth;
-        var isInSearchHit = false;
-        if (width != 0) {
-          if (userSearchRunning) {
-            isInSearchHit = searchResult.contains(absoluteY, col);
-          }
-          _paintCell(
-            canvas,
-            line,
-            col,
-            offsetX,
-            offsetY,
-            isInSearchHit,
-          );
+        if (width == 0) {
+          continue;
         }
-
-        // if (userSearchRunning && !isInSearchHit) {
-        //   // Fade out all cells that are not a search hit when a user search is ongoing
-        //   final effectWidth = cellCount * charSize.cellWidth;
-        //   final effectHeight = charSize.cellHeight;
-        //
-        //   final fadePaint = Paint()
-        //     ..color = Color(terminal.theme.background).withAlpha(80);
-        //
-        //   canvas.drawRect(
-        //     Rect.fromLTWH(offsetX, offsetY, effectWidth, effectHeight),
-        //     fadePaint,
-        //   );
-        // }
+        final offsetX = col * charSize.cellWidth;
+        _paintCell(
+          canvas,
+          line,
+          col,
+          offsetX,
+          offsetY,
+        );
       }
     }
   }
@@ -247,12 +269,13 @@ class TerminalPainter extends CustomPainter {
     BufferLine line,
     int cell,
     double offsetX,
-    double offsetY,
-    bool isInSearchResult,
-  ) {
+    double offsetY, {
+    int? fgColorOverride,
+    int? bgColorOverride,
+  }) {
     final codePoint = line.cellGetContent(cell);
-    var fgColor = line.cellGetFgColor(cell);
-    final bgColor = line.cellGetBgColor(cell);
+    final fgColor = fgColorOverride ?? line.cellGetFgColor(cell);
+    final bgColor = bgColorOverride ?? line.cellGetBgColor(cell);
     final flags = line.cellGetFlags(cell);
 
     if (codePoint == 0 || flags.hasFlag(CellFlags.invisible)) {
@@ -263,7 +286,7 @@ class TerminalPainter extends CustomPainter {
     final cellHash = hashValues(codePoint, fgColor, bgColor, flags);
 
     var character = textLayoutCache.getLayoutFromCache(cellHash);
-    if (!isInSearchResult && character != null) {
+    if (character != null) {
       canvas.drawParagraph(character, Offset(offsetX, offsetY));
       return;
     }
@@ -276,10 +299,6 @@ class TerminalPainter extends CustomPainter {
       color = color.withOpacity(0.5);
     }
 
-    if (isInSearchResult) {
-      color = Color(terminal.theme.searchHitForeground);
-    }
-
     final styleToUse = PaintHelper.getStyleToUse(
       style,
       color,
@@ -289,9 +308,7 @@ class TerminalPainter extends CustomPainter {
     );
 
     character = textLayoutCache.performAndCacheLayout(
-        String.fromCharCode(codePoint),
-        styleToUse,
-        isInSearchResult ? null : cellHash);
+        String.fromCharCode(codePoint), styleToUse, cellHash);
 
     canvas.drawParagraph(character, Offset(offsetX, offsetY));
   }
