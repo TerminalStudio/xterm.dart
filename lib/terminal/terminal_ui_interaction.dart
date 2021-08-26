@@ -140,4 +140,13 @@ abstract class TerminalUiInteraction with Observable {
 
   /// the search pattern of a currently active search or [null]
   String? get userSearchPattern;
+
+  /// sets the currently active search pattern
+  void set userSearchPattern(String? pattern);
+
+  /// gets if a user search is active
+  bool get isUserSearchActive;
+
+  // sets the user search active state
+  void set isUserSearchActive(bool isUserSearchActive);
 }

@@ -46,8 +46,6 @@ class Terminal with Observable implements TerminalUiInteraction {
   }) : _maxLines = maxLines {
     _search = TerminalSearch(this);
     _userSearchTask = _search.createSearchTask("UserSearch");
-    //TODO: remove and tie to the API
-    _userSearchTask.pattern = "test";
     backend?.init();
     backend?.exitCode.then((value) {
       _isTerminated = true;
@@ -747,4 +745,20 @@ class Terminal with Observable implements TerminalUiInteraction {
 
   @override
   String? get userSearchPattern => _userSearchTask.pattern;
+
+  @override
+  void set userSearchPattern(String? newValue) {
+    _userSearchTask.pattern = newValue;
+    refresh();
+  }
+
+  var _isUserSearchActive = false;
+
+  @override
+  bool get isUserSearchActive => _isUserSearchActive;
+
+  @override
+  void set isUserSearchActive(bool isUserSearchActive) {
+    _isUserSearchActive = isUserSearchActive;
+  }
 }

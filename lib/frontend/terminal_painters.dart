@@ -87,7 +87,7 @@ class TerminalPainter extends CustomPainter {
     final searchResult = terminal.userSearchResult;
 
     //when there is no ongoing user search then directly return
-    if (terminal.userSearchPattern == null) {
+    if (!terminal.isUserSearchActive) {
       return;
     }
 

@@ -23,7 +23,8 @@ class TerminalSearchResult {
     }
   }
 
-  TerminalSearchResult.empty();
+  TerminalSearchResult.empty()
+      : _allHits = List<TerminalSearchHit>.empty(growable: false);
 
   List<TerminalSearchHit> get allHits => _allHits;
 

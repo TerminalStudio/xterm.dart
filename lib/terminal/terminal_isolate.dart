@@ -33,7 +33,8 @@ enum _IsolateCommand {
   requestNewStateWhenDirty,
   paste,
   terminateBackend,
-  updateComposingString
+  updateComposingString,
+  updateSearchPattern
 }
 
 enum _IsolateEvent {
@@ -162,6 +163,9 @@ void terminalMain(SendPort port) async {
         break;
       case _IsolateCommand.updateComposingString:
         _terminal?.updateComposingString(msg[1]);
+        break;
+      case _IsolateCommand.updateSearchPattern:
+        _terminal?.userSearchPattern = msg[1];
         break;
     }
   }
@@ -545,4 +549,19 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
 
   @override
   String? get userSearchPattern => _lastState?.userSearchPattern;
+
+  @override
+  void set userSearchPattern(String? newValue) {
+    _sendPort?.send([_IsolateCommand.updateSearchPattern, newValue]);
+  }
+
+  var _isUserSearchActive = false;
+
+  @override
+  bool get isUserSearchActive => _isUserSearchActive;
+
+  @override
+  void set isUserSearchActive(bool isUserSearchActive) {
+    _isUserSearchActive = isUserSearchActive;
+  }
 }
