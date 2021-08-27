@@ -1,5 +1,7 @@
+import 'package:equatable/equatable.dart';
 import 'package:xterm/buffer/line/line.dart';
 import 'package:xterm/terminal/terminal.dart';
+import 'package:xterm/util/constants.dart';
 
 class TerminalSearchResult {
   final _hitsByLine = Map<int, List<TerminalSearchHit>>();
@@ -68,8 +70,40 @@ class TerminalSearchHit {
   }
 }
 
+class TerminalSearchOptions extends Equatable {
+  TerminalSearchOptions({
+    this.caseSensitive = false,
+    this.matchWholeWord = false,
+    this.useRegex = false,
+  });
+
+  final bool caseSensitive;
+  final bool matchWholeWord;
+  final bool useRegex;
+
+  TerminalSearchOptions copyWith(
+      {bool? caseSensitive, bool? matchWholeWord, bool? useRegex}) {
+    return TerminalSearchOptions(
+      caseSensitive: caseSensitive ?? this.caseSensitive,
+      matchWholeWord: matchWholeWord ?? this.matchWholeWord,
+      useRegex: useRegex ?? this.useRegex,
+    );
+  }
+
+  @override
+  bool get stringify => true;
+
+  @override
+  List<Object?> get props => [
+        caseSensitive,
+        matchWholeWord,
+        useRegex,
+      ];
+}
+
 class TerminalSearchTask {
-  TerminalSearchTask(this._search, this._terminal, this._dirtyTagName);
+  TerminalSearchTask(this._search, this._terminal, this._dirtyTagName,
+      this._terminalSearchOptions);
 
   final TerminalSearch _search;
   final Terminal _terminal;
@@ -77,6 +111,7 @@ class TerminalSearchTask {
   bool _isPatternDirty = true;
   RegExp? _searchRegexp = null;
   final String _dirtyTagName;
+  TerminalSearchOptions _terminalSearchOptions;
 
   bool? _hasBeenUsingAltBuffer;
   TerminalSearchResult? _lastSearchResult = null;
@@ -125,6 +160,16 @@ class TerminalSearchTask {
     }
   }
 
+  TerminalSearchOptions get options => _terminalSearchOptions;
+  void set options(TerminalSearchOptions newOptions) {
+    if (_terminalSearchOptions == newOptions) {
+      return;
+    }
+    _terminalSearchOptions = newOptions;
+    _isPatternDirty = true;
+    _searchRegexp = null;
+  }
+
   TerminalSearchResult get searchResult {
     if (_pattern == null) {
       return TerminalSearchResult.empty();
@@ -135,21 +180,43 @@ class TerminalSearchTask {
 
     final terminalWidth = _terminal.terminalWidth;
 
-    //TODO: make caseSensitive an option
     if (_searchRegexp == null) {
-      _searchRegexp = RegExp(_pattern!, caseSensitive: false, multiLine: false);
+      var pattern = _pattern!;
+      if (!_terminalSearchOptions.useRegex) {
+        pattern = RegExp.escape(_pattern!);
+      }
+      final regex = '(?<hit>$pattern)';
+      _searchRegexp = RegExp(regex,
+          caseSensitive: _terminalSearchOptions.caseSensitive,
+          multiLine: false);
     }
 
     final hits = List<TerminalSearchHit>.empty(growable: true);
 
     for (final match
         in _searchRegexp!.allMatches(_search.terminalSearchString)) {
-      final startLineIndex = (match.start / terminalWidth).floor();
-      final endLineIndex = (match.end / terminalWidth).floor();
+      final start = match.start;
+      final end = match.end;
+      final startLineIndex = (start / terminalWidth).floor();
+      final endLineIndex = (end / terminalWidth).floor();
 
       // subtract the lines that got added in order to get the index inside the line
-      final startIndex = match.start - startLineIndex * terminalWidth;
-      final endIndex = match.end - endLineIndex * terminalWidth;
+      final startIndex = start - startLineIndex * terminalWidth;
+      final endIndex = end - endLineIndex * terminalWidth;
+
+      if (_terminalSearchOptions.matchWholeWord) {
+        // we match a whole word when the hit fulfills:
+        // 1) starts at a line beginning or has a word-separator before it
+        final startIsOK =
+            startIndex == 0 || kWordSeparators.contains(match.input[start - 1]);
+        // 2) ends with a line or has a word-separator after it
+        final endIsOK = endIndex == terminalWidth ||
+            kWordSeparators.contains(match.input[end]);
+
+        if (!startIsOK || !endIsOK) {
+          continue;
+        }
+      }
 
       hits.add(
         TerminalSearchHit(
@@ -178,7 +245,8 @@ class TerminalSearch {
   int? _lastTerminalWidth;
 
   TerminalSearchTask createSearchTask(String dirtyTagName) {
-    return TerminalSearchTask(this, _terminal, dirtyTagName);
+    return TerminalSearchTask(
+        this, _terminal, dirtyTagName, TerminalSearchOptions());
   }
 
   String get terminalSearchString {

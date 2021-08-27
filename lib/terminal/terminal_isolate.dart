@@ -34,7 +34,8 @@ enum _IsolateCommand {
   paste,
   terminateBackend,
   updateComposingString,
-  updateSearchPattern
+  updateSearchPattern,
+  updateSearchOptions,
 }
 
 enum _IsolateEvent {
@@ -150,6 +151,7 @@ void terminalMain(SendPort port) async {
             _terminal.composingString,
             _terminal.userSearchResult,
             _terminal.userSearchPattern,
+            _terminal.userSearchOptions,
           );
           port.send([_IsolateEvent.newState, newState]);
           _needNotify = true;
@@ -166,6 +168,9 @@ void terminalMain(SendPort port) async {
         break;
       case _IsolateCommand.updateSearchPattern:
         _terminal?.userSearchPattern = msg[1];
+        break;
+      case _IsolateCommand.updateSearchOptions:
+        _terminal?.userSearchOptions = msg[1];
         break;
     }
   }
@@ -214,6 +219,7 @@ class TerminalState {
 
   TerminalSearchResult searchResult;
   String? userSearchPattern;
+  TerminalSearchOptions userSearchOptions;
 
   TerminalState(
     this.scrollOffsetFromBottom,
@@ -233,6 +239,7 @@ class TerminalState {
     this.composingString,
     this.searchResult,
     this.userSearchPattern,
+    this.userSearchOptions,
   );
 }
 
@@ -399,6 +406,7 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
           break;
         case _IsolateEvent.newState:
           _lastState = message[1];
+          _updateLocalCaches();
           if (!initialRefreshCompleted.isCompleted) {
             initialRefreshCompleted.complete(true);
           }
@@ -547,11 +555,26 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   TerminalSearchResult get userSearchResult =>
       _lastState?.searchResult ?? TerminalSearchResult.empty();
 
+  TerminalSearchOptions? _localUserSearchOptionsCache;
+
   @override
-  String? get userSearchPattern => _lastState?.userSearchPattern;
+  TerminalSearchOptions get userSearchOptions =>
+      _localUserSearchOptionsCache ?? TerminalSearchOptions();
+
+  @override
+  void set userSearchOptions(TerminalSearchOptions options) {
+    _localUserSearchOptionsCache = options;
+    _sendPort?.send([_IsolateCommand.updateSearchOptions, options]);
+  }
+
+  String? _localUserSearchPatternCache;
+
+  @override
+  String? get userSearchPattern => _localUserSearchPatternCache;
 
   @override
   void set userSearchPattern(String? newValue) {
+    _localUserSearchPatternCache = newValue;
     _sendPort?.send([_IsolateCommand.updateSearchPattern, newValue]);
   }
 
@@ -563,5 +586,11 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   @override
   void set isUserSearchActive(bool isUserSearchActive) {
     _isUserSearchActive = isUserSearchActive;
+  }
+
+  void _updateLocalCaches() {
+    _localUserSearchPatternCache = _lastState?.userSearchPattern;
+    _localUserSearchOptionsCache =
+        _lastState?.userSearchOptions ?? TerminalSearchOptions();
   }
 }

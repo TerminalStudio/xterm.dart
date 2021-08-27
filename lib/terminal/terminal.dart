@@ -22,6 +22,7 @@ import 'package:xterm/terminal/terminal_ui_interaction.dart';
 import 'package:xterm/theme/terminal_color.dart';
 import 'package:xterm/theme/terminal_theme.dart';
 import 'package:xterm/theme/terminal_themes.dart';
+import 'package:xterm/util/constants.dart';
 import 'package:xterm/util/debug_handler.dart';
 import 'package:xterm/util/observable.dart';
 
@@ -487,14 +488,6 @@ class Terminal with Observable implements TerminalUiInteraction {
     }
   }
 
-  final wordSeparatorCodes = <String>[
-    String.fromCharCode(0),
-    ' ',
-    '.',
-    ':',
-    '/'
-  ];
-
   void selectWordOrRow(Position position) {
     if (position.y > buffer.lines.length) {
       return;
@@ -524,7 +517,7 @@ class Terminal with Observable implements TerminalUiInteraction {
           break;
         }
         final content = line.cellGetContent(start - 1);
-        if (wordSeparatorCodes.contains(String.fromCharCode(content))) {
+        if (kWordSeparators.contains(String.fromCharCode(content))) {
           break;
         }
         start--;
@@ -534,7 +527,7 @@ class Terminal with Observable implements TerminalUiInteraction {
           break;
         }
         final content = line.cellGetContent(end + 1);
-        if (wordSeparatorCodes.contains(String.fromCharCode(content))) {
+        if (kWordSeparators.contains(String.fromCharCode(content))) {
           break;
         }
         end++;
@@ -543,6 +536,7 @@ class Terminal with Observable implements TerminalUiInteraction {
       _selection.clear();
       _selection.init(Position(start, row));
       _selection.update(Position(end, row));
+      refresh();
     }
   }
 
@@ -727,6 +721,7 @@ class Terminal with Observable implements TerminalUiInteraction {
   void selectAll() {
     _selection.init(Position(0, 0));
     _selection.update(Position(terminalWidth, bufferHeight));
+    refresh();
   }
 
   String _composingString = '';
@@ -742,6 +737,15 @@ class Terminal with Observable implements TerminalUiInteraction {
 
   @override
   TerminalSearchResult get userSearchResult => _userSearchTask.searchResult;
+
+  @override
+  TerminalSearchOptions get userSearchOptions => _userSearchTask.options;
+
+  @override
+  void set userSearchOptions(TerminalSearchOptions options) {
+    _userSearchTask.options = options;
+    refresh();
+  }
 
   @override
   String? get userSearchPattern => _userSearchTask.pattern;

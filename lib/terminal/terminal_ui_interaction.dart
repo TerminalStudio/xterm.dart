@@ -138,6 +138,13 @@ abstract class TerminalUiInteraction with Observable {
   /// returns the list of search hits
   TerminalSearchResult get userSearchResult;
 
+  /// gets the current user search options
+  TerminalSearchOptions get userSearchOptions;
+
+  /// sets new user search options. This invalidates the cached search hits and
+  /// will re-trigger a new search
+  void set userSearchOptions(TerminalSearchOptions options);
+
   /// the search pattern of a currently active search or [null]
   String? get userSearchPattern;
 
