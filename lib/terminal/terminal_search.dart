@@ -6,6 +6,7 @@ import 'package:xterm/util/constants.dart';
 class TerminalSearchResult {
   final _hitsByLine = Map<int, List<TerminalSearchHit>>();
   late final _allHits;
+  int _currentSearchHit = 0;
 
   TerminalSearchResult.fromHits(List<TerminalSearchHit> hits) {
     _allHits = hits;
@@ -23,12 +24,26 @@ class TerminalSearchResult {
         _hitsByLine[hit.endLineIndex]!.add(hit);
       }
     }
+    if (_allHits.length > 0) {
+      _currentSearchHit = 1;
+    } else {
+      _currentSearchHit = 0;
+    }
   }
 
   TerminalSearchResult.empty()
       : _allHits = List<TerminalSearchHit>.empty(growable: false);
 
   List<TerminalSearchHit> get allHits => _allHits;
+
+  int get currentSearchHit => _currentSearchHit;
+  void set currentSearchHit(int currentSearchHit) {
+    if (_allHits.length <= 0) {
+      _currentSearchHit = 0;
+    } else {
+      _currentSearchHit = currentSearchHit.clamp(1, _allHits.length).toInt();
+    }
+  }
 
   bool hasEntriesForLine(int line) {
     return _hitsByLine.containsKey(line);

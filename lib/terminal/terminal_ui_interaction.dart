@@ -138,6 +138,15 @@ abstract class TerminalUiInteraction with Observable {
   /// returns the list of search hits
   TerminalSearchResult get userSearchResult;
 
+  /// gets the number of search hits
+  int get numberOfSearchHits;
+
+  /// gets the current search hit
+  int get currentSearchHit;
+
+  /// sets the current search hit (gets clamped to the valid bounds)
+  void set currentSearchHit(int currentSearchHit);
+
   /// gets the current user search options
   TerminalSearchOptions get userSearchOptions;
 

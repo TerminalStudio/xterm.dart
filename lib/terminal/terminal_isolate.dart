@@ -36,6 +36,7 @@ enum _IsolateCommand {
   updateComposingString,
   updateSearchPattern,
   updateSearchOptions,
+  updateCurrentSearchHit,
 }
 
 enum _IsolateEvent {
@@ -171,6 +172,9 @@ void terminalMain(SendPort port) async {
         break;
       case _IsolateCommand.updateSearchOptions:
         _terminal?.userSearchOptions = msg[1];
+        break;
+      case _IsolateCommand.updateCurrentSearchHit:
+        _terminal?.currentSearchHit = msg[1];
         break;
     }
   }
@@ -554,6 +558,17 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   @override
   TerminalSearchResult get userSearchResult =>
       _lastState?.searchResult ?? TerminalSearchResult.empty();
+
+  @override
+  int get numberOfSearchHits => userSearchResult.allHits.length;
+
+  @override
+  int get currentSearchHit => userSearchResult.currentSearchHit;
+
+  @override
+  void set currentSearchHit(int currentSearchHit) {
+    _sendPort?.send([_IsolateCommand.updateCurrentSearchHit, currentSearchHit]);
+  }
 
   TerminalSearchOptions? _localUserSearchOptionsCache;
 
