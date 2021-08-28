@@ -21,6 +21,7 @@ class TerminalTheme {
       required this.brightCyan,
       required this.brightWhite,
       required this.searchHitBackground,
+      required this.searchHitBackgroundCurrent,
       required this.searchHitForeground});
 
   final int cursor;
@@ -47,5 +48,6 @@ class TerminalTheme {
   final int brightWhite;
 
   final int searchHitBackground;
+  final int searchHitBackgroundCurrent;
   final int searchHitForeground;
 }

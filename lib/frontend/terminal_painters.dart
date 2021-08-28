@@ -98,12 +98,12 @@ class TerminalPainter extends CustomPainter {
 
     canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), dimPaint);
 
-    for (final hit in searchResult.allHits) {
-      _paintSearchHit(canvas, hit);
+    for (int i = 1; i <= searchResult.allHits.length; i++) {
+      _paintSearchHit(canvas, searchResult.allHits[i - 1], i);
     }
   }
 
-  void _paintSearchHit(Canvas canvas, TerminalSearchHit hit) {
+  void _paintSearchHit(Canvas canvas, TerminalSearchHit hit, int hitNum) {
     //check if the hit is visible
     if (hit.startLineIndex >=
             terminal.scrollOffsetFromTop + terminal.terminalHeight ||
@@ -112,7 +112,9 @@ class TerminalPainter extends CustomPainter {
     }
 
     final paint = Paint()
-      ..color = Color(terminal.theme.searchHitBackground)
+      ..color = Color(terminal.currentSearchHit == hitNum
+          ? terminal.theme.searchHitBackgroundCurrent
+          : terminal.theme.searchHitBackground)
       ..style = PaintingStyle.fill;
 
     if (hit.startLineIndex == hit.endLineIndex) {

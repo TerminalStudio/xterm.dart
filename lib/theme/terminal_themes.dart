@@ -23,6 +23,7 @@ class TerminalThemes {
     brightCyan: 0XFF29B8DB,
     brightWhite: 0XFFFFFFFF,
     searchHitBackground: 0XFFFFFF2B,
+    searchHitBackgroundCurrent: 0XFF31FF26,
     searchHitForeground: 0XFF000000,
   );
 
@@ -48,6 +49,7 @@ class TerminalThemes {
     brightCyan: 0XFF29B8DB,
     brightWhite: 0XFFFFFFFF,
     searchHitBackground: 0XFFFFFF2B,
+    searchHitBackgroundCurrent: 0XFF31FF26,
     searchHitForeground: 0XFF000000,
   );
 }
