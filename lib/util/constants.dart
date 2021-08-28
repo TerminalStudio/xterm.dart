@@ -11,3 +11,17 @@ const kProfileMode = bool.fromEnvironment(
 const kDebugMode = !kReleaseMode && !kProfileMode;
 
 const kIsWeb = identical(0, 0.0);
+
+final kWordSeparators = [
+  String.fromCharCode(0),
+  ' ',
+  '.',
+  ':',
+  '-',
+  '\'',
+  '"',
+  '*',
+  '+',
+  '/',
+  '\\'
+];

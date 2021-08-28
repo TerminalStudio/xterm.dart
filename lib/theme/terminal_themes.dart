@@ -22,6 +22,9 @@ class TerminalThemes {
     brightMagenta: 0XFFD670D6,
     brightCyan: 0XFF29B8DB,
     brightWhite: 0XFFFFFFFF,
+    searchHitBackground: 0XFFFFFF2B,
+    searchHitBackgroundCurrent: 0XFF31FF26,
+    searchHitForeground: 0XFF000000,
   );
 
   static const whiteOnBlack = TerminalTheme(
@@ -45,5 +48,8 @@ class TerminalThemes {
     brightMagenta: 0XFFD670D6,
     brightCyan: 0XFF29B8DB,
     brightWhite: 0XFFFFFFFF,
+    searchHitBackground: 0XFFFFFF2B,
+    searchHitBackgroundCurrent: 0XFF31FF26,
+    searchHitForeground: 0XFF000000,
   );
 }

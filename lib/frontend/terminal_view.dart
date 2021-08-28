@@ -306,6 +306,7 @@ class _TerminalViewState extends State<TerminalView> {
                   charSize: _cellSize,
                   textLayoutCache: textLayoutCache,
                 ),
+                child: Container(), //to get the size
               ),
               Positioned(
                 key: _keyCursor,

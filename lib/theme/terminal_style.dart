@@ -1,4 +1,5 @@
 import 'dart:ui' as ui;
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
@@ -35,6 +36,7 @@ class TerminalStyle with EquatableMixin {
     this.fontWidthScaleFactor = 1.0,
     this.fontHeightScaleFactor = 1.1,
     this.textStyleProvider,
+    this.ignoreBoldFlag = false,
   });
 
   final List<String> fontFamily;
@@ -42,6 +44,7 @@ class TerminalStyle with EquatableMixin {
   final double fontWidthScaleFactor;
   final double fontHeightScaleFactor;
   final TextStyleProvider? textStyleProvider;
+  final bool ignoreBoldFlag;
 
   @override
   List<Object?> get props {
@@ -51,6 +54,7 @@ class TerminalStyle with EquatableMixin {
       fontWidthScaleFactor,
       fontHeightScaleFactor,
       textStyleProvider,
+      ignoreBoldFlag
     ];
   }
 }

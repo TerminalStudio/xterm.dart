@@ -1,31 +1,29 @@
 import 'dart:math';
-import 'dart:typed_data';
 
 import 'package:xterm/buffer/line/line.dart';
 import 'package:xterm/terminal/cursor.dart';
 
 /// Line layout:
 ///   |  cell  |  cell  |  cell  |  cell  | ...
-///   (16 bytes per cell)
+///   (4 ints per cell)
 ///
 /// Cell layout:
 ///   | code point |  fg color  |  bg color  | attributes |
-///       4bytes       4bytes       4bytes       4bytes
+///       1 int        1 int        1 int        1 int
 ///
 /// Attributes layout:
 ///   |  width  |  flags  | reserved | reserved |
 ///      1byte     1byte     1byte      1byte
 
-const _cellSize = 16;
-const _cellSize64Bit = _cellSize >> 3;
+const _cellSize = 4;
 
 const _cellContent = 0;
-const _cellFgColor = 4;
-const _cellBgColor = 8;
+const _cellFgColor = 1;
+const _cellBgColor = 2;
+const _cellAttributes = 3;
 
-// const _cellAttributes = 12;
-const _cellWidth = 12;
-const _cellFlags = 13;
+const _cellWidth = 0;
+const _cellFlags = 8;
 
 int _nextLength(int lengthRequirement) {
   var nextLength = 2;
@@ -35,15 +33,14 @@ int _nextLength(int lengthRequirement) {
   return nextLength;
 }
 
-/// [ByteData] based [BufferLine], used in non-web platforms to minimize memory
-/// footprint,
-class ByteDataBufferLine with BufferLine {
-  ByteDataBufferLine(int length, this.isWrapped) {
+/// [List] based [BufferLineData], used in browser where ByteData is not avaliable.
+class ListBufferLineData with BufferLineData {
+  ListBufferLineData(int length, this.isWrapped) {
     _maxCols = _nextLength(length);
-    _cells = ByteData(_maxCols * _cellSize);
+    _cells = List.filled(_maxCols * _cellSize, 0);
   }
 
-  late ByteData _cells;
+  late List<int> _cells;
 
   bool isWrapped;
 
@@ -55,8 +52,8 @@ class ByteDataBufferLine with BufferLine {
     }
 
     final nextLength = _nextLength(length);
-    final newCells = ByteData(nextLength * _cellSize);
-    newCells.buffer.asInt64List().setAll(0, _cells.buffer.asInt64List());
+    final newCells = List.filled(nextLength * _cellSize, 0);
+    newCells.setAll(0, _cells);
     _cells = newCells;
     _maxCols = nextLength;
   }
@@ -66,54 +63,40 @@ class ByteDataBufferLine with BufferLine {
   }
 
   void removeN(int index, int count) {
-    final moveStart = index * _cellSize64Bit;
-    final moveOffset = count * _cellSize64Bit;
-    final moveEnd = (_maxCols - count) * _cellSize64Bit;
-    final bufferEnd = _maxCols * _cellSize64Bit;
+    final moveStart = index * _cellSize;
+    final moveOffset = count * _cellSize;
+    final moveEnd = (_maxCols - count) * _cellSize;
+    final bufferEnd = _maxCols * _cellSize;
 
     // move data backward
-    final cells = _cells.buffer.asInt64List();
     for (var i = moveStart; i < moveEnd; i++) {
-      cells[i] = cells[i + moveOffset];
+      _cells[i] = _cells[i + moveOffset];
     }
 
     // set empty cells to 0
     for (var i = moveEnd; i < bufferEnd; i++) {
-      cells[i] = 0x00;
+      _cells[i] = 0x00;
     }
   }
 
   void insertN(int index, int count) {
-    //                       start
-    // +--------------------------|-----------------------------------+
-    // |                          |                                   |
-    // +--------------------------\--\--------------------------------+ end
-    //                             \  \
-    //                              \  \
-    //                               v  v
-    // +--------------------------|--|--------------------------------+
-    // |                          |  |                                |
-    // +--------------------------|--|--------------------------------+ end
-    //                       start   start+offset
-
-    final moveStart = index * _cellSize64Bit;
-    final moveOffset = count * _cellSize64Bit;
-    final bufferEnd = _maxCols * _cellSize64Bit;
+    final moveStart = index * _cellSize;
+    final moveOffset = count * _cellSize;
+    final bufferEnd = _maxCols * _cellSize;
 
     // move data forward
-    final cells = _cells.buffer.asInt64List();
     for (var i = bufferEnd - moveOffset - 1; i >= moveStart; i--) {
-      cells[i + moveOffset] = cells[i];
+      _cells[i + moveOffset] = _cells[i];
     }
 
     // set inserted cells to 0
     for (var i = moveStart; i < moveStart + moveOffset; i++) {
-      cells[i] = 0x00;
+      _cells[i] = 0x00;
     }
   }
 
   void clear() {
-    clearRange(0, _cells.lengthInBytes ~/ _cellSize);
+    clearRange(0, _cells.length ~/ _cellSize);
   }
 
   void erase(Cursor cursor, int start, int end, [bool resetIsWrapped = false]) {
@@ -127,8 +110,7 @@ class ByteDataBufferLine with BufferLine {
   }
 
   void cellClear(int index) {
-    _cells.setUint64(index * _cellSize, 0x00);
-    _cells.setUint64(index * _cellSize + 8, 0x00);
+    _cells.fillRange(index * _cellSize, index * _cellSize + _cellSize, 0);
   }
 
   void cellInitialize(
@@ -138,11 +120,11 @@ class ByteDataBufferLine with BufferLine {
     required Cursor cursor,
   }) {
     final cell = index * _cellSize;
-    _cells.setUint32(cell + _cellContent, content);
-    _cells.setUint32(cell + _cellFgColor, cursor.fg);
-    _cells.setUint32(cell + _cellBgColor, cursor.bg);
-    _cells.setUint8(cell + _cellWidth, width);
-    _cells.setUint8(cell + _cellFlags, cursor.flags);
+    _cells[cell + _cellContent] = content;
+    _cells[cell + _cellFgColor] = cursor.fg;
+    _cells[cell + _cellBgColor] = cursor.bg;
+    _cells[cell + _cellAttributes] =
+        (width << _cellWidth) + (cursor.flags << _cellFlags);
   }
 
   bool cellHasContent(int index) {
@@ -150,58 +132,58 @@ class ByteDataBufferLine with BufferLine {
   }
 
   int cellGetContent(int index) {
-    if (index > _maxCols) {
-      return 0;
-    }
-    return _cells.getUint32(index * _cellSize + _cellContent);
+    if (index >= _maxCols) return 0;
+    return _cells[index * _cellSize + _cellContent];
   }
 
   void cellSetContent(int index, int content) {
-    _cells.setInt32(index * _cellSize + _cellContent, content);
+    _cells[index * _cellSize + _cellContent] = content;
   }
 
   int cellGetFgColor(int index) {
-    if (index >= _maxCols) {
-      return 0;
-    }
-    return _cells.getUint32(index * _cellSize + _cellFgColor);
+    if (index >= _maxCols) return 0;
+    return _cells[index * _cellSize + _cellFgColor];
   }
 
   void cellSetFgColor(int index, int color) {
-    _cells.setUint32(index * _cellSize + _cellFgColor, color);
+    _cells[index * _cellSize + _cellFgColor] = color;
   }
 
   int cellGetBgColor(int index) {
-    if (index >= _maxCols) {
-      return 0;
-    }
-    return _cells.getUint32(index * _cellSize + _cellBgColor);
+    if (index >= _maxCols) return 0;
+    return _cells[index * _cellSize + _cellBgColor];
   }
 
   void cellSetBgColor(int index, int color) {
-    _cells.setUint32(index * _cellSize + _cellBgColor, color);
+    _cells[index * _cellSize + _cellBgColor] = color;
   }
 
   int cellGetFlags(int index) {
-    if (index >= _maxCols) {
-      return 0;
-    }
-    return _cells.getUint8(index * _cellSize + _cellFlags);
+    if (index >= _maxCols) return 0;
+    final offset = index * _cellSize + _cellAttributes;
+    return (_cells[offset] >> _cellFlags) & 0xFF;
   }
 
   void cellSetFlags(int index, int flags) {
-    _cells.setUint8(index * _cellSize + _cellFlags, flags);
+    final offset = index * _cellSize + _cellAttributes;
+    var result = _cells[offset];
+    result |= 0xFF << _cellFlags;
+    result &= flags << _cellFlags;
+    _cells[offset] = result;
   }
 
   int cellGetWidth(int index) {
-    if (index >= _maxCols) {
-      return 1;
-    }
-    return _cells.getUint8(index * _cellSize + _cellWidth);
+    if (index >= _maxCols) return 0;
+    final offset = index * _cellSize + _cellAttributes;
+    return (_cells[offset] >> _cellWidth) & 0xFF;
   }
 
   void cellSetWidth(int index, int width) {
-    _cells.setUint8(index * _cellSize + _cellWidth, width);
+    final offset = index * _cellSize + _cellAttributes;
+    var result = _cells[offset];
+    result |= 0xFF << _cellWidth;
+    result &= width << _cellWidth;
+    _cells[offset] = result;
   }
 
   void cellClearFlags(int index) {
@@ -244,26 +226,19 @@ class ByteDataBufferLine with BufferLine {
     return 0;
   }
 
-  void copyCellsFrom(ByteDataBufferLine src, int srcCol, int dstCol, int len) {
+  void copyCellsFrom(ListBufferLineData src, int srcCol, int dstCol, int len) {
     ensure(dstCol + len);
 
-    final intsToCopy = len * _cellSize64Bit;
-    final srcStart = srcCol * _cellSize64Bit;
-    final dstStart = dstCol * _cellSize64Bit;
+    final intsToCopy = len * _cellSize;
+    final srcStart = srcCol * _cellSize;
+    final dstStart = dstCol * _cellSize;
 
-    final cells = _cells.buffer.asInt64List();
-    final srcCells = src._cells.buffer.asInt64List();
+    final cells = _cells;
+    final srcCells = src._cells;
     for (var i = 0; i < intsToCopy; i++) {
       cells[dstStart + i] = srcCells[srcStart + i];
     }
   }
-
-  // int cellGetHash(int index) {
-  //   final cell = index * _cellSize;
-  //   final a = _cells.getInt64(cell);
-  //   final b = _cells.getInt64(cell + 8);
-  //   return a ^ b;
-  // }
 
   void removeRange(int start, int end) {
     end = min(end, _maxCols);
