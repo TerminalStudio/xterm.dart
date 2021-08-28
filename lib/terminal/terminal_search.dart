@@ -8,27 +8,13 @@ import 'package:xterm/util/constants.dart';
 /// It stores the hits the search produced and the navigation state inside
 /// the search results
 class TerminalSearchResult {
-  final _hitsByLine = Map<int, List<TerminalSearchHit>>();
   late final _allHits;
   int _currentSearchHit = 0;
 
   /// creates a new search result instance from the given hits
   TerminalSearchResult.fromHits(List<TerminalSearchHit> hits) {
     _allHits = hits;
-    for (final hit in hits) {
-      if (!_hitsByLine.containsKey(hit.startLineIndex)) {
-        _hitsByLine[hit.startLineIndex] =
-            List<TerminalSearchHit>.empty(growable: true);
-      }
-      if (!_hitsByLine.containsKey(hit.endLineIndex)) {
-        _hitsByLine[hit.endLineIndex] =
-            List<TerminalSearchHit>.empty(growable: true);
-      }
-      _hitsByLine[hit.startLineIndex]!.add(hit);
-      if (hit.startLineIndex != hit.endLineIndex) {
-        _hitsByLine[hit.endLineIndex]!.add(hit);
-      }
-    }
+
     if (_allHits.length > 0) {
       _currentSearchHit = _allHits.length;
     } else {
