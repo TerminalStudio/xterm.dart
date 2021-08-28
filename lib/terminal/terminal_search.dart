@@ -3,11 +3,16 @@ import 'package:xterm/buffer/line/line.dart';
 import 'package:xterm/terminal/terminal.dart';
 import 'package:xterm/util/constants.dart';
 
+/// Represents a search result.
+/// This instance will be replaced as a whole when the search has to be re-triggered
+/// It stores the hits the search produced and the navigation state inside
+/// the search results
 class TerminalSearchResult {
   final _hitsByLine = Map<int, List<TerminalSearchHit>>();
   late final _allHits;
   int _currentSearchHit = 0;
 
+  /// creates a new search result instance from the given hits
   TerminalSearchResult.fromHits(List<TerminalSearchHit> hits) {
     _allHits = hits;
     for (final hit in hits) {
@@ -31,12 +36,17 @@ class TerminalSearchResult {
     }
   }
 
+  /// creates an empty search result
   TerminalSearchResult.empty()
       : _allHits = List<TerminalSearchHit>.empty(growable: false);
 
+  /// returns all hits of this search result
   List<TerminalSearchHit> get allHits => _allHits;
 
+  /// returns the number of the current search hit
   int get currentSearchHit => _currentSearchHit;
+
+  /// sets the current search hit number
   void set currentSearchHit(int currentSearchHit) {
     if (_allHits.length <= 0) {
       _currentSearchHit = 0;
@@ -44,29 +54,26 @@ class TerminalSearchResult {
       _currentSearchHit = currentSearchHit.clamp(1, _allHits.length).toInt();
     }
   }
-
-  bool hasEntriesForLine(int line) {
-    return _hitsByLine.containsKey(line);
-  }
-
-  List<TerminalSearchHit> getEntriesForLine(int line) {
-    return _hitsByLine[line] ?? List<TerminalSearchHit>.empty(growable: false);
-  }
-
-  bool contains(int line, int col) {
-    return _hitsByLine[line]?.any((hit) => hit.contains(line, col)) ?? false;
-  }
 }
 
+/// Represents one search hit
 class TerminalSearchHit {
   TerminalSearchHit(
       this.startLineIndex, this.startIndex, this.endLineIndex, this.endIndex);
 
+  /// index of the line where the hit starts
   final int startLineIndex;
+
+  /// index of the hit start inside the start line
   final int startIndex;
+
+  /// index of the line where the hit starts
   final int endLineIndex;
+
+  /// index of the hit end inside the end line
   final int endIndex;
 
+  /// checks if the given cell (line / col) is contained in this hit
   bool contains(int line, int col) {
     if (line < startLineIndex || line > endLineIndex) {
       return false;
@@ -85,6 +92,7 @@ class TerminalSearchHit {
   }
 }
 
+/// represents options for a terminal search
 class TerminalSearchOptions extends Equatable {
   TerminalSearchOptions({
     this.caseSensitive = false,
@@ -92,10 +100,18 @@ class TerminalSearchOptions extends Equatable {
     this.useRegex = false,
   });
 
+  /// defines if the search should be case sensitive. If set to [false] then
+  /// the search will be case insensitive
   final bool caseSensitive;
+
+  /// defines if the search should match whole words.
   final bool matchWholeWord;
+
+  /// defines if the search should treat the pattern as a regex, or not
   final bool useRegex;
 
+  /// creates a new TerminalSearchOptions instance based on this one changing the
+  /// given parameters
   TerminalSearchOptions copyWith(
       {bool? caseSensitive, bool? matchWholeWord, bool? useRegex}) {
     return TerminalSearchOptions(
@@ -116,6 +132,10 @@ class TerminalSearchOptions extends Equatable {
       ];
 }
 
+/// represents a search task.
+/// A search task can deliver search results based on the given parameters.
+/// It takes care to cache the results as long as possible and re-trigger a
+/// search on demand only when necessary
 class TerminalSearchTask {
   TerminalSearchTask(this._search, this._terminal, this._dirtyTagName,
       this._terminalSearchOptions);
@@ -129,7 +149,11 @@ class TerminalSearchTask {
   TerminalSearchOptions _terminalSearchOptions;
 
   bool _isActive = false;
+
+  /// indicates if the current search task is active
   bool get isActive => _isActive;
+
+  /// sets the active state of this search task
   void set isActive(bool isActive) {
     _isActive = isActive;
     if (isActive) {
@@ -175,7 +199,10 @@ class TerminalSearchTask {
     return _isTerminalStateDirty();
   }
 
+  /// the currently used pattern of this search task
   String? get pattern => _pattern;
+
+  /// sets the pattern to use for this search task
   void set pattern(String? newPattern) {
     if (newPattern != _pattern) {
       _pattern = newPattern;
@@ -183,7 +210,10 @@ class TerminalSearchTask {
     }
   }
 
+  /// the currently used search options
   TerminalSearchOptions get options => _terminalSearchOptions;
+
+  /// sets the search options to use
   void set options(TerminalSearchOptions newOptions) {
     if (_terminalSearchOptions == newOptions) {
       return;
@@ -192,6 +222,8 @@ class TerminalSearchTask {
     _invalidate();
   }
 
+  /// returns the hit that is currently the selected one (based on the search
+  /// result navigation)
   TerminalSearchHit? get currentSearchHitObject {
     if (searchResult.allHits.length >= searchResult.currentSearchHit &&
         searchResult.currentSearchHit > 0) {
@@ -200,8 +232,13 @@ class TerminalSearchTask {
     return null;
   }
 
+  /// the number of search hits in the current search result
   int get numberOfSearchHits => searchResult.allHits.length;
+
+  /// number of the hit that is currently selected
   int get currentSearchHit => searchResult.currentSearchHit;
+
+  /// sets the hit number that shall be selected
   void set currentSearchHit(int currentSearchHit) {
     searchResult.currentSearchHit = currentSearchHit;
   }
@@ -212,6 +249,8 @@ class TerminalSearchTask {
     _lastSearchResult = null;
   }
 
+  /// returns the current search result or triggers a new search if it has to
+  /// the result is a up to date search result either way
   TerminalSearchResult get searchResult {
     if (_pattern == null || !_isActive) {
       return TerminalSearchResult.empty();
@@ -279,6 +318,9 @@ class TerminalSearchTask {
   }
 }
 
+/// main entry for terminal searches. This class is the factory for search tasks
+/// and will cache the search string that gets generated out of the terminal content
+/// so that all search tasks created by this search can use the same cached search string
 class TerminalSearch {
   TerminalSearch(this._terminal);
 
@@ -286,11 +328,15 @@ class TerminalSearch {
   String? _cachedSearchString;
   int? _lastTerminalWidth;
 
+  /// creates a new search task that will use this search to access a cached variant
+  /// of the terminal search string
   TerminalSearchTask createSearchTask(String dirtyTagName) {
     return TerminalSearchTask(
         this, _terminal, dirtyTagName, TerminalSearchOptions());
   }
 
+  /// returns the current terminal search string. The search string will be
+  /// refreshed on demand if
   String get terminalSearchString {
     final bufferLength = _terminal.buffer.lines.length;
     final terminalWidth = _terminal.terminalWidth;
