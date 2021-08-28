@@ -25,7 +25,7 @@ class TerminalSearchResult {
       }
     }
     if (_allHits.length > 0) {
-      _currentSearchHit = 1;
+      _currentSearchHit = _allHits.length;
     } else {
       _currentSearchHit = 0;
     }
@@ -192,9 +192,24 @@ class TerminalSearchTask {
     _invalidate();
   }
 
+  TerminalSearchHit? get currentSearchHitObject {
+    if (searchResult.allHits.length >= searchResult.currentSearchHit &&
+        searchResult.currentSearchHit > 0) {
+      return searchResult.allHits[searchResult.currentSearchHit - 1];
+    }
+    return null;
+  }
+
+  int get numberOfSearchHits => searchResult.allHits.length;
+  int get currentSearchHit => searchResult.currentSearchHit;
+  void set currentSearchHit(int currentSearchHit) {
+    searchResult.currentSearchHit = currentSearchHit;
+  }
+
   void _invalidate() {
     _isPatternDirty = true;
     _searchRegexp = null;
+    _lastSearchResult = null;
   }
 
   TerminalSearchResult get searchResult {

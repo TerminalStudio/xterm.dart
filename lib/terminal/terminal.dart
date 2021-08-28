@@ -739,14 +739,15 @@ class Terminal with Observable implements TerminalUiInteraction {
   TerminalSearchResult get userSearchResult => _userSearchTask.searchResult;
 
   @override
-  int get numberOfSearchHits => userSearchResult.allHits.length;
+  int get numberOfSearchHits => _userSearchTask.numberOfSearchHits;
 
   @override
-  int get currentSearchHit => userSearchResult.currentSearchHit;
+  int get currentSearchHit => _userSearchTask.currentSearchHit;
 
   @override
   void set currentSearchHit(int currentSearchHit) {
-    userSearchResult.currentSearchHit = currentSearchHit;
+    _userSearchTask.currentSearchHit = currentSearchHit;
+    _scrollCurrentHitIntoView();
     refresh();
   }
 
@@ -756,6 +757,7 @@ class Terminal with Observable implements TerminalUiInteraction {
   @override
   void set userSearchOptions(TerminalSearchOptions options) {
     _userSearchTask.options = options;
+    _scrollCurrentHitIntoView();
     refresh();
   }
 
@@ -765,6 +767,7 @@ class Terminal with Observable implements TerminalUiInteraction {
   @override
   void set userSearchPattern(String? newValue) {
     _userSearchTask.pattern = newValue;
+    _scrollCurrentHitIntoView();
     refresh();
   }
 
@@ -774,5 +777,20 @@ class Terminal with Observable implements TerminalUiInteraction {
   @override
   void set isUserSearchActive(bool isUserSearchActive) {
     _userSearchTask.isActive = isUserSearchActive;
+    _scrollCurrentHitIntoView();
+    refresh();
+  }
+
+  void _scrollCurrentHitIntoView() {
+    if (!_userSearchTask.isActive) {
+      return;
+    }
+    final currentHit = _userSearchTask.currentSearchHitObject;
+
+    if (currentHit != null) {
+      final desiredScrollOffsetFromTop =
+          currentHit.startLineIndex + (terminalHeight / 2).floor();
+      setScrollOffsetFromBottom(buffer.height - desiredScrollOffsetFromTop);
+    }
   }
 }
