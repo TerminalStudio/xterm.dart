@@ -37,6 +37,7 @@ enum _IsolateCommand {
   updateSearchPattern,
   updateSearchOptions,
   updateCurrentSearchHit,
+  updateIsUserSearchActive,
 }
 
 enum _IsolateEvent {
@@ -153,6 +154,7 @@ void terminalMain(SendPort port) async {
             _terminal.userSearchResult,
             _terminal.userSearchPattern,
             _terminal.userSearchOptions,
+            _terminal.isUserSearchActive,
           );
           port.send([_IsolateEvent.newState, newState]);
           _needNotify = true;
@@ -175,6 +177,9 @@ void terminalMain(SendPort port) async {
         break;
       case _IsolateCommand.updateCurrentSearchHit:
         _terminal?.currentSearchHit = msg[1];
+        break;
+      case _IsolateCommand.updateIsUserSearchActive:
+        _terminal?.isUserSearchActive = msg[1];
         break;
     }
   }
@@ -224,6 +229,7 @@ class TerminalState {
   TerminalSearchResult searchResult;
   String? userSearchPattern;
   TerminalSearchOptions userSearchOptions;
+  bool isUserSearchActive;
 
   TerminalState(
     this.scrollOffsetFromBottom,
@@ -244,6 +250,7 @@ class TerminalState {
     this.searchResult,
     this.userSearchPattern,
     this.userSearchOptions,
+    this.isUserSearchActive,
   );
 }
 
@@ -410,7 +417,6 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
           break;
         case _IsolateEvent.newState:
           _lastState = message[1];
-          _updateLocalCaches();
           if (!initialRefreshCompleted.isCompleted) {
             initialRefreshCompleted.complete(true);
           }
@@ -570,42 +576,29 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
     _sendPort?.send([_IsolateCommand.updateCurrentSearchHit, currentSearchHit]);
   }
 
-  TerminalSearchOptions? _localUserSearchOptionsCache;
-
   @override
   TerminalSearchOptions get userSearchOptions =>
-      _localUserSearchOptionsCache ?? TerminalSearchOptions();
+      _lastState?.userSearchOptions ?? TerminalSearchOptions();
 
   @override
   void set userSearchOptions(TerminalSearchOptions options) {
-    _localUserSearchOptionsCache = options;
     _sendPort?.send([_IsolateCommand.updateSearchOptions, options]);
   }
 
-  String? _localUserSearchPatternCache;
-
   @override
-  String? get userSearchPattern => _localUserSearchPatternCache;
+  String? get userSearchPattern => _lastState?.userSearchPattern;
 
   @override
   void set userSearchPattern(String? newValue) {
-    _localUserSearchPatternCache = newValue;
     _sendPort?.send([_IsolateCommand.updateSearchPattern, newValue]);
   }
 
-  var _isUserSearchActive = false;
-
   @override
-  bool get isUserSearchActive => _isUserSearchActive;
+  bool get isUserSearchActive => _lastState?.isUserSearchActive ?? false;
 
   @override
   void set isUserSearchActive(bool isUserSearchActive) {
-    _isUserSearchActive = isUserSearchActive;
-  }
-
-  void _updateLocalCaches() {
-    _localUserSearchPatternCache = _lastState?.userSearchPattern;
-    _localUserSearchOptionsCache =
-        _lastState?.userSearchOptions ?? TerminalSearchOptions();
+    _sendPort
+        ?.send([_IsolateCommand.updateIsUserSearchActive, isUserSearchActive]);
   }
 }

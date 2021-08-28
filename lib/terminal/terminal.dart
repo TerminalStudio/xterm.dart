@@ -768,13 +768,11 @@ class Terminal with Observable implements TerminalUiInteraction {
     refresh();
   }
 
-  var _isUserSearchActive = false;
-
   @override
-  bool get isUserSearchActive => _isUserSearchActive;
+  bool get isUserSearchActive => _userSearchTask.isActive;
 
   @override
   void set isUserSearchActive(bool isUserSearchActive) {
-    _isUserSearchActive = isUserSearchActive;
+    _userSearchTask.isActive = isUserSearchActive;
   }
 }

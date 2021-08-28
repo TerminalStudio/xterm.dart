@@ -128,6 +128,15 @@ class TerminalSearchTask {
   final String _dirtyTagName;
   TerminalSearchOptions _terminalSearchOptions;
 
+  bool _isActive = false;
+  bool get isActive => _isActive;
+  void set isActive(bool isActive) {
+    _isActive = isActive;
+    if (isActive) {
+      _invalidate();
+    }
+  }
+
   bool? _hasBeenUsingAltBuffer;
   TerminalSearchResult? _lastSearchResult = null;
 
@@ -170,8 +179,7 @@ class TerminalSearchTask {
   void set pattern(String? newPattern) {
     if (newPattern != _pattern) {
       _pattern = newPattern;
-      _isPatternDirty = true;
-      _searchRegexp = null;
+      _invalidate();
     }
   }
 
@@ -181,12 +189,16 @@ class TerminalSearchTask {
       return;
     }
     _terminalSearchOptions = newOptions;
+    _invalidate();
+  }
+
+  void _invalidate() {
     _isPatternDirty = true;
     _searchRegexp = null;
   }
 
   TerminalSearchResult get searchResult {
-    if (_pattern == null) {
+    if (_pattern == null || !_isActive) {
       return TerminalSearchResult.empty();
     }
     if (_lastSearchResult != null && !_isDirty) {
