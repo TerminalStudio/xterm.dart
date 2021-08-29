@@ -182,7 +182,7 @@ class TerminalPainter extends CustomPainter {
 
       final offsetY = row * charSize.cellHeight;
 
-      if (row >= visibleLines.length) {
+      if (row >= visibleLines.length || row < 0) {
         continue;
       }
 
