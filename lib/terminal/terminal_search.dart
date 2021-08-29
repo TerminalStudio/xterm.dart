@@ -9,7 +9,7 @@ import 'package:xterm/util/constants.dart';
 /// the search results
 class TerminalSearchResult {
   late final _allHits;
-  int _currentSearchHit = 0;
+  int? _currentSearchHit = null;
 
   /// creates a new search result instance from the given hits
   TerminalSearchResult.fromHits(List<TerminalSearchHit> hits) {
@@ -18,7 +18,7 @@ class TerminalSearchResult {
     if (_allHits.length > 0) {
       _currentSearchHit = _allHits.length;
     } else {
-      _currentSearchHit = 0;
+      _currentSearchHit = null;
     }
   }
 
@@ -30,14 +30,16 @@ class TerminalSearchResult {
   List<TerminalSearchHit> get allHits => _allHits;
 
   /// returns the number of the current search hit
-  int get currentSearchHit => _currentSearchHit;
+  int? get currentSearchHit => _currentSearchHit;
 
   /// sets the current search hit number
-  void set currentSearchHit(int currentSearchHit) {
+  void set currentSearchHit(int? currentSearchHit) {
     if (_allHits.length <= 0) {
-      _currentSearchHit = 0;
+      _currentSearchHit = null;
     } else {
-      _currentSearchHit = currentSearchHit.clamp(1, _allHits.length).toInt();
+      _currentSearchHit = currentSearchHit != null
+          ? currentSearchHit.clamp(1, _allHits.length).toInt()
+          : null;
     }
   }
 }
@@ -211,9 +213,12 @@ class TerminalSearchTask {
   /// returns the hit that is currently the selected one (based on the search
   /// result navigation)
   TerminalSearchHit? get currentSearchHitObject {
-    if (searchResult.allHits.length >= searchResult.currentSearchHit &&
-        searchResult.currentSearchHit > 0) {
-      return searchResult.allHits[searchResult.currentSearchHit - 1];
+    if (searchResult.currentSearchHit == null) {
+      return null;
+    }
+    if (searchResult.allHits.length >= searchResult.currentSearchHit! &&
+        searchResult.currentSearchHit! > 0) {
+      return searchResult.allHits[searchResult.currentSearchHit! - 1];
     }
     return null;
   }
@@ -222,10 +227,10 @@ class TerminalSearchTask {
   int get numberOfSearchHits => searchResult.allHits.length;
 
   /// number of the hit that is currently selected
-  int get currentSearchHit => searchResult.currentSearchHit;
+  int? get currentSearchHit => searchResult.currentSearchHit;
 
   /// sets the hit number that shall be selected
-  void set currentSearchHit(int currentSearchHit) {
+  void set currentSearchHit(int? currentSearchHit) {
     searchResult.currentSearchHit = currentSearchHit;
   }
 

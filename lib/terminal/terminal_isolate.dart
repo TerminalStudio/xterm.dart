@@ -569,10 +569,10 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   int get numberOfSearchHits => userSearchResult.allHits.length;
 
   @override
-  int get currentSearchHit => userSearchResult.currentSearchHit;
+  int? get currentSearchHit => userSearchResult.currentSearchHit;
 
   @override
-  void set currentSearchHit(int currentSearchHit) {
+  void set currentSearchHit(int? currentSearchHit) {
     _sendPort?.send([_IsolateCommand.updateCurrentSearchHit, currentSearchHit]);
   }
 

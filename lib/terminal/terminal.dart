@@ -742,10 +742,10 @@ class Terminal with Observable implements TerminalUiInteraction {
   int get numberOfSearchHits => _userSearchTask.numberOfSearchHits;
 
   @override
-  int get currentSearchHit => _userSearchTask.currentSearchHit;
+  int? get currentSearchHit => _userSearchTask.currentSearchHit;
 
   @override
-  void set currentSearchHit(int currentSearchHit) {
+  void set currentSearchHit(int? currentSearchHit) {
     _userSearchTask.currentSearchHit = currentSearchHit;
     _scrollCurrentHitIntoView();
     refresh();
