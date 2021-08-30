@@ -160,7 +160,9 @@ void main() {
     // overwrite expectations, nothing dirty => no new search
     fixture.expectTerminalSearchContent(
         ['Simple Content', 'Second Line', 'Third line'],
-        isSearchStringCached: false);
+        isSearchStringCached: true);
+    task.isActive = false;
+    task.isActive = true;
 
     final secondResult = task.searchResult;
     expect(secondResult.allHits.length,
@@ -186,17 +188,66 @@ void main() {
     expect(fourthResult.allHits.length,
         3); //search has happened again so the new content is found
   });
+  test('Handles regex special characters in non regex mode correctly', () {
+    final fixture = _TestFixture();
+    fixture.expectTerminalSearchContent(['Simple Content', 'Second Line.\\{']);
+    final task = fixture.uut.createSearchTask('testsearch');
+    task.isActive = true;
+    task.pattern = 'line.\\{';
+    task.options = TerminalSearchOptions(
+        caseSensitive: false, matchWholeWord: false, useRegex: false);
+
+    final result = task.searchResult;
+    expect(result.allHits.length, 1);
+    expect(result.allHits[0].startLineIndex, 1);
+    expect(result.allHits[0].startIndex, 7);
+    expect(result.allHits[0].endLineIndex, 1);
+    expect(result.allHits[0].endIndex, 14);
+  });
+  test('TerminalWidth change leads to retriggering search', () {
+    final fixture = _TestFixture();
+    fixture.expectTerminalSearchContent(['Simple Content', 'Second Line']);
+    final task = fixture.uut.createSearchTask('testsearch');
+    task.isActive = true;
+    task.pattern = 'line';
+    task.options = TerminalSearchOptions(
+        caseSensitive: false, matchWholeWord: false, useRegex: false);
+
+    final result = task.searchResult;
+    expect(result.allHits.length, 1);
+
+    // change data to detect a search re-run
+    fixture.expectTerminalSearchContent(
+        ['First line', 'Second Line']); //has 2 hits
+    task.isActive = false;
+    task.isActive = true;
+    final secondResult = task.searchResult;
+    expect(
+        secondResult.allHits.length, 1); //nothing changed so the cache is used
+
+    fixture.terminalWidth = 79;
+    task.isActive = false;
+    task.isActive = true;
+    final thirdResult = task.searchResult;
+    //we changed the terminal width which triggered a re-run of the search
+    expect(thirdResult.allHits.length, 2);
+  });
 }
 
 class _TestFixture {
   _TestFixture({
-    this.terminalWidth = 80,
-  }) {
+    terminalWidth = 80,
+  }) : _terminalWidth = terminalWidth {
     uut = TerminalSearch(terminalSearchInteractionMock);
     when(terminalSearchInteractionMock.terminalWidth).thenReturn(terminalWidth);
   }
 
-  final int terminalWidth;
+  int _terminalWidth;
+  int get terminalWidth => _terminalWidth;
+  void set terminalWidth(int terminalWidth) {
+    _terminalWidth = terminalWidth;
+    when(terminalSearchInteractionMock.terminalWidth).thenReturn(terminalWidth);
+  }
 
   void expectTerminalSearchContent(
     List<String> lines, {
