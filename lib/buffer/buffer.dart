@@ -11,22 +11,25 @@ import 'package:xterm/util/unicode_v11.dart';
 
 class Buffer {
   Buffer({
-    required this.terminal,
+    required Terminal terminal,
     required this.isAltBuffer,
-  }) {
+  }) : _terminal = terminal {
     resetVerticalMargins();
 
     lines = CircularList(
-      terminal.maxLines,
+      _terminal.maxLines,
     );
-    for (int i = 0; i < terminal.viewHeight; i++) {
+    for (int i = 0; i < _terminal.viewHeight; i++) {
       lines.push(_newEmptyLine());
     }
   }
 
-  final Terminal terminal;
+  final Terminal _terminal;
   final bool isAltBuffer;
   final charset = Charset();
+
+  int get viewHeight => _terminal.viewHeight;
+  int get viewWidth => _terminal.viewWidth;
 
   /// lines of the buffer. the length of [lines] should always be equal or
   /// greater than [Terminal.viewHeight].
@@ -46,7 +49,7 @@ class Buffer {
   // Indicates how far the top of the viewport is from the top of the entire
   // buffer. 0 if the viewport is scrolled to the top.
   int get scrollOffsetFromTop {
-    return terminal.invisibleHeight - scrollOffsetFromBottom;
+    return _terminal.invisibleHeight - scrollOffsetFromBottom;
   }
 
   /// Indicated whether the terminal should automatically scroll to bottom when
@@ -58,7 +61,7 @@ class Buffer {
 
   /// Horizontal position of the cursor relative to the top-left cornor of the
   /// screen, starting from 0.
-  int get cursorX => _cursorX.clamp(0, terminal.viewWidth - 1);
+  int get cursorX => _cursorX.clamp(0, _terminal.viewWidth - 1);
   int _cursorX = 0;
 
   /// Vertical position of the cursor relative to the top-left cornor of the
@@ -72,7 +75,7 @@ class Buffer {
   int get marginBottom => _marginBottom;
   late int _marginBottom;
 
-  /// Writes data to the terminal. Terminal sequences or special characters are
+  /// Writes data to the _terminal. Terminal sequences or special characters are
   /// not interpreted and directly added to the buffer.
   ///
   /// See also: [Terminal.write]
@@ -82,7 +85,7 @@ class Buffer {
     }
   }
 
-  /// Writes a single character to the terminal. Special chatacters are not
+  /// Writes a single character to the _terminal. Special chatacters are not
   /// interpreted and directly added to the buffer.
   ///
   /// See also: [Terminal.writeChar]
@@ -90,10 +93,10 @@ class Buffer {
     codePoint = charset.translate(codePoint);
 
     final cellWidth = unicodeV11.wcwidth(codePoint);
-    if (_cursorX >= terminal.viewWidth) {
+    if (_cursorX >= _terminal.viewWidth) {
       newLine();
       setCursorX(0);
-      if (terminal.autoWrapMode) {
+      if (_terminal.autoWrapMode) {
         currentLine.isWrapped = true;
       }
     }
@@ -105,10 +108,10 @@ class Buffer {
       _cursorX,
       content: codePoint,
       width: cellWidth,
-      cursor: terminal.cursor,
+      cursor: _terminal.cursor,
     );
 
-    if (_cursorX < terminal.viewWidth) {
+    if (_cursorX < _terminal.viewWidth) {
       _cursorX++;
     }
 
@@ -120,7 +123,7 @@ class Buffer {
   /// get line in the viewport. [index] starts from 0, must be smaller than
   /// [Terminal.viewHeight].
   BufferLine getViewLine(int index) {
-    index = index.clamp(0, terminal.viewHeight - 1);
+    index = index.clamp(0, _terminal.viewHeight - 1);
     return lines[convertViewLineToRawLine(index)];
   }
 
@@ -133,23 +136,23 @@ class Buffer {
   }
 
   int convertViewLineToRawLine(int viewLine) {
-    if (terminal.viewHeight > height) {
+    if (_terminal.viewHeight > height) {
       return viewLine;
     }
 
-    return viewLine + (height - terminal.viewHeight);
+    return viewLine + (height - _terminal.viewHeight);
   }
 
   int convertRawLineToViewLine(int rawLine) {
-    if (terminal.viewHeight > height) {
+    if (_terminal.viewHeight > height) {
       return rawLine;
     }
 
-    return rawLine - (height - terminal.viewHeight);
+    return rawLine - (height - _terminal.viewHeight);
   }
 
   void newLine() {
-    if (terminal.newLineMode) {
+    if (_terminal.newLineMode) {
       setCursorX(0);
     }
 
@@ -163,8 +166,8 @@ class Buffer {
   void backspace() {
     if (_cursorX == 0 && currentLine.isWrapped) {
       currentLine.isWrapped = false;
-      movePosition(terminal.viewWidth - 1, -1);
-    } else if (_cursorX == terminal.viewWidth) {
+      movePosition(_terminal.viewWidth - 1, -1);
+    } else if (_cursorX == _terminal.viewWidth) {
       movePosition(-2, 0);
     } else {
       movePosition(-1, 0);
@@ -172,13 +175,13 @@ class Buffer {
   }
 
   List<BufferLine> getVisibleLines() {
-    if (height < terminal.viewHeight) {
+    if (height < _terminal.viewHeight) {
       return lines.toList();
     }
 
     final result = <BufferLine>[];
 
-    for (var i = height - terminal.viewHeight; i < height; i++) {
+    for (var i = height - _terminal.viewHeight; i < height; i++) {
       final y = i - scrollOffsetFromBottom;
       if (y >= 0 && y < height) {
         result.add(lines[y]);
@@ -191,10 +194,10 @@ class Buffer {
   void eraseDisplayFromCursor() {
     eraseLineFromCursor();
 
-    for (var i = _cursorY + 1; i < terminal.viewHeight; i++) {
+    for (var i = _cursorY + 1; i < _terminal.viewHeight; i++) {
       final line = getViewLine(i);
       line.isWrapped = false;
-      line.erase(terminal.cursor, 0, terminal.viewWidth);
+      line.erase(_terminal.cursor, 0, _terminal.viewWidth);
     }
   }
 
@@ -204,36 +207,36 @@ class Buffer {
     for (var i = 0; i < _cursorY; i++) {
       final line = getViewLine(i);
       line.isWrapped = false;
-      line.erase(terminal.cursor, 0, terminal.viewWidth);
+      line.erase(_terminal.cursor, 0, _terminal.viewWidth);
     }
   }
 
   void eraseDisplay() {
-    for (var i = 0; i < terminal.viewHeight; i++) {
+    for (var i = 0; i < _terminal.viewHeight; i++) {
       final line = getViewLine(i);
       line.isWrapped = false;
-      line.erase(terminal.cursor, 0, terminal.viewWidth);
+      line.erase(_terminal.cursor, 0, _terminal.viewWidth);
     }
   }
 
   void eraseLineFromCursor() {
     currentLine.isWrapped = false;
-    currentLine.erase(terminal.cursor, _cursorX, terminal.viewWidth);
+    currentLine.erase(_terminal.cursor, _cursorX, _terminal.viewWidth);
   }
 
   void eraseLineToCursor() {
     currentLine.isWrapped = false;
-    currentLine.erase(terminal.cursor, 0, _cursorX);
+    currentLine.erase(_terminal.cursor, 0, _cursorX);
   }
 
   void eraseLine() {
     currentLine.isWrapped = false;
-    currentLine.erase(terminal.cursor, 0, terminal.viewWidth);
+    currentLine.erase(_terminal.cursor, 0, _terminal.viewWidth);
   }
 
   void eraseCharacters(int count) {
     final start = _cursorX;
-    currentLine.erase(terminal.cursor, start, start + count);
+    currentLine.erase(_terminal.cursor, start, start + count);
   }
 
   ScrollRange getAreaScrollRange() {
@@ -288,7 +291,7 @@ class Buffer {
     }
 
     // the cursor is not in the scrollable region
-    if (_cursorY >= terminal.viewHeight - 1) {
+    if (_cursorY >= _terminal.viewHeight - 1) {
       // we are at the bottom so a new line is created.
       lines.push(_newEmptyLine());
 
@@ -316,11 +319,11 @@ class Buffer {
   }
 
   void setCursorX(int cursorX) {
-    _cursorX = cursorX.clamp(0, terminal.viewWidth - 1);
+    _cursorX = cursorX.clamp(0, _terminal.viewWidth - 1);
   }
 
   void setCursorY(int cursorY) {
-    _cursorY = cursorY.clamp(0, terminal.viewHeight - 1);
+    _cursorY = cursorY.clamp(0, _terminal.viewHeight - 1);
   }
 
   void moveCursorX(int offset) {
@@ -332,14 +335,14 @@ class Buffer {
   }
 
   void setPosition(int cursorX, int cursorY) {
-    var maxLine = terminal.viewHeight - 1;
+    var maxLine = _terminal.viewHeight - 1;
 
-    if (terminal.originMode) {
+    if (_terminal.originMode) {
       cursorY += _marginTop;
       maxLine = _marginBottom;
     }
 
-    _cursorX = cursorX.clamp(0, terminal.viewWidth - 1);
+    _cursorX = cursorX.clamp(0, _terminal.viewWidth - 1);
     _cursorY = cursorY.clamp(0, maxLine);
   }
 
@@ -350,13 +353,13 @@ class Buffer {
   }
 
   void setScrollOffsetFromBottom(int offsetFromBottom) {
-    if (height < terminal.viewHeight) return;
-    final maxOffsetFromBottom = height - terminal.viewHeight;
+    if (height < _terminal.viewHeight) return;
+    final maxOffsetFromBottom = height - _terminal.viewHeight;
     _scrollOffsetFromBottom = offsetFromBottom.clamp(0, maxOffsetFromBottom);
   }
 
   void setScrollOffsetFromTop(int offsetFromTop) {
-    final bottomOffset = terminal.invisibleHeight - offsetFromTop;
+    final bottomOffset = _terminal.invisibleHeight - offsetFromTop;
     setScrollOffsetFromBottom(bottomOffset);
   }
 
@@ -369,9 +372,9 @@ class Buffer {
   }
 
   void saveCursor() {
-    _savedCellFlags = terminal.cursor.flags;
-    _savedCellFgColor = terminal.cursor.fg;
-    _savedCellBgColor = terminal.cursor.bg;
+    _savedCellFlags = _terminal.cursor.flags;
+    _savedCellFgColor = _terminal.cursor.fg;
+    _savedCellBgColor = _terminal.cursor.bg;
     _savedCursorX = _cursorX;
     _savedCursorY = _cursorY;
     charset.save();
@@ -379,15 +382,15 @@ class Buffer {
 
   void restoreCursor() {
     if (_savedCellFlags != null) {
-      terminal.cursor.flags = _savedCellFlags!;
+      _terminal.cursor.flags = _savedCellFlags!;
     }
 
     if (_savedCellFgColor != null) {
-      terminal.cursor.fg = _savedCellFgColor!;
+      _terminal.cursor.fg = _savedCellFgColor!;
     }
 
     if (_savedCellBgColor != null) {
-      terminal.cursor.bg = _savedCellBgColor!;
+      _terminal.cursor.bg = _savedCellBgColor!;
     }
 
     if (_savedCursorX != null) {
@@ -402,15 +405,15 @@ class Buffer {
   }
 
   void setVerticalMargins(int top, int bottom) {
-    _marginTop = top.clamp(0, terminal.viewHeight - 1);
-    _marginBottom = bottom.clamp(0, terminal.viewHeight - 1);
+    _marginTop = top.clamp(0, _terminal.viewHeight - 1);
+    _marginBottom = bottom.clamp(0, _terminal.viewHeight - 1);
 
     _marginTop = min(_marginTop, _marginBottom);
     _marginBottom = max(_marginTop, _marginBottom);
   }
 
   bool get hasScrollableRegion {
-    return _marginTop > 0 || _marginBottom < (terminal.viewHeight - 1);
+    return _marginTop > 0 || _marginBottom < (_terminal.viewHeight - 1);
   }
 
   bool get isInScrollableRegion {
@@ -420,26 +423,26 @@ class Buffer {
   }
 
   void resetVerticalMargins() {
-    setVerticalMargins(0, terminal.viewHeight - 1);
+    setVerticalMargins(0, _terminal.viewHeight - 1);
   }
 
   void deleteChars(int count) {
-    final start = _cursorX.clamp(0, terminal.viewWidth);
-    final end = min(_cursorX + count, terminal.viewWidth);
+    final start = _cursorX.clamp(0, _terminal.viewWidth);
+    final end = min(_cursorX + count, _terminal.viewWidth);
     currentLine.removeRange(start, end);
   }
 
   void clearScrollback() {
-    if (lines.length <= terminal.viewHeight) {
+    if (lines.length <= _terminal.viewHeight) {
       return;
     }
 
-    lines.trimStart(lines.length - terminal.viewHeight);
+    lines.trimStart(lines.length - _terminal.viewHeight);
   }
 
   void clear() {
     lines.clear();
-    for (int i = 0; i < terminal.viewHeight; i++) {
+    for (int i = 0; i < _terminal.viewHeight; i++) {
       lines.push(_newEmptyLine());
     }
   }
@@ -447,7 +450,7 @@ class Buffer {
   void insertBlankCharacters(int count) {
     for (var i = 0; i < count; i++) {
       currentLine.insert(_cursorX + i);
-      currentLine.cellSetFlags(_cursorX + i, terminal.cursor.flags);
+      currentLine.cellSetFlags(_cursorX + i, _terminal.cursor.flags);
     }
   }
 
@@ -537,7 +540,7 @@ class Buffer {
   }
 
   BufferLine _newEmptyLine() {
-    final line = BufferLine(length: terminal.viewWidth);
+    final line = BufferLine(length: _terminal.viewWidth);
     return line;
   }
 

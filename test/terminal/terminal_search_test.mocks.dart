@@ -4,15 +4,14 @@
 
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:xterm/buffer/buffer.dart' as _i2;
-import 'package:xterm/buffer/line/line.dart' as _i6;
-import 'package:xterm/terminal/charset.dart' as _i4;
-import 'package:xterm/terminal/cursor.dart' as _i10;
-import 'package:xterm/terminal/terminal.dart' as _i3;
-import 'package:xterm/terminal/terminal_search_interaction.dart' as _i8;
-import 'package:xterm/util/circular_list.dart' as _i5;
-import 'package:xterm/util/scroll_range.dart' as _i7;
+import 'package:xterm/buffer/line/line.dart' as _i5;
+import 'package:xterm/terminal/charset.dart' as _i3;
+import 'package:xterm/terminal/cursor.dart' as _i9;
+import 'package:xterm/terminal/terminal_search_interaction.dart' as _i7;
+import 'package:xterm/util/circular_list.dart' as _i4;
+import 'package:xterm/util/scroll_range.dart' as _i6;
 
-import 'terminal_search_test.dart' as _i9;
+import 'terminal_search_test.dart' as _i8;
 
 // ignore_for_file: avoid_redundant_argument_values
 // ignore_for_file: avoid_setters_without_getters
@@ -24,23 +23,21 @@ import 'terminal_search_test.dart' as _i9;
 
 class _FakeBuffer_0 extends _i1.Fake implements _i2.Buffer {}
 
-class _FakeTerminal_1 extends _i1.Fake implements _i3.Terminal {}
+class _FakeCharset_1 extends _i1.Fake implements _i3.Charset {}
 
-class _FakeCharset_2 extends _i1.Fake implements _i4.Charset {}
+class _FakeCircularList_2<T> extends _i1.Fake implements _i4.CircularList<T> {}
 
-class _FakeCircularList_3<T> extends _i1.Fake implements _i5.CircularList<T> {}
+class _FakeBufferLine_3 extends _i1.Fake implements _i5.BufferLine {}
 
-class _FakeBufferLine_4 extends _i1.Fake implements _i6.BufferLine {}
+class _FakeScrollRange_4 extends _i1.Fake implements _i6.ScrollRange {}
 
-class _FakeScrollRange_5 extends _i1.Fake implements _i7.ScrollRange {}
-
-class _FakeBufferLineData_6 extends _i1.Fake implements _i6.BufferLineData {}
+class _FakeBufferLineData_5 extends _i1.Fake implements _i5.BufferLineData {}
 
 /// A class which mocks [TerminalSearchInteraction].
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockTerminalSearchInteraction extends _i1.Mock
-    implements _i8.TerminalSearchInteraction {
+    implements _i7.TerminalSearchInteraction {
   MockTerminalSearchInteraction() {
     _i1.throwOnMissingStub(this);
   }
@@ -69,24 +66,29 @@ class MockBuffer extends _i1.Mock implements _i2.Buffer {
   }
 
   @override
-  _i3.Terminal get terminal => (super.noSuchMethod(Invocation.getter(#terminal),
-      returnValue: _FakeTerminal_1()) as _i3.Terminal);
-  @override
   bool get isAltBuffer =>
       (super.noSuchMethod(Invocation.getter(#isAltBuffer), returnValue: false)
           as bool);
   @override
-  _i4.Charset get charset => (super.noSuchMethod(Invocation.getter(#charset),
-      returnValue: _FakeCharset_2()) as _i4.Charset);
+  _i3.Charset get charset => (super.noSuchMethod(Invocation.getter(#charset),
+      returnValue: _FakeCharset_1()) as _i3.Charset);
   @override
-  _i5.CircularList<_i6.BufferLine> get lines =>
+  _i4.CircularList<_i5.BufferLine> get lines =>
       (super.noSuchMethod(Invocation.getter(#lines),
-              returnValue: _FakeCircularList_3<_i6.BufferLine>())
-          as _i5.CircularList<_i6.BufferLine>);
+              returnValue: _FakeCircularList_2<_i5.BufferLine>())
+          as _i4.CircularList<_i5.BufferLine>);
   @override
-  set lines(_i5.CircularList<_i6.BufferLine>? _lines) =>
+  set lines(_i4.CircularList<_i5.BufferLine>? _lines) =>
       super.noSuchMethod(Invocation.setter(#lines, _lines),
           returnValueForMissingStub: null);
+  @override
+  int get viewHeight =>
+      (super.noSuchMethod(Invocation.getter(#viewHeight), returnValue: 0)
+          as int);
+  @override
+  int get viewWidth =>
+      (super.noSuchMethod(Invocation.getter(#viewWidth), returnValue: 0)
+          as int);
   @override
   int get scrollOffsetFromBottom =>
       (super.noSuchMethod(Invocation.getter(#scrollOffsetFromBottom),
@@ -114,9 +116,9 @@ class MockBuffer extends _i1.Mock implements _i2.Buffer {
       (super.noSuchMethod(Invocation.getter(#marginBottom), returnValue: 0)
           as int);
   @override
-  _i6.BufferLine get currentLine =>
+  _i5.BufferLine get currentLine =>
       (super.noSuchMethod(Invocation.getter(#currentLine),
-          returnValue: _FakeBufferLine_4()) as _i6.BufferLine);
+          returnValue: _FakeBufferLine_3()) as _i5.BufferLine);
   @override
   int get height =>
       (super.noSuchMethod(Invocation.getter(#height), returnValue: 0) as int);
@@ -137,9 +139,9 @@ class MockBuffer extends _i1.Mock implements _i2.Buffer {
       super.noSuchMethod(Invocation.method(#writeChar, [codePoint]),
           returnValueForMissingStub: null);
   @override
-  _i6.BufferLine getViewLine(int? index) =>
+  _i5.BufferLine getViewLine(int? index) =>
       (super.noSuchMethod(Invocation.method(#getViewLine, [index]),
-          returnValue: _FakeBufferLine_4()) as _i6.BufferLine);
+          returnValue: _FakeBufferLine_3()) as _i5.BufferLine);
   @override
   int convertViewLineToRawLine(int? viewLine) => (super.noSuchMethod(
       Invocation.method(#convertViewLineToRawLine, [viewLine]),
@@ -159,9 +161,9 @@ class MockBuffer extends _i1.Mock implements _i2.Buffer {
   void backspace() => super.noSuchMethod(Invocation.method(#backspace, []),
       returnValueForMissingStub: null);
   @override
-  List<_i6.BufferLine> getVisibleLines() =>
+  List<_i5.BufferLine> getVisibleLines() =>
       (super.noSuchMethod(Invocation.method(#getVisibleLines, []),
-          returnValue: <_i6.BufferLine>[]) as List<_i6.BufferLine>);
+          returnValue: <_i5.BufferLine>[]) as List<_i5.BufferLine>);
   @override
   void eraseDisplayFromCursor() =>
       super.noSuchMethod(Invocation.method(#eraseDisplayFromCursor, []),
@@ -190,9 +192,9 @@ class MockBuffer extends _i1.Mock implements _i2.Buffer {
       super.noSuchMethod(Invocation.method(#eraseCharacters, [count]),
           returnValueForMissingStub: null);
   @override
-  _i7.ScrollRange getAreaScrollRange() =>
+  _i6.ScrollRange getAreaScrollRange() =>
       (super.noSuchMethod(Invocation.method(#getAreaScrollRange, []),
-          returnValue: _FakeScrollRange_5()) as _i7.ScrollRange);
+          returnValue: _FakeScrollRange_4()) as _i6.ScrollRange);
   @override
   void areaScrollDown(int? lines) =>
       super.noSuchMethod(Invocation.method(#areaScrollDown, [lines]),
@@ -313,7 +315,7 @@ class MockBuffer extends _i1.Mock implements _i2.Buffer {
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockTerminalSearchTestCircularList extends _i1.Mock
-    implements _i9.TerminalSearchTestCircularList {
+    implements _i8.TerminalSearchTestCircularList {
   MockTerminalSearchTestCircularList() {
     _i1.throwOnMissingStub(this);
   }
@@ -338,41 +340,41 @@ class MockTerminalSearchTestCircularList extends _i1.Mock
       (super.noSuchMethod(Invocation.getter(#isFull), returnValue: false)
           as bool);
   @override
-  void forEach(void Function(_i6.BufferLine)? callback) =>
+  void forEach(void Function(_i5.BufferLine)? callback) =>
       super.noSuchMethod(Invocation.method(#forEach, [callback]),
           returnValueForMissingStub: null);
   @override
-  _i6.BufferLine operator [](int? index) =>
+  _i5.BufferLine operator [](int? index) =>
       (super.noSuchMethod(Invocation.method(#[], [index]),
-          returnValue: _FakeBufferLine_4()) as _i6.BufferLine);
+          returnValue: _FakeBufferLine_3()) as _i5.BufferLine);
   @override
-  void operator []=(int? index, _i6.BufferLine? value) =>
+  void operator []=(int? index, _i5.BufferLine? value) =>
       super.noSuchMethod(Invocation.method(#[]=, [index, value]),
           returnValueForMissingStub: null);
   @override
   void clear() => super.noSuchMethod(Invocation.method(#clear, []),
       returnValueForMissingStub: null);
   @override
-  void pushAll(Iterable<_i6.BufferLine>? items) =>
+  void pushAll(Iterable<_i5.BufferLine>? items) =>
       super.noSuchMethod(Invocation.method(#pushAll, [items]),
           returnValueForMissingStub: null);
   @override
-  void push(_i6.BufferLine? value) =>
+  void push(_i5.BufferLine? value) =>
       super.noSuchMethod(Invocation.method(#push, [value]),
           returnValueForMissingStub: null);
   @override
-  _i6.BufferLine pop() => (super.noSuchMethod(Invocation.method(#pop, []),
-      returnValue: _FakeBufferLine_4()) as _i6.BufferLine);
+  _i5.BufferLine pop() => (super.noSuchMethod(Invocation.method(#pop, []),
+      returnValue: _FakeBufferLine_3()) as _i5.BufferLine);
   @override
   void remove(int? index, [int? count = 1]) =>
       super.noSuchMethod(Invocation.method(#remove, [index, count]),
           returnValueForMissingStub: null);
   @override
-  void insert(int? index, _i6.BufferLine? item) =>
+  void insert(int? index, _i5.BufferLine? item) =>
       super.noSuchMethod(Invocation.method(#insert, [index, item]),
           returnValueForMissingStub: null);
   @override
-  void insertAll(int? index, List<_i6.BufferLine>? items) =>
+  void insertAll(int? index, List<_i5.BufferLine>? items) =>
       super.noSuchMethod(Invocation.method(#insertAll, [index, items]),
           returnValueForMissingStub: null);
   @override
@@ -384,13 +386,13 @@ class MockTerminalSearchTestCircularList extends _i1.Mock
       Invocation.method(#shiftElements, [start, count, offset]),
       returnValueForMissingStub: null);
   @override
-  void replaceWith(List<_i6.BufferLine>? replacement) =>
+  void replaceWith(List<_i5.BufferLine>? replacement) =>
       super.noSuchMethod(Invocation.method(#replaceWith, [replacement]),
           returnValueForMissingStub: null);
   @override
-  List<_i6.BufferLine> toList() =>
+  List<_i5.BufferLine> toList() =>
       (super.noSuchMethod(Invocation.method(#toList, []),
-          returnValue: <_i6.BufferLine>[]) as List<_i6.BufferLine>);
+          returnValue: <_i5.BufferLine>[]) as List<_i5.BufferLine>);
   @override
   String toString() => super.toString();
 }
@@ -398,14 +400,14 @@ class MockTerminalSearchTestCircularList extends _i1.Mock
 /// A class which mocks [BufferLine].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockBufferLine extends _i1.Mock implements _i6.BufferLine {
+class MockBufferLine extends _i1.Mock implements _i5.BufferLine {
   MockBufferLine() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i6.BufferLineData get data => (super.noSuchMethod(Invocation.getter(#data),
-      returnValue: _FakeBufferLineData_6()) as _i6.BufferLineData);
+  _i5.BufferLineData get data => (super.noSuchMethod(Invocation.getter(#data),
+      returnValue: _FakeBufferLineData_5()) as _i5.BufferLineData);
   @override
   bool get isWrapped =>
       (super.noSuchMethod(Invocation.getter(#isWrapped), returnValue: false)
@@ -446,7 +448,7 @@ class MockBufferLine extends _i1.Mock implements _i6.BufferLine {
   void clear() => super.noSuchMethod(Invocation.method(#clear, []),
       returnValueForMissingStub: null);
   @override
-  void erase(_i10.Cursor? cursor, int? start, int? end,
+  void erase(_i9.Cursor? cursor, int? start, int? end,
           [bool? resetIsWrapped = false]) =>
       super.noSuchMethod(
           Invocation.method(#erase, [cursor, start, end, resetIsWrapped]),
@@ -457,7 +459,7 @@ class MockBufferLine extends _i1.Mock implements _i6.BufferLine {
           returnValueForMissingStub: null);
   @override
   void cellInitialize(int? index,
-          {int? content, int? width, _i10.Cursor? cursor}) =>
+          {int? content, int? width, _i9.Cursor? cursor}) =>
       super.noSuchMethod(
           Invocation.method(#cellInitialize, [index],
               {#content: content, #width: width, #cursor: cursor}),
@@ -519,7 +521,7 @@ class MockBufferLine extends _i1.Mock implements _i6.BufferLine {
       super.noSuchMethod(Invocation.method(#cellSetFlag, [index, flag]),
           returnValueForMissingStub: null);
   @override
-  void cellErase(int? index, _i10.Cursor? cursor) =>
+  void cellErase(int? index, _i9.Cursor? cursor) =>
       super.noSuchMethod(Invocation.method(#cellErase, [index, cursor]),
           returnValueForMissingStub: null);
   @override
@@ -527,7 +529,7 @@ class MockBufferLine extends _i1.Mock implements _i6.BufferLine {
       (super.noSuchMethod(Invocation.method(#getTrimmedLength, [cols]),
           returnValue: 0) as int);
   @override
-  void copyCellsFrom(_i6.BufferLine? src, int? srcCol, int? dstCol, int? len) =>
+  void copyCellsFrom(_i5.BufferLine? src, int? srcCol, int? dstCol, int? len) =>
       super.noSuchMethod(
           Invocation.method(#copyCellsFrom, [src, srcCol, dstCol, len]),
           returnValueForMissingStub: null);
