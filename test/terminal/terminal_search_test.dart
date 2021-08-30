@@ -21,7 +21,9 @@ class TerminalSearchTestCircularList extends CircularList<BufferLine> {
 ])
 void main() {
   group('Terminal Search Tests', () {
-    test('Creation works', () {});
+    test('Creation works', () {
+      _TestFixture();
+    });
 
     test('Doesn\'t trigger anything when not activated', () {
       final fixture = _TestFixture();
