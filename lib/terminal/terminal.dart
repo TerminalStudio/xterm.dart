@@ -18,6 +18,7 @@ import 'package:xterm/terminal/sbc.dart';
 import 'package:xterm/terminal/tabs.dart';
 import 'package:xterm/terminal/terminal_backend.dart';
 import 'package:xterm/terminal/terminal_search.dart';
+import 'package:xterm/terminal/terminal_search_interaction.dart';
 import 'package:xterm/terminal/terminal_ui_interaction.dart';
 import 'package:xterm/theme/terminal_color.dart';
 import 'package:xterm/theme/terminal_theme.dart';
@@ -35,7 +36,9 @@ void _defaultBellHandler() {}
 void _defaultTitleHandler(String _) {}
 void _defaultIconHandler(String _) {}
 
-class Terminal with Observable implements TerminalUiInteraction {
+class Terminal
+    with Observable
+    implements TerminalUiInteraction, TerminalSearchInteraction {
   Terminal({
     this.backend,
     this.onBell = _defaultBellHandler,

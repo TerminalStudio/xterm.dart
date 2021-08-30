@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:xterm/buffer/line/line.dart';
-import 'package:xterm/terminal/terminal.dart';
+import 'package:xterm/terminal/terminal_search_interaction.dart';
 import 'package:xterm/util/constants.dart';
 
 /// Represents a search result.
@@ -129,7 +129,7 @@ class TerminalSearchTask {
       this._terminalSearchOptions);
 
   final TerminalSearch _search;
-  final Terminal _terminal;
+  final TerminalSearchInteraction _terminal;
   String? _pattern = null;
   bool _isPatternDirty = true;
   RegExp? _searchRegexp = null;
@@ -257,8 +257,7 @@ class TerminalSearchTask {
       if (!_terminalSearchOptions.useRegex) {
         pattern = RegExp.escape(_pattern!);
       }
-      final regex = '(?<hit>$pattern)';
-      _searchRegexp = RegExp(regex,
+      _searchRegexp = RegExp(pattern,
           caseSensitive: _terminalSearchOptions.caseSensitive,
           multiLine: false);
     }
@@ -315,7 +314,7 @@ class TerminalSearchTask {
 class TerminalSearch {
   TerminalSearch(this._terminal);
 
-  final Terminal _terminal;
+  final TerminalSearchInteraction _terminal;
   String? _cachedSearchString;
   int? _lastTerminalWidth;
 
