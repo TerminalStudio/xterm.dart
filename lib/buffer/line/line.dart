@@ -157,10 +157,13 @@ class BufferLine {
     final length = getTrimmedLength();
     for (int i = 0; i < max(cols, length); i++) {
       var code = cellGetContent(i);
-      if (code == 0) {
-        searchString.writeAll(List<String>.filled(cellGetWidth(i), ' '));
-      } else {
-        searchString.writeCharCode(code);
+      if (code != 0) {
+        final cellString = String.fromCharCode(code);
+        searchString.write(cellString);
+        final widthDiff = cellGetWidth(i) - cellString.length;
+        if (widthDiff > 0) {
+          searchString.write(''.padRight(widthDiff));
+        }
       }
     }
     _searchStringCache = searchString.toString();

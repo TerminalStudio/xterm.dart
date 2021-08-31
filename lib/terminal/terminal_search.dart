@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:xterm/buffer/line/line.dart';
 import 'package:xterm/terminal/terminal_search_interaction.dart';
 import 'package:xterm/util/constants.dart';
+import 'package:xterm/util/unicode_v11.dart';
 
 /// Represents a search result.
 /// This instance will be replaced as a whole when the search has to be re-triggered
@@ -240,6 +241,22 @@ class TerminalSearchTask {
     _lastSearchResult = null;
   }
 
+  String _createRegexPattern(String inputPattern) {
+    final result = StringBuffer();
+
+    for (final rune in inputPattern.runes) {
+      final runeString = String.fromCharCode(rune);
+      result.write(runeString);
+      final cellWidth = unicodeV11.wcwidth(rune);
+      final widthDiff = cellWidth - runeString.length;
+      if (widthDiff > 0) {
+        result.write(''.padRight(widthDiff));
+      }
+    }
+
+    return result.toString();
+  }
+
   /// returns the current search result or triggers a new search if it has to
   /// the result is a up to date search result either way
   TerminalSearchResult get searchResult {
@@ -257,7 +274,7 @@ class TerminalSearchTask {
       if (!_terminalSearchOptions.useRegex) {
         pattern = RegExp.escape(_pattern!);
       }
-      _searchRegexp = RegExp(pattern,
+      _searchRegexp = RegExp(_createRegexPattern(pattern),
           caseSensitive: _terminalSearchOptions.caseSensitive,
           multiLine: false);
     }

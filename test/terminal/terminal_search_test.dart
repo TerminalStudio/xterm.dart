@@ -5,9 +5,11 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:xterm/buffer/buffer.dart';
 import 'package:xterm/buffer/line/line.dart';
+import 'package:xterm/terminal/cursor.dart';
 import 'package:xterm/terminal/terminal_search.dart';
 import 'package:xterm/terminal/terminal_search_interaction.dart';
 import 'package:xterm/util/circular_list.dart';
+import 'package:xterm/util/unicode_v11.dart';
 
 import 'terminal_search_test.mocks.dart';
 
@@ -70,7 +72,21 @@ void main() {
 
     test('Emoji search works', () {
       final fixture = _TestFixture();
-      fixture.expectTerminalSearchContent(['🍏🍎🍐🍊🍋🍌🍉🍇🍓🫐🍈🍒🍑']);
+      fixture.expectBufferContentLine([
+        '🍏',
+        '🍎',
+        '🍐',
+        '🍊',
+        '🍋',
+        '🍌',
+        '🍉',
+        '🍇',
+        '🍓',
+        '🫐',
+        '🍈',
+        '🍒',
+        '🍑'
+      ]);
       final task = fixture.uut.createSearchTask('testsearch');
       task.isActive = true;
       task.pattern = '🍋';
@@ -86,7 +102,7 @@ void main() {
 
     test('CJK search works', () {
       final fixture = _TestFixture();
-      fixture.expectTerminalSearchContent(['こんにちは世界']);
+      fixture.expectBufferContentLine(['こ', 'ん', 'に', 'ち', 'は', '世', '界']);
       final task = fixture.uut.createSearchTask('testsearch');
       task.isActive = true;
       task.pattern = 'は';
@@ -285,6 +301,16 @@ class _TestFixture {
     when(terminalSearchInteractionMock.terminalWidth).thenReturn(terminalWidth);
   }
 
+  void expectBufferContentLine(
+    List<String> cellData, {
+    isUsingAltBuffer = false,
+  }) {
+    final buffer = _getBufferFromCellData(cellData);
+    when(terminalSearchInteractionMock.buffer).thenReturn(buffer);
+    when(terminalSearchInteractionMock.isUsingAltBuffer())
+        .thenReturn(isUsingAltBuffer);
+  }
+
   void expectTerminalSearchContent(
     List<String> lines, {
     isUsingAltBuffer = false,
@@ -301,6 +327,16 @@ class _TestFixture {
 
   final terminalSearchInteractionMock = MockTerminalSearchInteraction();
   late final TerminalSearch uut;
+
+  MockBuffer _getBufferFromCellData(List<String> cellData) {
+    final result = MockBuffer();
+    final circularList = MockTerminalSearchTestCircularList();
+    when(result.lines).thenReturn(circularList);
+    when(circularList[0]).thenReturn(_getBufferLineFromData(cellData));
+    when(circularList.length).thenReturn(1);
+
+    return result;
+  }
 
   MockBuffer _getBuffer(
     List<String> lines, {
@@ -321,6 +357,32 @@ class _TestFixture {
         (realInvocation) => bufferLines[realInvocation.positionalArguments[0]]);
     when(circularList.length).thenReturn(bufferLines.length);
 
+    return result;
+  }
+
+  BufferLine _getBufferLineFromData(List<String> cellData) {
+    final result = BufferLine(length: _terminalWidth);
+    int currentIndex = 0;
+    for (var data in cellData) {
+      final codePoint = data.runes.first;
+      final width = unicodeV11.wcwidth(codePoint);
+      result.cellInitialize(
+        currentIndex,
+        content: codePoint,
+        width: width,
+        cursor: Cursor(bg: 0, fg: 0, flags: 0),
+      );
+      currentIndex++;
+      for (int i = 1; i < width; i++) {
+        result.cellInitialize(
+          currentIndex,
+          content: 0,
+          width: 0,
+          cursor: Cursor(bg: 0, fg: 0, flags: 0),
+        );
+        currentIndex++;
+      }
+    }
     return result;
   }
 
