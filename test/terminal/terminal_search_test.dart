@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -66,12 +68,28 @@ void main() {
       expect(result.allHits[0].endIndex, 11);
     });
 
-    test('Wide character search works', () {
+    test('Emoji search works', () {
       final fixture = _TestFixture();
       fixture.expectTerminalSearchContent(['🍏🍎🍐🍊🍋🍌🍉🍇🍓🫐🍈🍒🍑']);
       final task = fixture.uut.createSearchTask('testsearch');
       task.isActive = true;
       task.pattern = '🍋';
+      task.options = TerminalSearchOptions(
+          caseSensitive: false, matchWholeWord: false, useRegex: false);
+      final result = task.searchResult;
+      expect(result.allHits.length, 1);
+      expect(result.allHits[0].startLineIndex, 0);
+      expect(result.allHits[0].startIndex, 8);
+      expect(result.allHits[0].endLineIndex, 0);
+      expect(result.allHits[0].endIndex, 10);
+    });
+
+    test('CJK search works', () {
+      final fixture = _TestFixture();
+      fixture.expectTerminalSearchContent(['こんにちは世界']);
+      final task = fixture.uut.createSearchTask('testsearch');
+      task.isActive = true;
+      task.pattern = 'は';
       task.options = TerminalSearchOptions(
           caseSensitive: false, matchWholeWord: false, useRegex: false);
       final result = task.searchResult;
