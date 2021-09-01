@@ -17,10 +17,13 @@ import 'package:xterm/terminal/platform.dart';
 import 'package:xterm/terminal/sbc.dart';
 import 'package:xterm/terminal/tabs.dart';
 import 'package:xterm/terminal/terminal_backend.dart';
+import 'package:xterm/terminal/terminal_search.dart';
+import 'package:xterm/terminal/terminal_search_interaction.dart';
 import 'package:xterm/terminal/terminal_ui_interaction.dart';
 import 'package:xterm/theme/terminal_color.dart';
 import 'package:xterm/theme/terminal_theme.dart';
 import 'package:xterm/theme/terminal_themes.dart';
+import 'package:xterm/util/constants.dart';
 import 'package:xterm/util/debug_handler.dart';
 import 'package:xterm/util/observable.dart';
 
@@ -33,7 +36,9 @@ void _defaultBellHandler() {}
 void _defaultTitleHandler(String _) {}
 void _defaultIconHandler(String _) {}
 
-class Terminal with Observable implements TerminalUiInteraction {
+class Terminal
+    with Observable
+    implements TerminalUiInteraction, TerminalSearchInteraction {
   Terminal({
     this.backend,
     this.onBell = _defaultBellHandler,
@@ -43,6 +48,8 @@ class Terminal with Observable implements TerminalUiInteraction {
     this.theme = TerminalThemes.defaultTheme,
     required int maxLines,
   }) : _maxLines = maxLines {
+    _search = TerminalSearch(this);
+    _userSearchTask = _search.createSearchTask("UserSearch");
     backend?.init();
     backend?.exitCode.then((value) {
       _isTerminated = true;
@@ -61,6 +68,9 @@ class Terminal with Observable implements TerminalUiInteraction {
 
     tabs.reset();
   }
+
+  late TerminalSearch _search;
+  late TerminalSearchTask _userSearchTask;
 
   bool _dirty = false;
   @override
@@ -97,10 +107,11 @@ class Terminal with Observable implements TerminalUiInteraction {
   /// replacing the character at the cursor position.
   ///
   /// You can set or reset insert/replace mode as follows.
-  bool _replaceMode = true; // ignore: unused_field
+  // ignore: unused_field
+  bool _replaceMode = true;
 
-  bool _screenMode =
-      false; // ignore: unused_field, // DECSCNM (black on white background)
+  // ignore: unused_field
+  bool _screenMode = false; // DECSCNM (black on white background)
   bool _autoWrapMode = true;
   bool get autoWrapMode => _autoWrapMode;
 
@@ -185,6 +196,7 @@ class Terminal with Observable implements TerminalUiInteraction {
   MouseMode _mouseMode = MouseMode.none;
   MouseMode get mouseMode => _mouseMode;
 
+  @override
   final TerminalTheme theme;
 
   // final cellAttr = CellAttrTemplate();
@@ -479,14 +491,6 @@ class Terminal with Observable implements TerminalUiInteraction {
     }
   }
 
-  final wordSeparatorCodes = <String>[
-    String.fromCharCode(0),
-    ' ',
-    '.',
-    ':',
-    '/'
-  ];
-
   void selectWordOrRow(Position position) {
     if (position.y > buffer.lines.length) {
       return;
@@ -516,7 +520,7 @@ class Terminal with Observable implements TerminalUiInteraction {
           break;
         }
         final content = line.cellGetContent(start - 1);
-        if (wordSeparatorCodes.contains(String.fromCharCode(content))) {
+        if (kWordSeparators.contains(String.fromCharCode(content))) {
           break;
         }
         start--;
@@ -526,7 +530,7 @@ class Terminal with Observable implements TerminalUiInteraction {
           break;
         }
         final content = line.cellGetContent(end + 1);
-        if (wordSeparatorCodes.contains(String.fromCharCode(content))) {
+        if (kWordSeparators.contains(String.fromCharCode(content))) {
           break;
         }
         end++;
@@ -535,6 +539,7 @@ class Terminal with Observable implements TerminalUiInteraction {
       _selection.clear();
       _selection.init(Position(start, row));
       _selection.update(Position(end, row));
+      refresh();
     }
   }
 
@@ -596,8 +601,6 @@ class Terminal with Observable implements TerminalUiInteraction {
 
     backend?.write(data);
   }
-
-  void selectWord(int x, int y) {}
 
   int get _tabIndexFromCursor {
     var index = buffer.cursorX;
@@ -721,6 +724,7 @@ class Terminal with Observable implements TerminalUiInteraction {
   void selectAll() {
     _selection.init(Position(0, 0));
     _selection.update(Position(terminalWidth, bufferHeight));
+    refresh();
   }
 
   String _composingString = '';
@@ -732,5 +736,64 @@ class Terminal with Observable implements TerminalUiInteraction {
   void updateComposingString(String value) {
     _composingString = value;
     refresh();
+  }
+
+  @override
+  TerminalSearchResult get userSearchResult => _userSearchTask.searchResult;
+
+  @override
+  int get numberOfSearchHits => _userSearchTask.numberOfSearchHits;
+
+  @override
+  int? get currentSearchHit => _userSearchTask.currentSearchHit;
+
+  @override
+  void set currentSearchHit(int? currentSearchHit) {
+    _userSearchTask.currentSearchHit = currentSearchHit;
+    _scrollCurrentHitIntoView();
+    refresh();
+  }
+
+  @override
+  TerminalSearchOptions get userSearchOptions => _userSearchTask.options;
+
+  @override
+  void set userSearchOptions(TerminalSearchOptions options) {
+    _userSearchTask.options = options;
+    _scrollCurrentHitIntoView();
+    refresh();
+  }
+
+  @override
+  String? get userSearchPattern => _userSearchTask.pattern;
+
+  @override
+  void set userSearchPattern(String? newValue) {
+    _userSearchTask.pattern = newValue;
+    _scrollCurrentHitIntoView();
+    refresh();
+  }
+
+  @override
+  bool get isUserSearchActive => _userSearchTask.isActive;
+
+  @override
+  void set isUserSearchActive(bool isUserSearchActive) {
+    _userSearchTask.isActive = isUserSearchActive;
+    _scrollCurrentHitIntoView();
+    refresh();
+  }
+
+  void _scrollCurrentHitIntoView() {
+    if (!_userSearchTask.isActive) {
+      return;
+    }
+    final currentHit = _userSearchTask.currentSearchHitObject;
+
+    if (currentHit != null) {
+      final desiredScrollOffsetFromTop =
+          currentHit.startLineIndex + (terminalHeight / 2).floor();
+      setScrollOffsetFromBottom(buffer.height - desiredScrollOffsetFromTop);
+    }
   }
 }

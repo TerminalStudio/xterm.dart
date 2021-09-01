@@ -1,26 +1,28 @@
 class TerminalTheme {
-  const TerminalTheme({
-    required this.cursor,
-    required this.selection,
-    required this.foreground,
-    required this.background,
-    required this.black,
-    required this.white,
-    required this.red,
-    required this.green,
-    required this.yellow,
-    required this.blue,
-    required this.magenta,
-    required this.cyan,
-    required this.brightBlack,
-    required this.brightRed,
-    required this.brightGreen,
-    required this.brightYellow,
-    required this.brightBlue,
-    required this.brightMagenta,
-    required this.brightCyan,
-    required this.brightWhite,
-  });
+  const TerminalTheme(
+      {required this.cursor,
+      required this.selection,
+      required this.foreground,
+      required this.background,
+      required this.black,
+      required this.white,
+      required this.red,
+      required this.green,
+      required this.yellow,
+      required this.blue,
+      required this.magenta,
+      required this.cyan,
+      required this.brightBlack,
+      required this.brightRed,
+      required this.brightGreen,
+      required this.brightYellow,
+      required this.brightBlue,
+      required this.brightMagenta,
+      required this.brightCyan,
+      required this.brightWhite,
+      required this.searchHitBackground,
+      required this.searchHitBackgroundCurrent,
+      required this.searchHitForeground});
 
   final int cursor;
   final int selection;
@@ -44,4 +46,8 @@ class TerminalTheme {
   final int brightMagenta;
   final int brightCyan;
   final int brightWhite;
+
+  final int searchHitBackground;
+  final int searchHitBackgroundCurrent;
+  final int searchHitForeground;
 }

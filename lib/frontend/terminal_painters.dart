@@ -1,14 +1,17 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:xterm/buffer/cell_flags.dart';
 import 'package:xterm/buffer/line/line.dart';
 import 'package:xterm/mouse/position.dart';
+import 'package:xterm/terminal/terminal_search.dart';
 import 'package:xterm/terminal/terminal_ui_interaction.dart';
 import 'package:xterm/theme/terminal_style.dart';
 import 'package:xterm/util/bit_flags.dart';
 
-import 'char_size.dart';
 import 'cache.dart';
+import 'char_size.dart';
 
 class TerminalPainter extends CustomPainter {
   TerminalPainter({
@@ -27,10 +30,9 @@ class TerminalPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     _paintBackground(canvas);
 
-    // if (oscillator.value) {
-    // }
-
     _paintText(canvas);
+
+    _paintUserSearchResult(canvas, size);
 
     _paintSelection(canvas);
   }
@@ -41,7 +43,6 @@ class TerminalPainter extends CustomPainter {
     for (var row = 0; row < lines.length; row++) {
       final line = lines[row];
       final offsetY = row * charSize.cellHeight;
-      // final cellCount = math.min(terminal.viewWidth, line.length);
       final cellCount = terminal.terminalWidth;
 
       for (var col = 0; col < cellCount; col++) {
@@ -65,10 +66,6 @@ class TerminalPainter extends CustomPainter {
           continue;
         }
 
-        // final cellFlags = line.cellGetFlags(i);
-        // final cell = line.getCell(i);
-        // final attr = cell.attr;
-
         final offsetX = col * charSize.cellWidth;
         final effectWidth = charSize.cellWidth * cellWidth + 1;
         final effectHeight = charSize.cellHeight + 1;
@@ -81,6 +78,126 @@ class TerminalPainter extends CustomPainter {
         canvas.drawRect(
           Rect.fromLTWH(offsetX, offsetY, effectWidth, effectHeight),
           paint,
+        );
+      }
+    }
+  }
+
+  void _paintUserSearchResult(Canvas canvas, Size size) {
+    final searchResult = terminal.userSearchResult;
+
+    //when there is no ongoing user search then directly return
+    if (!terminal.isUserSearchActive) {
+      return;
+    }
+
+    //make everything dim so that the search result can be seen better
+    final dimPaint = Paint()
+      ..color = Color(terminal.theme.background).withAlpha(128)
+      ..style = PaintingStyle.fill;
+
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), dimPaint);
+
+    for (int i = 1; i <= searchResult.allHits.length; i++) {
+      _paintSearchHit(canvas, searchResult.allHits[i - 1], i);
+    }
+  }
+
+  void _paintSearchHit(Canvas canvas, TerminalSearchHit hit, int hitNum) {
+    //check if the hit is visible
+    if (hit.startLineIndex >=
+            terminal.scrollOffsetFromTop + terminal.terminalHeight ||
+        hit.endLineIndex < terminal.scrollOffsetFromTop) {
+      return;
+    }
+
+    final paint = Paint()
+      ..color = Color(terminal.currentSearchHit == hitNum
+          ? terminal.theme.searchHitBackgroundCurrent
+          : terminal.theme.searchHitBackground)
+      ..style = PaintingStyle.fill;
+
+    if (hit.startLineIndex == hit.endLineIndex) {
+      final double y =
+          (hit.startLineIndex.toDouble() - terminal.scrollOffsetFromTop) *
+              charSize.cellHeight;
+      final startX = charSize.cellWidth * hit.startIndex;
+      final endX = charSize.cellWidth * hit.endIndex;
+
+      canvas.drawRect(
+          Rect.fromLTRB(startX, y, endX, y + charSize.cellHeight), paint);
+    } else {
+      //draw first row: start - line end
+      final double yFirstRow =
+          (hit.startLineIndex.toDouble() - terminal.scrollOffsetFromTop) *
+              charSize.cellHeight;
+      final startXFirstRow = charSize.cellWidth * hit.startIndex;
+      final endXFirstRow = charSize.cellWidth * terminal.terminalWidth;
+      canvas.drawRect(
+          Rect.fromLTRB(startXFirstRow, yFirstRow, endXFirstRow,
+              yFirstRow + charSize.cellHeight),
+          paint);
+      //draw middle rows
+      final middleRowCount = hit.endLineIndex - hit.startLineIndex - 1;
+      if (middleRowCount > 0) {
+        final startYMiddleRows =
+            (hit.startLineIndex + 1 - terminal.scrollOffsetFromTop) *
+                charSize.cellHeight;
+        final startXMiddleRows = 0.toDouble();
+        final endYMiddleRows = min(
+                hit.endLineIndex - terminal.scrollOffsetFromTop,
+                terminal.terminalHeight) *
+            charSize.cellHeight;
+        final endXMiddleRows = terminal.terminalWidth * charSize.cellWidth;
+        canvas.drawRect(
+            Rect.fromLTRB(startXMiddleRows, startYMiddleRows, endXMiddleRows,
+                endYMiddleRows),
+            paint);
+      }
+      //draw end row: line start - end
+      if (hit.endLineIndex - terminal.scrollOffsetFromTop <
+          terminal.terminalHeight) {
+        final startXEndRow = 0.toDouble();
+        final startYEndRow = (hit.endLineIndex - terminal.scrollOffsetFromTop) *
+            charSize.cellHeight;
+        final endXEndRow = hit.endIndex * charSize.cellWidth;
+        final endYEndRow = startYEndRow + charSize.cellHeight;
+        canvas.drawRect(
+            Rect.fromLTRB(startXEndRow, startYEndRow, endXEndRow, endYEndRow),
+            paint);
+      }
+    }
+
+    final visibleLines = terminal.getVisibleLines();
+
+    //paint text
+    for (var rawRow = hit.startLineIndex;
+        rawRow <= hit.endLineIndex;
+        rawRow++) {
+      final start = rawRow == hit.startLineIndex ? hit.startIndex : 0;
+      final end =
+          rawRow == hit.endLineIndex ? hit.endIndex : terminal.terminalWidth;
+
+      final row = rawRow - terminal.scrollOffsetFromTop;
+
+      final offsetY = row * charSize.cellHeight;
+
+      if (row >= visibleLines.length || row < 0) {
+        continue;
+      }
+
+      final line = visibleLines[row];
+
+      for (var col = start; col < end; col++) {
+        final offsetX = col * charSize.cellWidth;
+        _paintCell(
+          canvas,
+          line,
+          col,
+          offsetX,
+          offsetY,
+          fgColorOverride: terminal.theme.searchHitForeground,
+          bgColorOverride: terminal.theme.searchHitForeground,
         );
       }
     }
@@ -137,9 +254,14 @@ class TerminalPainter extends CustomPainter {
         if (width == 0) {
           continue;
         }
-
         final offsetX = col * charSize.cellWidth;
-        _paintCell(canvas, line, col, offsetX, offsetY);
+        _paintCell(
+          canvas,
+          line,
+          col,
+          offsetX,
+          offsetY,
+        );
       }
     }
   }
@@ -149,11 +271,13 @@ class TerminalPainter extends CustomPainter {
     BufferLine line,
     int cell,
     double offsetX,
-    double offsetY,
-  ) {
+    double offsetY, {
+    int? fgColorOverride,
+    int? bgColorOverride,
+  }) {
     final codePoint = line.cellGetContent(cell);
-    final fgColor = line.cellGetFgColor(cell);
-    final bgColor = line.cellGetBgColor(cell);
+    final fgColor = fgColorOverride ?? line.cellGetFgColor(cell);
+    final bgColor = bgColorOverride ?? line.cellGetBgColor(cell);
     final flags = line.cellGetFlags(cell);
 
     if (codePoint == 0 || flags.hasFlag(CellFlags.invisible)) {
@@ -223,7 +347,8 @@ class CursorPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    bool isVisible = visible && (blinkVisible || composingString != '');
+    bool isVisible =
+        visible && (blinkVisible || composingString != '' || !focused);
     if (isVisible) {
       _paintCursor(canvas);
     }
@@ -272,7 +397,9 @@ class PaintHelper {
         ? style.textStyleProvider!(
             color: color,
             fontSize: style.fontSize,
-            fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+            fontWeight: bold && !style.ignoreBoldFlag
+                ? FontWeight.bold
+                : FontWeight.normal,
             fontStyle: italic ? FontStyle.italic : FontStyle.normal,
             decoration:
                 underline ? TextDecoration.underline : TextDecoration.none,
@@ -280,7 +407,9 @@ class PaintHelper {
         : TextStyle(
             color: color,
             fontSize: style.fontSize,
-            fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+            fontWeight: bold && !style.ignoreBoldFlag
+                ? FontWeight.bold
+                : FontWeight.normal,
             fontStyle: italic ? FontStyle.italic : FontStyle.normal,
             decoration:
                 underline ? TextDecoration.underline : TextDecoration.none,

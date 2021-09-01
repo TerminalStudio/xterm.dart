@@ -8,6 +8,7 @@ import 'package:xterm/mouse/selection.dart';
 import 'package:xterm/terminal/platform.dart';
 import 'package:xterm/terminal/terminal.dart';
 import 'package:xterm/terminal/terminal_backend.dart';
+import 'package:xterm/terminal/terminal_search.dart';
 import 'package:xterm/terminal/terminal_ui_interaction.dart';
 import 'package:xterm/theme/terminal_theme.dart';
 import 'package:xterm/theme/terminal_themes.dart';
@@ -32,7 +33,11 @@ enum _IsolateCommand {
   requestNewStateWhenDirty,
   paste,
   terminateBackend,
-  updateComposingString
+  updateComposingString,
+  updateSearchPattern,
+  updateSearchOptions,
+  updateCurrentSearchHit,
+  updateIsUserSearchActive,
 }
 
 enum _IsolateEvent {
@@ -141,8 +146,15 @@ void terminalMain(SendPort port) async {
             _terminal.cursorY,
             _terminal.showCursor,
             _terminal.theme.cursor,
-            _terminal.getVisibleLines(),
+            _terminal
+                .getVisibleLines()
+                .map((bl) => BufferLine.withDataFrom(bl))
+                .toList(growable: false),
             _terminal.composingString,
+            _terminal.userSearchResult,
+            _terminal.userSearchPattern,
+            _terminal.userSearchOptions,
+            _terminal.isUserSearchActive,
           );
           port.send([_IsolateEvent.newState, newState]);
           _needNotify = true;
@@ -156,6 +168,18 @@ void terminalMain(SendPort port) async {
         break;
       case _IsolateCommand.updateComposingString:
         _terminal?.updateComposingString(msg[1]);
+        break;
+      case _IsolateCommand.updateSearchPattern:
+        _terminal?.userSearchPattern = msg[1];
+        break;
+      case _IsolateCommand.updateSearchOptions:
+        _terminal?.userSearchOptions = msg[1];
+        break;
+      case _IsolateCommand.updateCurrentSearchHit:
+        _terminal?.currentSearchHit = msg[1];
+        break;
+      case _IsolateCommand.updateIsUserSearchActive:
+        _terminal?.isUserSearchActive = msg[1];
         break;
     }
   }
@@ -202,6 +226,11 @@ class TerminalState {
 
   String composingString;
 
+  TerminalSearchResult searchResult;
+  String? userSearchPattern;
+  TerminalSearchOptions userSearchOptions;
+  bool isUserSearchActive;
+
   TerminalState(
     this.scrollOffsetFromBottom,
     this.scrollOffsetFromTop,
@@ -218,6 +247,10 @@ class TerminalState {
     this.cursorColor,
     this.visibleLines,
     this.composingString,
+    this.searchResult,
+    this.userSearchPattern,
+    this.userSearchOptions,
+    this.isUserSearchActive,
   );
 }
 
@@ -254,6 +287,7 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   final IconChangeHandler onIconChange;
   final PlatformBehavior _platform;
 
+  @override
   final TerminalTheme theme;
   final int maxLines;
 
@@ -525,5 +559,46 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   @override
   void updateComposingString(String value) {
     _sendPort?.send([_IsolateCommand.updateComposingString, value]);
+  }
+
+  @override
+  TerminalSearchResult get userSearchResult =>
+      _lastState?.searchResult ?? TerminalSearchResult.empty();
+
+  @override
+  int get numberOfSearchHits => userSearchResult.allHits.length;
+
+  @override
+  int? get currentSearchHit => userSearchResult.currentSearchHit;
+
+  @override
+  void set currentSearchHit(int? currentSearchHit) {
+    _sendPort?.send([_IsolateCommand.updateCurrentSearchHit, currentSearchHit]);
+  }
+
+  @override
+  TerminalSearchOptions get userSearchOptions =>
+      _lastState?.userSearchOptions ?? TerminalSearchOptions();
+
+  @override
+  void set userSearchOptions(TerminalSearchOptions options) {
+    _sendPort?.send([_IsolateCommand.updateSearchOptions, options]);
+  }
+
+  @override
+  String? get userSearchPattern => _lastState?.userSearchPattern;
+
+  @override
+  void set userSearchPattern(String? newValue) {
+    _sendPort?.send([_IsolateCommand.updateSearchPattern, newValue]);
+  }
+
+  @override
+  bool get isUserSearchActive => _lastState?.isUserSearchActive ?? false;
+
+  @override
+  void set isUserSearchActive(bool isUserSearchActive) {
+    _sendPort
+        ?.send([_IsolateCommand.updateIsUserSearchActive, isUserSearchActive]);
   }
 }

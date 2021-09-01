@@ -67,8 +67,8 @@ class ReflowStrategyWider extends ReflowStrategy {
       i += linesToSkip;
     }
     //buffer doesn't have enough lines
-    while (linesAfterReflow.length < buffer.terminal.viewHeight) {
-      linesAfterReflow.add(BufferLine(length: buffer.terminal.viewWidth));
+    while (linesAfterReflow.length < buffer.viewHeight) {
+      linesAfterReflow.add(BufferLine(length: buffer.viewWidth));
     }
 
     buffer.lines.replaceWith(linesAfterReflow);

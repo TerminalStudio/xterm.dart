@@ -3,10 +3,15 @@ import 'package:xterm/input/keys.dart';
 import 'package:xterm/mouse/position.dart';
 import 'package:xterm/mouse/selection.dart';
 import 'package:xterm/terminal/platform.dart';
+import 'package:xterm/terminal/terminal_search.dart';
+import 'package:xterm/theme/terminal_theme.dart';
 import 'package:xterm/util/observable.dart';
 
 /// this interface describes what a Terminal UI needs from a Terminal
 abstract class TerminalUiInteraction with Observable {
+  /// The theme associated with this Terminal
+  TerminalTheme get theme;
+
   /// the ViewPort scroll offset from the bottom
   int get scrollOffsetFromBottom;
 
@@ -129,4 +134,35 @@ abstract class TerminalUiInteraction with Observable {
   /// update the composing string. This gets called by the input handling
   /// part of the terminal
   void updateComposingString(String value);
+
+  /// returns the list of search hits
+  TerminalSearchResult get userSearchResult;
+
+  /// gets the number of search hits
+  int get numberOfSearchHits;
+
+  /// gets the current search hit
+  int? get currentSearchHit;
+
+  /// sets the current search hit (gets clamped to the valid bounds)
+  void set currentSearchHit(int? currentSearchHit);
+
+  /// gets the current user search options
+  TerminalSearchOptions get userSearchOptions;
+
+  /// sets new user search options. This invalidates the cached search hits and
+  /// will re-trigger a new search
+  void set userSearchOptions(TerminalSearchOptions options);
+
+  /// the search pattern of a currently active search or [null]
+  String? get userSearchPattern;
+
+  /// sets the currently active search pattern
+  void set userSearchPattern(String? pattern);
+
+  /// gets if a user search is active
+  bool get isUserSearchActive;
+
+  // sets the user search active state
+  void set isUserSearchActive(bool isUserSearchActive);
 }
