@@ -54,7 +54,7 @@ class InputBehaviorDefault extends InputBehavior {
     //this is a hack to bypass some race condition in the input system
     //we just take the last rune if there are more than one as it sometimes
     //happens that the last value is still part of the new value
-    if(inputText.runes.length > 1) {
+    if (inputText.runes.length > 1) {
       inputText = String.fromCharCode(inputText.runes.last);
     }
 
