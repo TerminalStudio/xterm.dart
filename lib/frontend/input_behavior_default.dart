@@ -34,6 +34,8 @@ class InputBehaviorDefault extends InputBehavior {
 
   String? _composingString = null;
 
+  TextEditingValue? _lastEditingState;
+
   @override
   TextEditingValue? onTextEdit(
       TextEditingValue value, TerminalUiInteraction terminal) {
@@ -43,6 +45,7 @@ class InputBehaviorDefault extends InputBehavior {
     if (value.composing.start != value.composing.end) {
       _composingString = inputText;
       terminal.updateComposingString(_composingString!);
+      _lastEditingState = value;
       return null;
     }
     //when we reach this point the composing state is over
@@ -54,11 +57,18 @@ class InputBehaviorDefault extends InputBehavior {
     //this is a hack to bypass some race condition in the input system
     //we just take the last rune if there are more than one as it sometimes
     //happens that the last value is still part of the new value
-    if (inputText.runes.length > 1) {
-      inputText = String.fromCharCode(inputText.runes.last);
+
+    if (_lastEditingState?.text.isNotEmpty == true) {
+      if (inputText.length > _lastEditingState!.text.length) {
+        inputText = inputText.substring(_lastEditingState!.text.length);
+      }
     }
 
-    terminal.raiseOnInput(inputText);
+    if (inputText.isNotEmpty) {
+      terminal.raiseOnInput(inputText);
+    }
+
+    _lastEditingState = value;
 
     if (value == TextEditingValue.empty || inputText == '') {
       return null;
