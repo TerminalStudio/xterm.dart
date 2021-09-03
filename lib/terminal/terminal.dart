@@ -412,6 +412,7 @@ class Terminal
     bool shift = false,
     bool mac = false,
     // bool meta,
+    String? character,
   }) {
     debug.onMsg(key);
 
@@ -484,8 +485,16 @@ class Terminal
     if (alt) {
       if (key.index >= TerminalKey.keyA.index &&
           key.index <= TerminalKey.keyZ.index) {
-        final input = [0x1b, key.index - TerminalKey.keyA.index + 65];
-        backend?.write(String.fromCharCodes(input));
+        final charCode = key.index - TerminalKey.keyA.index + 65;
+
+        // only process ALT + Key when this combination has no other meaning
+        // (reflected in the given character argument
+        if (character == null ||
+            character.toLowerCase() ==
+                String.fromCharCode(charCode).toLowerCase()) {
+          final input = [0x1b, key.index - TerminalKey.keyA.index + 65];
+          backend?.write(String.fromCharCodes(input));
+        }
         return;
       }
     }

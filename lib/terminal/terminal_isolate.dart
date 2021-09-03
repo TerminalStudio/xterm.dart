@@ -124,8 +124,14 @@ void terminalMain(SendPort port) async {
         _terminal?.backend?.write(msg[1]);
         break;
       case _IsolateCommand.keyInput:
-        _terminal?.keyInput(msg[1],
-            ctrl: msg[2], alt: msg[3], shift: msg[4], mac: msg[5]);
+        _terminal?.keyInput(
+          msg[1],
+          ctrl: msg[2],
+          alt: msg[3],
+          shift: msg[4],
+          mac: msg[5],
+          character: msg[6],
+        );
         break;
       case _IsolateCommand.requestNewStateWhenDirty:
         if (_terminal == null) {
@@ -530,8 +536,10 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
     bool shift = false,
     bool mac = false,
     // bool meta,
+    String? character,
   }) {
-    _sendPort?.send([_IsolateCommand.keyInput, key, ctrl, alt, shift, mac]);
+    _sendPort?.send(
+        [_IsolateCommand.keyInput, key, ctrl, alt, shift, mac, character]);
   }
 
   var _isTerminated = false;
