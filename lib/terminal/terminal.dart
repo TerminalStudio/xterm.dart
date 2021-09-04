@@ -492,7 +492,7 @@ class Terminal
         if (character == null ||
             character.toLowerCase() ==
                 String.fromCharCode(charCode).toLowerCase()) {
-          final input = [0x1b, key.index - TerminalKey.keyA.index + 65];
+          final input = [0x1b, charCode];
           backend?.write(String.fromCharCodes(input));
         }
         return;

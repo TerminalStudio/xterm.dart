@@ -209,10 +209,18 @@ class MockTerminalUiInteraction extends _i1.Mock
           {bool? ctrl = false,
           bool? alt = false,
           bool? shift = false,
-          bool? mac = false}) =>
+          bool? mac = false,
+          String? character}) =>
       super.noSuchMethod(
-          Invocation.method(#keyInput, [key],
-              {#ctrl: ctrl, #alt: alt, #shift: shift, #mac: mac}),
+          Invocation.method(#keyInput, [
+            key
+          ], {
+            #ctrl: ctrl,
+            #alt: alt,
+            #shift: shift,
+            #mac: mac,
+            #character: character
+          }),
           returnValueForMissingStub: null);
   @override
   void terminateBackend() =>
