@@ -117,6 +117,7 @@ abstract class TerminalUiInteraction with Observable {
     bool shift = false,
     bool mac = false,
     // bool meta,
+    String? character,
   });
 
   /// Future that fires when the backend has exited
