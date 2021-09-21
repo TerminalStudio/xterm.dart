@@ -31,17 +31,15 @@ class MyHomePage extends StatefulWidget {
 }
 
 class FakeTerminalBackend extends TerminalBackend {
-  Completer<int> _exitCodeCompleter = Completer<int>();
+  final _exitCodeCompleter = Completer<int>();
   // ignore: close_sinks
-  StreamController<String> _outStream = StreamController<String>();
+  final _outStream = StreamController<String>();
 
   @override
   Future<int> get exitCode => _exitCodeCompleter.future;
 
   @override
   void init() {
-    _exitCodeCompleter = Completer<int>();
-    _outStream = StreamController<String>();
     _outStream.sink.add('xterm.dart demo');
     _outStream.sink.add('\r\n');
     _outStream.sink.add('\$ ');
@@ -88,7 +86,7 @@ class FakeTerminalBackend extends TerminalBackend {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  TerminalIsolate terminal = TerminalIsolate(
+  final terminal = TerminalIsolate(
     backend: FakeTerminalBackend(),
     maxLines: 10000,
   );

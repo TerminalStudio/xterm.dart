@@ -30,9 +30,9 @@ class MyHomePage extends StatefulWidget {
 }
 
 class FakeTerminalBackend extends TerminalBackend {
-  Completer<int> _exitCodeCompleter = Completer<int>();
+  final _exitCodeCompleter = Completer<int>();
   // ignore: close_sinks
-  StreamController<String> _outStream = StreamController<String>();
+  final _outStream = StreamController<String>();
 
   @override
   Future<int> get exitCode => _exitCodeCompleter.future;
@@ -85,15 +85,10 @@ class FakeTerminalBackend extends TerminalBackend {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  Terminal terminal = Terminal(
+  final terminal = Terminal(
     backend: FakeTerminalBackend(),
     maxLines: 10000,
   );
-
-  @override
-  void initState() {
-    super.initState();
-  }
 
   void onInput(String input) {}
 
