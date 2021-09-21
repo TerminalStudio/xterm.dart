@@ -34,8 +34,6 @@ class FakeTerminalBackend extends TerminalBackend {
   // ignore: close_sinks
   StreamController<String> _outStream = StreamController<String>();
 
-
-
   @override
   Future<int> get exitCode => _exitCodeCompleter.future;
 
