@@ -205,6 +205,9 @@ class _TerminalViewState extends State<TerminalView> {
               child: Scrollable(
                 controller: widget.scrollController,
                 viewportBuilder: (context, offset) {
+                  if (!widget.scrollController.hasClients) {
+                    return buildTerminal(context);
+                  }
                   final position = widget.scrollController.position;
 
                   /// use [_EmptyScrollActivity] to suppress unexpected behaviors
