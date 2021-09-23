@@ -266,6 +266,10 @@ class TerminalPainter extends CustomPainter {
     }
   }
 
+  int _getColor(int colorCode) {
+    return (colorCode == 0) ? 0xFF000000 : colorCode;
+  }
+
   void _paintCell(
     Canvas canvas,
     BufferLine line,
@@ -276,8 +280,8 @@ class TerminalPainter extends CustomPainter {
     int? bgColorOverride,
   }) {
     final codePoint = line.cellGetContent(cell);
-    final fgColor = fgColorOverride ?? line.cellGetFgColor(cell);
-    final bgColor = bgColorOverride ?? line.cellGetBgColor(cell);
+    final fgColor = fgColorOverride ?? _getColor(line.cellGetFgColor(cell));
+    final bgColor = bgColorOverride ?? _getColor(line.cellGetBgColor(cell));
     final flags = line.cellGetFlags(cell);
 
     if (codePoint == 0 || flags.hasFlag(CellFlags.invisible)) {
