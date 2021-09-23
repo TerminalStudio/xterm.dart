@@ -69,7 +69,7 @@ class SSHTerminalBackend extends TerminalBackend {
       termvar: 'xterm-256color',
       getPassword: () => utf8.encode(_password),
       response: (transport, data) {
-        onWrite(data);
+        onWrite(utf8.decode(data, allowMalformed: true));
       },
       success: () {
         onWrite('connected.\n');
