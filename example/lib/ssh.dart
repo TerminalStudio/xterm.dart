@@ -42,8 +42,8 @@ class SSHTerminalBackend extends TerminalBackend {
   String _username;
   String _password;
 
-  Completer<int> _exitCodeCompleter;
-  StreamController<String> _outStream;
+  final _exitCodeCompleter = Completer<int>();
+  final _outStream = StreamController<String>();
 
   SSHTerminalBackend(this._host, this._username, this._password);
 
@@ -56,8 +56,9 @@ class SSHTerminalBackend extends TerminalBackend {
 
   @override
   void init() {
-    _exitCodeCompleter = Completer<int>();
-    _outStream = StreamController<String>();
+    // Use utf8.decoder to handle broken utf8 chunks
+    final _sshOutput = StreamController<List<int>>();
+    _sshOutput.stream.transform(utf8.decoder).listen(onWrite);
 
     onWrite('connecting $_host...');
     client = SSHClient(
@@ -69,7 +70,7 @@ class SSHTerminalBackend extends TerminalBackend {
       termvar: 'xterm-256color',
       getPassword: () => utf8.encode(_password),
       response: (transport, data) {
-        onWrite(data);
+        _sshOutput.add(data);
       },
       success: () {
         onWrite('connected.\n');
