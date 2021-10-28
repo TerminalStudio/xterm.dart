@@ -25,6 +25,11 @@ class InputListener extends StatefulWidget {
     this.listenKeyStroke = true,
     this.readOnly = false,
     this.initEditingState = TextEditingValue.empty,
+    this.inputType = TextInputType.text,
+    this.enableSuggestions = false,
+    this.inputAction = TextInputAction.done,
+    this.keyboardAppearance = Brightness.light,
+    this.autocorrect = false,
   });
 
   final Widget child;
@@ -37,6 +42,11 @@ class InputListener extends StatefulWidget {
   final bool listenKeyStroke;
   final bool readOnly;
   final TextEditingValue initEditingState;
+  final TextInputType inputType;
+  final bool enableSuggestions;
+  final TextInputAction inputAction;
+  final Brightness keyboardAppearance;
+  final bool autocorrect;
 
   @override
   InputListenerState createState() => InputListenerState();
@@ -162,7 +172,13 @@ class InputListenerState extends State<InputListener>
     if (_hasInputConnection) {
       _conn!.show();
     } else {
-      final config = TextInputConfiguration();
+      final config = TextInputConfiguration(
+        inputType: widget.inputType,
+        enableSuggestions: widget.enableSuggestions,
+        inputAction: widget.inputAction,
+        keyboardAppearance: widget.keyboardAppearance,
+        autocorrect: widget.autocorrect,
+      );
       final client = TerminalTextInputClient(onInput, onAction);
       _conn = TextInput.attach(client, config);
 

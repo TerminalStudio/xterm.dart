@@ -28,6 +28,11 @@ class TerminalView extends StatefulWidget {
     FocusNode? focusNode,
     this.autofocus = false,
     ScrollController? scrollController,
+    this.inputType = TextInputType.text,
+    this.enableSuggestions = false,
+    this.inputAction = TextInputAction.done,
+    this.keyboardAppearance = Brightness.light,
+    this.autocorrect = false,
     InputBehavior? inputBehavior,
     this.scrollBehavior,
     this.padding = 0.0,
@@ -40,6 +45,11 @@ class TerminalView extends StatefulWidget {
   final FocusNode focusNode;
   final bool autofocus;
   final ScrollController scrollController;
+  final TextInputType inputType;
+  final bool enableSuggestions;
+  final TextInputAction inputAction;
+  final Brightness keyboardAppearance;
+  final bool autocorrect;
 
   final TerminalStyle style;
   final double opacity;
@@ -170,6 +180,11 @@ class _TerminalViewState extends State<TerminalView> {
       focusNode: widget.focusNode,
       autofocus: widget.autofocus,
       initEditingState: widget.inputBehavior.initEditingState,
+      inputType: widget.inputType,
+      enableSuggestions: widget.enableSuggestions,
+      inputAction: widget.inputAction,
+      keyboardAppearance: widget.keyboardAppearance,
+      autocorrect: widget.autocorrect,
       child: MouseRegion(
         cursor: SystemMouseCursors.text,
         child: LayoutBuilder(builder: (context, constraints) {
