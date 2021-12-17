@@ -91,10 +91,11 @@ class _MyHomePageState extends State<MyHomePage> {
     maxLines: 10000,
   );
 
-  @override
-  void initState() {
-    super.initState();
-    terminal.start();
+  Future<TerminalIsolate> _ensureTerminalStarted() async {
+    if (!terminal.isReady) {
+      await terminal.start();
+    }
+    return terminal;
   }
 
   void onInput(String input) {}
@@ -102,8 +103,15 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: TerminalView(terminal: terminal),
+      body: FutureBuilder(
+        future: _ensureTerminalStarted(),
+        builder: (context, snapshot) {
+          return SafeArea(
+            child: snapshot.hasData
+                ? TerminalView(terminal: snapshot.data as TerminalIsolate)
+                : Text('Initializing...'),
+          );
+        },
       ),
     );
   }
