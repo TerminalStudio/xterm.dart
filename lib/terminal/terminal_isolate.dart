@@ -660,7 +660,7 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   void _assertStarted() {
     if (!_isStarted) {
       throw Exception(
-          'Ther Terminal Isolate has to be started before using it! (call await terminalIsolate.start()');
+          'The Terminal Isolate has to be started before using it! (call await terminalIsolate.start()');
     }
   }
 }
