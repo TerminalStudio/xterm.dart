@@ -757,7 +757,7 @@ class Terminal
   int? get currentSearchHit => _userSearchTask.currentSearchHit;
 
   @override
-  void set currentSearchHit(int? currentSearchHit) {
+  set currentSearchHit(int? currentSearchHit) {
     _userSearchTask.currentSearchHit = currentSearchHit;
     _scrollCurrentHitIntoView();
     refresh();
@@ -767,7 +767,7 @@ class Terminal
   TerminalSearchOptions get userSearchOptions => _userSearchTask.options;
 
   @override
-  void set userSearchOptions(TerminalSearchOptions options) {
+  set userSearchOptions(TerminalSearchOptions options) {
     _userSearchTask.options = options;
     _scrollCurrentHitIntoView();
     refresh();
@@ -777,7 +777,7 @@ class Terminal
   String? get userSearchPattern => _userSearchTask.pattern;
 
   @override
-  void set userSearchPattern(String? newValue) {
+  set userSearchPattern(String? newValue) {
     _userSearchTask.pattern = newValue;
     _scrollCurrentHitIntoView();
     refresh();
@@ -787,7 +787,7 @@ class Terminal
   bool get isUserSearchActive => _userSearchTask.isActive;
 
   @override
-  void set isUserSearchActive(bool isUserSearchActive) {
+  set isUserSearchActive(bool isUserSearchActive) {
     _userSearchTask.isActive = isUserSearchActive;
     _scrollCurrentHitIntoView();
     refresh();

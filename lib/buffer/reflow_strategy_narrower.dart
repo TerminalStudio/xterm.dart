@@ -1,4 +1,3 @@
-import 'dart:math';
 
 import 'package:xterm/buffer/buffer.dart';
 import 'package:xterm/buffer/line/line.dart';

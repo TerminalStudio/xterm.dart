@@ -1,5 +1,4 @@
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:xterm/frontend/input_behavior_default.dart';
 import 'package:xterm/input/keys.dart';
 import 'package:xterm/xterm.dart';

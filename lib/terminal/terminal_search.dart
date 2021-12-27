@@ -10,7 +10,7 @@ import 'package:xterm/util/unicode_v11.dart';
 /// the search results
 class TerminalSearchResult {
   late final _allHits;
-  int? _currentSearchHit = null;
+  int? _currentSearchHit;
 
   /// creates a new search result instance from the given hits
   TerminalSearchResult.fromHits(List<TerminalSearchHit> hits) {
@@ -34,7 +34,7 @@ class TerminalSearchResult {
   int? get currentSearchHit => _currentSearchHit;
 
   /// sets the current search hit number
-  void set currentSearchHit(int? currentSearchHit) {
+  set currentSearchHit(int? currentSearchHit) {
     if (_allHits.length <= 0) {
       _currentSearchHit = null;
     } else {
@@ -131,9 +131,9 @@ class TerminalSearchTask {
 
   final TerminalSearch _search;
   final TerminalSearchInteraction _terminal;
-  String? _pattern = null;
+  String? _pattern;
   bool _isPatternDirty = true;
-  RegExp? _searchRegexp = null;
+  RegExp? _searchRegexp;
   final String _dirtyTagName;
   TerminalSearchOptions _terminalSearchOptions;
 
@@ -143,7 +143,7 @@ class TerminalSearchTask {
   bool get isActive => _isActive;
 
   /// sets the active state of this search task
-  void set isActive(bool isActive) {
+  set isActive(bool isActive) {
     _isActive = isActive;
     if (isActive) {
       _invalidate();
@@ -151,7 +151,7 @@ class TerminalSearchTask {
   }
 
   bool? _hasBeenUsingAltBuffer;
-  TerminalSearchResult? _lastSearchResult = null;
+  TerminalSearchResult? _lastSearchResult;
 
   bool _isAnyLineDirty() {
     final bufferLength = _terminal.buffer.lines.length;
@@ -192,7 +192,7 @@ class TerminalSearchTask {
   String? get pattern => _pattern;
 
   /// sets the pattern to use for this search task
-  void set pattern(String? newPattern) {
+  set pattern(String? newPattern) {
     if (newPattern != _pattern) {
       _pattern = newPattern;
       _invalidate();
@@ -203,7 +203,7 @@ class TerminalSearchTask {
   TerminalSearchOptions get options => _terminalSearchOptions;
 
   /// sets the search options to use
-  void set options(TerminalSearchOptions newOptions) {
+  set options(TerminalSearchOptions newOptions) {
     if (_terminalSearchOptions == newOptions) {
       return;
     }
@@ -231,7 +231,7 @@ class TerminalSearchTask {
   int? get currentSearchHit => searchResult.currentSearchHit;
 
   /// sets the hit number that shall be selected
-  void set currentSearchHit(int? currentSearchHit) {
+  set currentSearchHit(int? currentSearchHit) {
     searchResult.currentSearchHit = currentSearchHit;
   }
 

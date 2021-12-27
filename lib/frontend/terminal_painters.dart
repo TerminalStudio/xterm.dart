@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:xterm/buffer/cell_flags.dart';
 import 'package:xterm/buffer/line/line.dart';
 import 'package:xterm/mouse/position.dart';

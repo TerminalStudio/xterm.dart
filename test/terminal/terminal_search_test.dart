@@ -294,7 +294,7 @@ class _TestFixture {
 
   int _terminalWidth;
   int get terminalWidth => _terminalWidth;
-  void set terminalWidth(int terminalWidth) {
+  set terminalWidth(int terminalWidth) {
     _terminalWidth = terminalWidth;
     when(terminalSearchInteractionMock.terminalWidth).thenReturn(terminalWidth);
   }

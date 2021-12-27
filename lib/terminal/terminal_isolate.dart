@@ -623,7 +623,7 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   }
 
   @override
-  void set currentSearchHit(int? currentSearchHit) {
+  set currentSearchHit(int? currentSearchHit) {
     _sendPort?.send([_IsolateCommand.updateCurrentSearchHit, currentSearchHit]);
   }
 
@@ -632,7 +632,7 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
       _lastState?.userSearchOptions ?? TerminalSearchOptions();
 
   @override
-  void set userSearchOptions(TerminalSearchOptions options) {
+  set userSearchOptions(TerminalSearchOptions options) {
     _sendPort?.send([_IsolateCommand.updateSearchOptions, options]);
   }
 
@@ -642,7 +642,7 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   }
 
   @override
-  void set userSearchPattern(String? newValue) {
+  set userSearchPattern(String? newValue) {
     _sendPort?.send([_IsolateCommand.updateSearchPattern, newValue]);
   }
 
@@ -652,7 +652,7 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   }
 
   @override
-  void set isUserSearchActive(bool isUserSearchActive) {
+  set isUserSearchActive(bool isUserSearchActive) {
     _sendPort
         ?.send([_IsolateCommand.updateIsUserSearchActive, isUserSearchActive]);
   }

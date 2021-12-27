@@ -146,24 +146,24 @@ abstract class TerminalUiInteraction with Observable {
   int? get currentSearchHit;
 
   /// sets the current search hit (gets clamped to the valid bounds)
-  void set currentSearchHit(int? currentSearchHit);
+  set currentSearchHit(int? currentSearchHit);
 
   /// gets the current user search options
   TerminalSearchOptions get userSearchOptions;
 
   /// sets new user search options. This invalidates the cached search hits and
   /// will re-trigger a new search
-  void set userSearchOptions(TerminalSearchOptions options);
+  set userSearchOptions(TerminalSearchOptions options);
 
   /// the search pattern of a currently active search or [null]
   String? get userSearchPattern;
 
   /// sets the currently active search pattern
-  void set userSearchPattern(String? pattern);
+  set userSearchPattern(String? pattern);
 
   /// gets if a user search is active
   bool get isUserSearchActive;
 
   // sets the user search active state
-  void set isUserSearchActive(bool isUserSearchActive);
+  set isUserSearchActive(bool isUserSearchActive);
 }
