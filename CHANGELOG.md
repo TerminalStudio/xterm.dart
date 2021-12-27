@@ -1,4 +1,16 @@
 
+## [2.6.0] - 2021-12-28
+* Add scrollBehavior field to the TerminalView class [#55].
+* Feature: Search [#60]. Thanks [@devmil].
+* Fixes for occasional unintended multi character input [#61]. Thanks [@devmil].
+* Fixes ALT + L for a Mac (German Layout) [#62]. Thanks [@devmil].
+* Fixes example build problem of flutter-windows for new version of flutter [#63]. Thanks [@linhanyu].
+* Fixes inverse color text (when background == 0) [#66]. Thanks [@devmil].
+* Fixes assert of scrollController.position [#67]. Thanks [@linhanyu].
+* Change interface of ssh.dart example to satisfied new dartssh [#69]. Thanks [@linhanyu].
+* add configuration options for keyboard [#74]. Thanks [@jda258].
+* Adds check if the TerminalIsolate has already been started  [#77]. Thanks [@devmil].
+
 ## [2.5.0-pre] - 2021-8-4
 * Support select word / whole row via double tap [#40]. Thanks [@devmil].
 * Adds "selectAll" to TerminalUiInteraction [#43]. Thanks [@devmil].
@@ -101,6 +113,7 @@
 [@devmil]: https://github.com/devmil
 [@michaellee8]: https://github.com/michaellee8
 [@linhanyu]: https://github.com/linhanyu
+[@jda258]: https://github.com/jda258
 
 [#40]: https://github.com/TerminalStudio/xterm.dart/pull/40
 [#43]: https://github.com/TerminalStudio/xterm.dart/pull/43
@@ -112,3 +125,15 @@
 [#49]: https://github.com/TerminalStudio/xterm.dart/pull/49
 [#50]: https://github.com/TerminalStudio/xterm.dart/pull/50
 [#51]: https://github.com/TerminalStudio/xterm.dart/pull/51
+
+
+[#55]: https://github.com/TerminalStudio/xterm.dart/pull/55
+[#60]: https://github.com/TerminalStudio/xterm.dart/pull/60
+[#61]: https://github.com/TerminalStudio/xterm.dart/pull/61
+[#62]: https://github.com/TerminalStudio/xterm.dart/pull/62
+[#63]: https://github.com/TerminalStudio/xterm.dart/pull/63
+[#66]: https://github.com/TerminalStudio/xterm.dart/pull/66
+[#67]: https://github.com/TerminalStudio/xterm.dart/pull/67
+[#69]: https://github.com/TerminalStudio/xterm.dart/pull/69
+[#74]: https://github.com/TerminalStudio/xterm.dart/pull/74
+[#77]: https://github.com/TerminalStudio/xterm.dart/pull/77
