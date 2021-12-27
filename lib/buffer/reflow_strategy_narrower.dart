@@ -1,4 +1,3 @@
-
 import 'package:xterm/buffer/buffer.dart';
 import 'package:xterm/buffer/line/line.dart';
 import 'package:xterm/buffer/reflow_strategy.dart';
