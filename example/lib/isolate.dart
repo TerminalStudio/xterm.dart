@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:xterm/flutter.dart';
 import 'package:xterm/isolate.dart';
+import 'package:xterm/theme/terminal_theme.dart';
+import 'package:xterm/theme/terminal_themes.dart';
 import 'package:xterm/xterm.dart';
 
 void main() {
@@ -18,13 +20,23 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: MyHomePage(),
+      home: MyHomePage(
+        theme: TerminalThemes.defaultTheme,
+        terminalOpacity: 0.8,
+      ),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key}) : super(key: key);
+  MyHomePage({
+    Key? key,
+    required this.theme,
+    required this.terminalOpacity,
+  }) : super(key: key);
+
+  final TerminalTheme theme;
+  final double terminalOpacity;
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
@@ -86,16 +98,21 @@ class FakeTerminalBackend extends TerminalBackend {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final terminal = TerminalIsolate(
-    backend: FakeTerminalBackend(),
-    maxLines: 10000,
-  );
+  TerminalIsolate? terminal;
 
   Future<TerminalIsolate> _ensureTerminalStarted() async {
-    if (!terminal.isReady) {
-      await terminal.start();
+    if (terminal == null) {
+      terminal = TerminalIsolate(
+        backend: FakeTerminalBackend(),
+        maxLines: 10000,
+        theme: widget.theme,
+      );
     }
-    return terminal;
+
+    if (!terminal!.isReady) {
+      await terminal!.start();
+    }
+    return terminal!;
   }
 
   void onInput(String input) {}
@@ -109,7 +126,11 @@ class _MyHomePageState extends State<MyHomePage> {
           return SafeArea(
             child: snapshot.hasData
                 ? TerminalView(terminal: snapshot.data as TerminalIsolate)
-                : Text('Initializing...'),
+                : Container(
+                    constraints: const BoxConstraints.expand(),
+                    color: Color(widget.theme.background)
+                        .withOpacity(widget.terminalOpacity),
+                  ),
           );
         },
       ),
