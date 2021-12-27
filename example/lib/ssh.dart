@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
-import 'package:dartssh/client.dart';
+import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
 import 'package:xterm/flutter.dart';
 import 'package:xterm/xterm.dart';
@@ -29,14 +30,14 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key}) : super(key: key);
+  MyHomePage({Key? key}) : super(key: key);
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
 
 class SSHTerminalBackend extends TerminalBackend {
-  SSHClient client;
+  late SSHClient client;
 
   String _host;
   String _username;
@@ -63,13 +64,13 @@ class SSHTerminalBackend extends TerminalBackend {
     onWrite('connecting $_host...');
     client = SSHClient(
       hostport: Uri.parse(_host),
-      login: _username,
+      username: _username,
       print: print,
       termWidth: 80,
       termHeight: 25,
       termvar: 'xterm-256color',
-      getPassword: () => utf8.encode(_password),
-      response: (transport, data) {
+      onPasswordRequest: () => _password,
+      response: (data) {
         _sshOutput.add(data);
       },
       success: () {
@@ -92,12 +93,12 @@ class SSHTerminalBackend extends TerminalBackend {
 
   @override
   void write(String input) {
-    client?.sendChannelData(utf8.encode(input));
+    client.sendChannelData(Uint8List.fromList(utf8.encode(input)));
   }
 
   @override
   void terminate() {
-    client?.disconnect('terminate');
+    client.disconnect('terminate');
   }
 
   @override
@@ -107,8 +108,8 @@ class SSHTerminalBackend extends TerminalBackend {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  Terminal terminal;
-  SSHTerminalBackend backend;
+  late Terminal terminal;
+  late SSHTerminalBackend backend;
 
   @override
   void initState() {

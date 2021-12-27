@@ -286,6 +286,7 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   final _receivePort = ReceivePort();
   SendPort? _sendPort;
   late Isolate _isolate;
+  bool _isStarted = false;
 
   final TerminalBackend? backend;
   final BellHandler onBell;
@@ -319,28 +320,50 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
         _refreshEventDebouncer = EventDebouncer(minRefreshDelay);
 
   @override
-  int get scrollOffsetFromBottom => _lastState!.scrollOffsetFromBottom;
+  int get scrollOffsetFromBottom {
+    _assertStarted();
+    return _lastState!.scrollOffsetFromBottom;
+  }
 
   @override
-  int get scrollOffsetFromTop => _lastState!.scrollOffsetFromTop;
+  int get scrollOffsetFromTop {
+    _assertStarted();
+    return _lastState!.scrollOffsetFromTop;
+  }
 
   @override
-  int get bufferHeight => _lastState!.bufferHeight;
+  int get bufferHeight {
+    _assertStarted();
+    return _lastState!.bufferHeight;
+  }
 
   @override
-  int get terminalHeight => _lastState!.viewHeight;
+  int get terminalHeight {
+    _assertStarted();
+    return _lastState!.viewHeight;
+  }
 
   @override
-  int get terminalWidth => _lastState!.viewWidth;
+  int get terminalWidth {
+    _assertStarted();
+    return _lastState!.viewWidth;
+  }
 
   @override
-  int get invisibleHeight => _lastState!.invisibleHeight;
+  int get invisibleHeight {
+    _assertStarted();
+    return _lastState!.invisibleHeight;
+  }
 
   @override
-  Selection? get selection => _lastState?.selection;
+  Selection? get selection {
+    return _lastState?.selection;
+  }
 
   @override
-  bool get showCursor => _lastState?.showCursor ?? true;
+  bool get showCursor {
+    return _lastState?.showCursor ?? true;
+  }
 
   @override
   List<BufferLine> getVisibleLines() {
@@ -351,10 +374,14 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   }
 
   @override
-  int get cursorY => _lastState?.cursorY ?? 0;
+  int get cursorY {
+    return _lastState?.cursorY ?? 0;
+  }
 
   @override
-  int get cursorX => _lastState?.cursorX ?? 0;
+  int get cursorX {
+    return _lastState?.cursorX ?? 0;
+  }
 
   @override
   BufferLine? get currentLine {
@@ -371,10 +398,14 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   }
 
   @override
-  int get cursorColor => _lastState?.cursorColor ?? 0;
+  int get cursorColor {
+    return _lastState?.cursorColor ?? 0;
+  }
 
   @override
-  int get backgroundColor => _lastState?.backgroundColor ?? 0;
+  int get backgroundColor {
+    return _lastState?.backgroundColor ?? 0;
+  }
 
   @override
   bool get dirty {
@@ -392,12 +423,14 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   PlatformBehavior get platform => _platform;
 
   @override
-  String? get selectedText => _lastState?.selectedText;
+  String? get selectedText {
+    return _lastState?.selectedText;
+  }
 
   @override
   bool get isReady => _lastState != null;
 
-  Future<void> start() async {
+  Future<void> start({bool testingDontWaitForBootup = false}) async {
     final initialRefreshCompleted = Completer<bool>();
     var firstReceivePort = ReceivePort();
     _isolate = await Isolate.spawn(terminalMain, firstReceivePort.sendPort);
@@ -438,10 +471,14 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
       _IsolateCommand.init,
       TerminalInitData(this.backend, this.platform, this.theme, this.maxLines)
     ]);
-    await initialRefreshCompleted.future;
+    if (!testingDontWaitForBootup) {
+      await initialRefreshCompleted.future;
+    }
+    _isStarted = true;
   }
 
   void stop() {
+    _assertStarted();
     terminateBackend();
     _isolate.kill();
   }
@@ -562,7 +599,9 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   bool get isTerminated => _isTerminated;
 
   @override
-  String get composingString => _lastState?.composingString ?? '';
+  String get composingString {
+    return _lastState?.composingString ?? '';
+  }
 
   @override
   void updateComposingString(String value) {
@@ -574,10 +613,14 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
       _lastState?.searchResult ?? TerminalSearchResult.empty();
 
   @override
-  int get numberOfSearchHits => userSearchResult.allHits.length;
+  int get numberOfSearchHits {
+    return userSearchResult.allHits.length;
+  }
 
   @override
-  int? get currentSearchHit => userSearchResult.currentSearchHit;
+  int? get currentSearchHit {
+    return userSearchResult.currentSearchHit;
+  }
 
   @override
   void set currentSearchHit(int? currentSearchHit) {
@@ -594,7 +637,9 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   }
 
   @override
-  String? get userSearchPattern => _lastState?.userSearchPattern;
+  String? get userSearchPattern {
+    return _lastState?.userSearchPattern;
+  }
 
   @override
   void set userSearchPattern(String? newValue) {
@@ -602,11 +647,20 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
   }
 
   @override
-  bool get isUserSearchActive => _lastState?.isUserSearchActive ?? false;
+  bool get isUserSearchActive {
+    return _lastState?.isUserSearchActive ?? false;
+  }
 
   @override
   void set isUserSearchActive(bool isUserSearchActive) {
     _sendPort
         ?.send([_IsolateCommand.updateIsUserSearchActive, isUserSearchActive]);
+  }
+
+  void _assertStarted() {
+    if (!_isStarted) {
+      throw Exception(
+          'The Terminal Isolate has to be started before using it! (call await terminalIsolate.start()');
+    }
   }
 }
