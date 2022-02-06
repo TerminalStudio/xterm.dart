@@ -264,4 +264,12 @@ abstract class TerminalHandler {
   void setBackgroundRgb(int r, int g, int b) {}
 
   void setBackgroundIndexed(int index) {}
+
+  /* OSC */
+
+  void setTitle(String name) {}
+
+  void setIconName(String name) {}
+
+  void unknownOSC(String ps) {}
 }

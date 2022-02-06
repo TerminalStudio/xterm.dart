@@ -294,7 +294,7 @@ abstract class Ascii {
   /// square brackets or box brackets, opening bracket '['
   static const openBracket = 91;
 
-  /// Backslash , reverse slash '\'
+  /// Backslash , reverse slash '\\'
   static const backslash = 92;
 
   /// box brackets or square brackets, closing bracket ']'

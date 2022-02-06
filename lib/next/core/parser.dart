@@ -957,7 +957,73 @@ class TerminalParser {
   }
 
   bool _escHandleOSC() {
+    final consumed = consumeOsc();
+    if (!consumed) return false;
+
+    if (_osc.length < 2) {
+      return true;
+    }
+
+    final ps = _osc[0];
+    final pt = _osc[1];
+
+    switch (ps) {
+      case '0':
+        handler.setTitle(pt);
+        handler.setIconName(pt);
+        break;
+      case '1':
+        handler.setIconName(pt);
+        break;
+      case '2':
+        handler.setTitle(pt);
+        break;
+      default:
+        handler.unknownOSC(ps);
+    }
+
     return true;
+  }
+
+  final _osc = <String>[];
+
+  bool consumeOsc() {
+    _osc.clear();
+    final param = StringBuffer();
+
+    while (true) {
+      if (_queue.isEmpty) {
+        return false;
+      }
+
+      final char = _queue.consume();
+
+      // OSC terminates with BEL
+      if (char == Ascii.BEL) {
+        _osc.add(param.toString());
+        return true;
+      }
+
+      /// OSC terminates with ST
+      if (char == Ascii.ESC) {
+        if (_queue.isEmpty) {
+          return false;
+        }
+
+        if (_queue.consume() == Ascii.backslash) {
+          _osc.add(param.toString());
+        }
+
+        return true;
+      }
+
+      /// Parse next parameter
+      if (char == Ascii.semicolon) {
+        _osc.add(param.toString());
+        param.clear();
+        continue;
+      }
+    }
   }
 }
 
