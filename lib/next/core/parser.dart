@@ -957,7 +957,7 @@ class TerminalParser {
   }
 
   bool _escHandleOSC() {
-    final consumed = consumeOsc();
+    final consumed = _consumeOsc();
     if (!consumed) return false;
 
     if (_osc.length < 2) {
@@ -987,7 +987,7 @@ class TerminalParser {
 
   final _osc = <String>[];
 
-  bool consumeOsc() {
+  bool _consumeOsc() {
     _osc.clear();
     final param = StringBuffer();
 
