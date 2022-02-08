@@ -454,12 +454,12 @@ class Buffer {
     return line;
   }
 
-  adjustSavedCursor(int dx, int dy) {
-    if (_savedCursorX != null) {
-      _savedCursorX = _savedCursorX! + dx;
-    }
-    if (_savedCursorY != null) {
-      _savedCursorY = _savedCursorY! + dy;
-    }
-  }
+  // adjustSavedCursor(int dx, int dy) {
+  //   if (_savedCursorX != null) {
+  //     _savedCursorX = _savedCursorX! + dx;
+  //   }
+  //   if (_savedCursorY != null) {
+  //     _savedCursorY = _savedCursorY! + dy;
+  //   }
+  // }
 }

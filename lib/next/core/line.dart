@@ -1,21 +1,8 @@
-import 'dart:math' show max, min;
+import 'dart:math' show min;
 import 'dart:typed_data';
 
 import 'package:xterm/next/core/cell.dart';
 import 'package:xterm/next/core/cursor.dart';
-
-/// Note:
-/// xterm的实现和xd类似
-/// xterm的resize是一定复制 不太理想 len/cap模型会好些？
-/// xterm hasContent的实现不错 用了额外的flag
-/// 可以用填充celldata的方式减少调用函数调用次数
-///
-/// Q:
-/// xterm的combined是什么意思？？
-/// xterm对widechar的处理
-///
-///
-///
 
 const _cellSize = 4;
 

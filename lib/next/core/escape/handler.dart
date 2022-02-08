@@ -1,4 +1,3 @@
-import 'package:xterm/next/core/color.dart';
 import 'package:xterm/next/core/mouse.dart';
 
 abstract class EscapeHandler {
