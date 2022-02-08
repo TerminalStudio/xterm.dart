@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 // import 'package:xterm/buffer/line/line.dart';
 import 'package:xterm/terminal/terminal.dart';
@@ -53,6 +54,7 @@ class TerminalLineView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // TextField
     return CustomPaint(
       painter: _TerminalLinePainter(),
     );

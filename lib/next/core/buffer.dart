@@ -1,22 +1,26 @@
 import 'dart:math' show max, min;
 
-import 'package:xterm/buffer/line/line.dart';
+import 'package:xterm/next/core/cursor.dart';
+import 'package:xterm/next/core/line.dart';
+import 'package:xterm/next/core/state.dart';
 // import 'package:xterm/buffer/reflow_strategy_narrower.dart';
 // import 'package:xterm/buffer/reflow_strategy_wider.dart';
 import 'package:xterm/terminal/charset.dart';
 import 'package:xterm/terminal/terminal.dart';
 import 'package:xterm/util/circular_list.dart';
-import 'package:xterm/util/scroll_range.dart';
 import 'package:xterm/util/unicode_v11.dart';
 
 class Buffer {
-  final Terminal terminal;
+  final TerminalState terminal;
 
-  final bool isAltBuffer;
+  final int maxLines;
 
-  Buffer({
-    required this.terminal,
-    required this.isAltBuffer,
+  final bool reflow;
+
+  Buffer(
+    this.terminal, {
+    required this.maxLines,
+    required this.reflow,
   }) {
     for (int i = 0; i < terminal.viewHeight; i++) {
       lines.push(_newEmptyLine());
@@ -24,12 +28,6 @@ class Buffer {
 
     resetVerticalMargins();
   }
-
-  int? _savedCursorX;
-  int? _savedCursorY;
-  int? _savedCellFgColor;
-  int? _savedCellBgColor;
-  int? _savedCellFlags;
 
   int _cursorX = 0;
 
@@ -39,17 +37,23 @@ class Buffer {
 
   late int _marginBottom;
 
+  var _savedCursorX = 0;
+
+  var _savedCursorY = 0;
+
+  var _savedCursorStyle = CursorStyle();
+
   final charset = Charset();
 
-  /// Width of the viewport in columns.
+  /// Width of the viewport in columns. Also the index of the last column.
   int get viewWidth => terminal.viewWidth;
 
-  /// Height of the viewport in rows.
+  /// Height of the viewport in rows. Also the index of the last line.
   int get viewHeight => terminal.viewHeight;
 
   /// lines of the buffer. the length of [lines] should always be equal or
   /// greater than [viewHeight].
-  late final lines = CircularList<BufferLine>(terminal.maxLines);
+  late final lines = CircularList<BufferLine>(maxLines);
 
   /// Total number of lines in the buffer. Always equal or greater than
   /// [viewHeight].
@@ -63,12 +67,10 @@ class Buffer {
   /// screen, starting from 0.
   int get cursorY => _cursorY;
 
-  /// Top margin of the scrolling region relative to the top of the viewport,
-  /// starting from 0. 0 <= [marginTop] <= [marginBottom].
+  /// Index of the first line in the scroll region.
   int get marginTop => _marginTop;
 
-  /// Bottom margin of the scrolling region relative to the top of the viewport,
-  /// starting from 0. [marginTop] <= [marginBottom] <=  [viewHeight] - 1.
+  /// Index of the last line in the scroll region.
   int get marginBottom => _marginBottom;
 
   /// The number of lines above the viewport.
@@ -78,10 +80,10 @@ class Buffer {
   /// starting from 0.
   int get absoluteCursorY => _cursorY + scrollBack;
 
-  /// Top margin of the scrolling region relative to the top of the buffer.
+  /// Absolute index of the first line in the scroll region.
   int get absoluteMarginTop => _marginTop + scrollBack;
 
-  /// Bottom margin of the scrolling region relative to the top of the buffer.
+  /// Absolute index of the last line in the scroll region.
   int get absoluteMarginBottom => _marginBottom + scrollBack;
 
   /// Writes data to the _terminal. Terminal sequences or special characters are
@@ -111,16 +113,9 @@ class Buffer {
     }
 
     final line = currentLine;
-    line.ensure(_cursorX + 1);
+    line.setCell(_cursorX, codePoint, cellWidth, terminal.cursor);
 
-    line.cellInitialize(
-      _cursorX,
-      content: codePoint,
-      width: cellWidth,
-      cursor: terminal.cursor,
-    );
-
-    if (_cursorX < terminal.viewWidth) {
+    if (_cursorX < viewWidth) {
       _cursorX++;
     }
 
@@ -142,16 +137,11 @@ class Buffer {
   //   index();
   // }
 
-  /// Moves the cursor to the start of the current line.
-  void carriageReturn() {
-    setCursorX(0);
-  }
-
   void backspace() {
     if (_cursorX == 0 && currentLine.isWrapped) {
       currentLine.isWrapped = false;
       moveCursor(viewWidth - 1, -1);
-    } else if (_cursorX == terminal.viewWidth) {
+    } else if (_cursorX == viewWidth) {
       moveCursor(-2, 0);
     } else {
       moveCursor(-1, 0);
@@ -166,7 +156,7 @@ class Buffer {
     for (var i = absoluteCursorY; i < height; i++) {
       final line = lines[i];
       line.isWrapped = false;
-      line.erase(terminal.cursor, 0, terminal.viewWidth);
+      line.eraseRange(0, viewWidth, terminal.cursor);
     }
   }
 
@@ -178,7 +168,7 @@ class Buffer {
     for (var i = 0; i < _cursorY; i++) {
       final line = lines[i + scrollBack];
       line.isWrapped = false;
-      line.erase(terminal.cursor, 0, terminal.viewWidth);
+      line.eraseRange(0, viewWidth, terminal.cursor);
     }
   }
 
@@ -187,7 +177,7 @@ class Buffer {
     for (var i = 0; i < viewHeight; i++) {
       final line = lines[i + scrollBack];
       line.isWrapped = false;
-      line.erase(terminal.cursor, 0, terminal.viewWidth);
+      line.eraseRange(0, viewWidth, terminal.cursor);
     }
   }
 
@@ -195,43 +185,31 @@ class Buffer {
   /// cursor position.
   void eraseLineFromCursor() {
     currentLine.isWrapped = false;
-    currentLine.erase(terminal.cursor, _cursorX, terminal.viewWidth);
+    currentLine.eraseRange(_cursorX, viewWidth, terminal.cursor);
   }
 
   /// Erases the line from the start of the line to the cursor, including the
   /// cursor.
   void eraseLineToCursor() {
     currentLine.isWrapped = false;
-    currentLine.erase(terminal.cursor, 0, _cursorX);
+    currentLine.eraseRange(0, _cursorX, terminal.cursor);
   }
 
   /// Erases the line at the current cursor position.
   void eraseLine() {
     currentLine.isWrapped = false;
-    currentLine.erase(terminal.cursor, 0, terminal.viewWidth);
+    currentLine.eraseRange(0, viewWidth, terminal.cursor);
   }
 
   /// Erases [count] cells starting at the cursor position.
-  void eraseCharacters(int count) {
+  void eraseChars(int count) {
     final start = _cursorX;
-    currentLine.erase(terminal.cursor, start, start + count);
+    currentLine.eraseRange(start, start + count, terminal.cursor);
   }
 
-  ScrollRange getAreaScrollRange() {
-    var top = absoluteMarginTop;
-    var bottom = absoluteMarginBottom + 1;
-    if (bottom > lines.length) {
-      bottom = lines.length;
-    }
-    return ScrollRange(top, bottom);
-  }
-
-  void areaScrollDown(int lines) {
-    final scrollRange = getAreaScrollRange();
-
-    for (var i = scrollRange.bottom; i > scrollRange.top;) {
-      i--;
-      if (i >= scrollRange.top + lines) {
+  void scrollDown(int lines) {
+    for (var i = absoluteMarginBottom; i >= absoluteMarginTop; i--) {
+      if (i >= absoluteMarginTop + lines) {
         this.lines[i] = this.lines[i - lines];
       } else {
         this.lines[i] = _newEmptyLine();
@@ -239,11 +217,9 @@ class Buffer {
     }
   }
 
-  void areaScrollUp(int lines) {
-    final scrollRange = getAreaScrollRange();
-
-    for (var i = scrollRange.top; i < scrollRange.bottom; i++) {
-      if (i + lines < scrollRange.bottom) {
+  void scrollUp(int lines) {
+    for (var i = absoluteMarginTop; i <= absoluteMarginBottom; i++) {
+      if (i <= absoluteMarginBottom - lines) {
         this.lines[i] = this.lines[i + lines];
       } else {
         this.lines[i] = _newEmptyLine();
@@ -263,13 +239,13 @@ class Buffer {
       if (_cursorY < _marginBottom) {
         moveCursorY(1);
       } else {
-        areaScrollUp(1);
+        scrollUp(1);
       }
       return;
     }
 
     // the cursor is not in the scrollable region
-    if (_cursorY >= terminal.viewHeight - 1) {
+    if (_cursorY >= viewHeight - 1) {
       // we are at the bottom so a new line is created.
       lines.push(_newEmptyLine());
     } else {
@@ -278,11 +254,22 @@ class Buffer {
     }
   }
 
-  /// https://vt100.net/docs/vt100-ug/chapter3.html#RI
+  void lineFeed() {
+    index();
+    if (terminal.lineFeedMode) {
+      setCursorX(0);
+    }
+  }
+
+  /// https://terminalguide.namepad.de/seq/a_esc_cm/
   void reverseIndex() {
-    if (_cursorY == _marginTop) {
-      areaScrollDown(1);
-    } else if (_cursorY > 0) {
+    if (isInScrollableRegion) {
+      if (_cursorY == _marginTop) {
+        scrollDown(1);
+      } else {
+        moveCursorY(-1);
+      }
+    } else {
       moveCursorY(-1);
     }
   }
@@ -292,11 +279,11 @@ class Buffer {
   }
 
   void setCursorX(int cursorX) {
-    _cursorX = cursorX.clamp(0, terminal.viewWidth - 1);
+    _cursorX = cursorX.clamp(0, viewWidth - 1);
   }
 
   void setCursorY(int cursorY) {
-    _cursorY = cursorY.clamp(0, terminal.viewHeight - 1);
+    _cursorY = cursorY.clamp(0, viewHeight - 1);
   }
 
   void moveCursorX(int offset) {
@@ -308,14 +295,14 @@ class Buffer {
   }
 
   void setCursor(int cursorX, int cursorY) {
-    var maxLine = terminal.viewHeight - 1;
+    var maxLine = viewHeight - 1;
 
     if (terminal.originMode) {
       cursorY += _marginTop;
       maxLine = _marginBottom;
     }
 
-    _cursorX = cursorX.clamp(0, terminal.viewWidth - 1);
+    _cursorX = cursorX.clamp(0, viewWidth - 1);
     _cursorY = cursorY.clamp(0, maxLine);
   }
 
@@ -327,51 +314,36 @@ class Buffer {
 
   /// Save cursor position, charmap and text attributes.
   void saveCursor() {
-    _savedCellFlags = terminal.cursor.flags;
-    _savedCellFgColor = terminal.cursor.fg;
-    _savedCellBgColor = terminal.cursor.bg;
     _savedCursorX = _cursorX;
     _savedCursorY = _cursorY;
+    _savedCursorStyle.foreground = terminal.cursor.foreground;
+    _savedCursorStyle.background = terminal.cursor.background;
+    _savedCursorStyle.attrs = terminal.cursor.attrs;
     charset.save();
   }
 
   /// Restore cursor position, charmap and text attributes.
   void restoreCursor() {
-    if (_savedCellFlags != null) {
-      terminal.cursor.flags = _savedCellFlags!;
-    }
-
-    if (_savedCellFgColor != null) {
-      terminal.cursor.fg = _savedCellFgColor!;
-    }
-
-    if (_savedCellBgColor != null) {
-      terminal.cursor.bg = _savedCellBgColor!;
-    }
-
-    if (_savedCursorX != null) {
-      _cursorX = _savedCursorX!;
-    }
-
-    if (_savedCursorY != null) {
-      _cursorY = _savedCursorY!;
-    }
-
+    _cursorX = _savedCursorX;
+    _cursorY = _savedCursorY;
+    terminal.cursor.foreground = _savedCursorStyle.foreground;
+    terminal.cursor.background = _savedCursorStyle.background;
+    terminal.cursor.attrs = _savedCursorStyle.attrs;
     charset.restore();
   }
 
   /// Sets the vertical scrolling margin to [top] and [bottom].
-  /// Both values must be between 0 and [terminal.viewHeight] - 1.
+  /// Both values must be between 0 and [viewHeight] - 1.
   void setVerticalMargins(int top, int bottom) {
-    _marginTop = top.clamp(0, terminal.viewHeight - 1);
-    _marginBottom = bottom.clamp(0, terminal.viewHeight - 1);
+    _marginTop = top.clamp(0, viewHeight - 1);
+    _marginBottom = bottom.clamp(0, viewHeight - 1);
 
     _marginTop = min(_marginTop, _marginBottom);
     _marginBottom = max(_marginTop, _marginBottom);
   }
 
   bool get hasScrollableRegion {
-    return _marginTop > 0 || _marginBottom < (terminal.viewHeight - 1);
+    return _marginTop > 0 || _marginBottom < (viewHeight - 1);
   }
 
   bool get isInScrollableRegion {
@@ -381,13 +353,13 @@ class Buffer {
   }
 
   void resetVerticalMargins() {
-    setVerticalMargins(0, terminal.viewHeight - 1);
+    setVerticalMargins(0, viewHeight - 1);
   }
 
   void deleteChars(int count) {
-    final start = _cursorX.clamp(0, terminal.viewWidth);
-    final end = min(_cursorX + count, terminal.viewWidth);
-    currentLine.removeRange(start, end);
+    final start = _cursorX.clamp(0, viewWidth);
+    count = min(count, viewWidth - start);
+    currentLine.removeCells(start, count, terminal.cursor);
   }
 
   /// Remove all lines above the top of the viewport.
@@ -402,65 +374,44 @@ class Buffer {
   /// Clears the viewport and scrollback buffer. Then fill with empty lines.
   void clear() {
     lines.clear();
-    for (int i = 0; i < terminal.viewHeight; i++) {
+    for (int i = 0; i < viewHeight; i++) {
       lines.push(_newEmptyLine());
     }
   }
 
-  void insertBlankCharacters(int count) {
-    for (var i = 0; i < count; i++) {
-      currentLine.insert(_cursorX + i);
-      currentLine.cellSetFlags(_cursorX + i, terminal.cursor.flags);
-    }
+  void insertBlankChars(int count) {
+    currentLine.insertCells(_cursorX, count, terminal.cursor);
   }
 
   void insertLines(int count) {
-    if (hasScrollableRegion && !isInScrollableRegion) {
+    if (!isInScrollableRegion) {
       return;
     }
 
     setCursorX(0);
 
     for (var i = 0; i < count; i++) {
-      insertLine();
+      lines.remove(absoluteMarginBottom);
+      lines.insert(absoluteCursorY, _newEmptyLine());
     }
   }
 
-  void insertLine() {
+  void deleteLines(int count) {
     if (!isInScrollableRegion) {
-      final newLine = _newEmptyLine();
-      lines.insert(absoluteCursorY, newLine);
-    } else {
-      final newLine = _newEmptyLine();
-      lines.insert(_cursorY, newLine);
+      return;
+    }
+
+    setCursorX(0);
+
+    for (var i = 0; i < count; i++) {
+      lines.insert(absoluteMarginBottom, _newEmptyLine());
+      lines.remove(absoluteCursorY);
     }
   }
-
-  // void deleteLines(int count) {
-  //   if (hasScrollableRegion && !isInScrollableRegion) {
-  //     return;
-  //   }
-
-  //   setCursorX(0);
-
-  //   for (var i = 0; i < count; i++) {
-  //     deleteLine();
-  //   }
-  // }
-
-  // void deleteLine() {
-  //   final index = convertViewLineToRawLine(_cursorX);
-
-  //   if (index >= height) {
-  //     return;
-  //   }
-
-  //   lines.remove(index);
-  // }
 
   void resize(int oldWidth, int oldHeight, int newWidth, int newHeight) {
     if (newWidth > oldWidth) {
-      lines.forEach((item) => item.ensure(newWidth));
+      lines.forEach((item) => item.resize(newWidth));
     }
 
     if (newHeight > oldHeight) {
@@ -499,7 +450,7 @@ class Buffer {
   }
 
   BufferLine _newEmptyLine() {
-    final line = BufferLine(length: terminal.viewWidth);
+    final line = BufferLine(viewWidth);
     return line;
   }
 

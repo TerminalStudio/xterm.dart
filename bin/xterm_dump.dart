@@ -2,11 +2,11 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:xterm/next/core/handler.dart';
-import 'package:xterm/next/core/parser.dart';
+import 'package:xterm/next/core/escape/handler.dart';
+import 'package:xterm/next/core/escape/parser.dart';
 
 final handler = DebugTerminalHandler();
-final protocol = TerminalParser(handler);
+final protocol = EscapeParser(handler);
 final input = BytesBuilder(copy: true);
 
 void main(List<String> args) async {
@@ -28,7 +28,7 @@ extension StringEscape on String {
   }
 }
 
-class DebugTerminalHandler implements TerminalHandler {
+class DebugTerminalHandler implements EscapeHandler {
   final stringBuffer = StringBuffer();
 
   void flush() {

@@ -1,25 +1,40 @@
-class TerminalState {}
+import 'package:xterm/next/core/cursor.dart';
+import 'package:xterm/next/core/mouse.dart';
 
-class TerminalModes {
-  bool lineFeed = false;
+abstract class TerminalState {
+  int get viewWidth;
 
-  bool autoWrap = false;
+  int get viewHeight;
 
-  bool autoRepeat = false;
+  CursorStyle get cursor;
 
-  bool insert = false;
+  /* Modes */
 
-  bool origin = false;
+  bool get insertMode;
 
-  bool lock = false;
+  bool get lineFeedMode;
 
-  bool erase = false;
+  /* DEC Private modes */
 
-  bool screen = false;
+  bool get cursorKeysMode;
 
-  bool scroll = false;
+  bool get reverseDisplayMode;
 
-  bool screenSaver = false;
+  bool get originMode;
 
-  bool jump = false;
+  bool get autoWrapMode;
+
+  MouseMode get mouseMode;
+
+  bool get cursorBlinkMode;
+
+  bool get cursorVisibleMode;
+
+  bool get appKeypadMode;
+
+  bool get reportFocusMode;
+
+  bool get altBufferMouseScrollMode;
+
+  bool get bracketedPasteMode;
 }

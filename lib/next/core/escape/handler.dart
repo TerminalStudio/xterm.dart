@@ -1,6 +1,7 @@
+import 'package:xterm/next/core/color.dart';
 import 'package:xterm/next/core/mouse.dart';
 
-abstract class TerminalHandler {
+abstract class EscapeHandler {
   void writeChar(int char);
 
   /* SBC */
@@ -11,7 +12,7 @@ abstract class TerminalHandler {
 
   void tab();
 
-  void newLine();
+  void lineFeed();
 
   void carriageReturn();
 
@@ -23,15 +24,11 @@ abstract class TerminalHandler {
 
   /* ANSI sequence */
 
-  void sendDeviceAttrs();
-
   void saveCursor();
 
   void restoreCursor();
 
   void index();
-
-  void newline();
 
   void nextLine();
 
@@ -55,15 +52,13 @@ abstract class TerminalHandler {
 
   void sendPrimaryDeviceAttributes();
 
-  void cursorUp(int n);
-
-  void cursorDown(int n);
-
   void clearTabStopUnderCursor();
 
   void clearAllTabStops();
 
   void moveCursorX(int offset);
+
+  void moveCursorY(int n);
 
   void sendSecondaryDeviceAttributes();
 
@@ -125,7 +120,7 @@ abstract class TerminalHandler {
 
   void setColumnMode(bool enabled);
 
-  void setAutowrapMode(bool enabled);
+  void setAutoWrapMode(bool enabled);
 
   void setMouseMode(MouseMode mode);
 
@@ -187,89 +182,29 @@ abstract class TerminalHandler {
 
   void unsetCursorStrikethrough();
 
-  void setForegroundBlack() {}
+  void setForegroundColor16(int color);
 
-  void setForegroundRed() {}
+  void setForegroundColor256(int index);
 
-  void setForegroundGreen() {}
+  void setForegroundColorRgb(int r, int g, int b);
 
-  void setForegroundYellow() {}
+  void resetForeground();
 
-  void setForegroundBlue() {}
+  void setBackgroundColor16(int color);
 
-  void setForegroundMagenta() {}
+  void setBackgroundColor256(int index);
 
-  void setForegroundCyan() {}
+  void setBackgroundColorRgb(int r, int g, int b);
 
-  void setForegroundWhite() {}
+  void resetBackground();
 
-  void resetForeground() {}
-
-  void setForegroundBrightBlack() {}
-
-  void setForegroundBrightRed() {}
-
-  void setForegroundBrightGreen() {}
-
-  void setForegroundBrightYellow() {}
-
-  void setForegroundBrightBlue() {}
-
-  void setForegroundBrightMagenta() {}
-
-  void setForegroundBrightCyan() {}
-
-  void setForegroundBrightWhite() {}
-
-  void setBackgroundBlack() {}
-
-  void setBackgroundRed() {}
-
-  void setBackgroundGreen() {}
-
-  void setBackgroundYellow() {}
-
-  void setBackgroundBlue() {}
-
-  void setBackgroundMagenta() {}
-
-  void setBackgroundCyan() {}
-
-  void setBackgroundWhite() {}
-
-  void resetBackground() {}
-
-  void setBackgroundBrightBlack() {}
-
-  void setBackgroundBrightRed() {}
-
-  void setBackgroundBrightGreen() {}
-
-  void setBackgroundBrightYellow() {}
-
-  void setBackgroundBrightBlue() {}
-
-  void setBackgroundBrightMagenta() {}
-
-  void setBackgroundBrightCyan() {}
-
-  void setBackgroundBrightWhite() {}
-
-  void unsupportedStyle(int param) {}
-
-  void setForegroundIndexed(int param) {}
-
-  void setForegroundRgb(int r, int g, int b) {}
-
-  void setBackgroundRgb(int r, int g, int b) {}
-
-  void setBackgroundIndexed(int index) {}
+  void unsupportedStyle(int param);
 
   /* OSC */
 
-  void setTitle(String name) {}
+  void setTitle(String name);
 
-  void setIconName(String name) {}
+  void setIconName(String name);
 
-  void unknownOSC(String ps) {}
+  void unknownOSC(String ps);
 }

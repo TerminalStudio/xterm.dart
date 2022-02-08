@@ -1,22 +1,23 @@
 import 'dart:typed_data';
 
+import 'package:xterm/next/core/color.dart';
 import 'package:xterm/next/core/mouse.dart';
-import 'package:xterm/next/core/handler.dart';
+import 'package:xterm/next/core/escape/handler.dart';
 import 'package:xterm/util/ascii.dart';
 import 'package:xterm/util/byte_consumer.dart';
 import 'package:xterm/util/char_code.dart';
 import 'package:xterm/util/lookup_table.dart';
 
-/// TerminalParser translates control characters and escape sequences into
+/// EscapeParser translates control characters and escape sequences into
 /// function calls that the terminal can handle.
 ///
 /// The design goals for this class are:
 ///  * Zero object allocation during processing.
 ///  * No internal state. Same input will always produce same output.
-class TerminalParser {
-  final TerminalHandler handler;
+class EscapeParser {
+  final EscapeHandler handler;
 
-  TerminalParser(this.handler);
+  EscapeParser(this.handler);
 
   final _queue = ByteConsumer();
 
@@ -84,9 +85,9 @@ class TerminalParser {
     0x07: handler.bell,
     0x08: handler.backspaceReturn,
     0x09: handler.tab,
-    0x0a: handler.newLine,
-    0x0b: handler.newLine,
-    0x0c: handler.newLine,
+    0x0a: handler.lineFeed,
+    0x0b: handler.lineFeed,
+    0x0c: handler.lineFeed,
     0x0d: handler.carriageReturn,
     0x0e: handler.shiftOut,
     0x0f: handler.shiftIn,
@@ -441,28 +442,28 @@ class TerminalParser {
           continue;
 
         case 30:
-          handler.setForegroundBlack();
+          handler.setForegroundColor16(NamedColor.black);
           continue;
         case 31:
-          handler.setForegroundRed();
+          handler.setForegroundColor16(NamedColor.red);
           continue;
         case 32:
-          handler.setForegroundGreen();
+          handler.setForegroundColor16(NamedColor.green);
           continue;
         case 33:
-          handler.setForegroundYellow();
+          handler.setForegroundColor16(NamedColor.yellow);
           continue;
         case 34:
-          handler.setForegroundBlue();
+          handler.setForegroundColor16(NamedColor.blue);
           continue;
         case 35:
-          handler.setForegroundMagenta();
+          handler.setForegroundColor16(NamedColor.magenta);
           continue;
         case 36:
-          handler.setForegroundCyan();
+          handler.setForegroundColor16(NamedColor.cyan);
           continue;
         case 37:
-          handler.setForegroundWhite();
+          handler.setForegroundColor16(NamedColor.white);
           continue;
         case 38:
           final mode = params[i + 1];
@@ -471,12 +472,12 @@ class TerminalParser {
               final r = params[i + 2];
               final g = params[i + 3];
               final b = params[i + 4];
-              handler.setForegroundRgb(r, g, b);
+              handler.setForegroundColorRgb(r, g, b);
               i += 4;
               break;
             case 5:
               final index = params[i + 2];
-              handler.setForegroundIndexed(index);
+              handler.setForegroundColor256(index);
               i += 2;
               break;
           }
@@ -486,28 +487,28 @@ class TerminalParser {
           continue;
 
         case 40:
-          handler.setBackgroundBlack();
+          handler.setBackgroundColor16(NamedColor.black);
           continue;
         case 41:
-          handler.setBackgroundRed();
+          handler.setBackgroundColor16(NamedColor.red);
           continue;
         case 42:
-          handler.setBackgroundGreen();
+          handler.setBackgroundColor16(NamedColor.green);
           continue;
         case 43:
-          handler.setBackgroundYellow();
+          handler.setBackgroundColor16(NamedColor.yellow);
           continue;
         case 44:
-          handler.setBackgroundBlue();
+          handler.setBackgroundColor16(NamedColor.blue);
           continue;
         case 45:
-          handler.setBackgroundMagenta();
+          handler.setBackgroundColor16(NamedColor.magenta);
           continue;
         case 46:
-          handler.setBackgroundCyan();
+          handler.setBackgroundColor16(NamedColor.cyan);
           continue;
         case 47:
-          handler.setBackgroundWhite();
+          handler.setBackgroundColor16(NamedColor.white);
           continue;
         case 48:
           final mode = params[i + 1];
@@ -516,12 +517,12 @@ class TerminalParser {
               final r = params[i + 2];
               final g = params[i + 3];
               final b = params[i + 4];
-              handler.setBackgroundRgb(r, g, b);
+              handler.setBackgroundColorRgb(r, g, b);
               i += 4;
               break;
             case 5:
               final index = params[i + 2];
-              handler.setBackgroundIndexed(index);
+              handler.setBackgroundColor256(index);
               i += 2;
               break;
           }
@@ -531,53 +532,53 @@ class TerminalParser {
           continue;
 
         case 90:
-          handler.setForegroundBrightBlack();
+          handler.setForegroundColor16(NamedColor.brightBlack);
           continue;
         case 91:
-          handler.setForegroundBrightRed();
+          handler.setForegroundColor16(NamedColor.brightRed);
           continue;
         case 92:
-          handler.setForegroundBrightGreen();
+          handler.setForegroundColor16(NamedColor.brightGreen);
           continue;
         case 93:
-          handler.setForegroundBrightYellow();
+          handler.setForegroundColor16(NamedColor.brightYellow);
           continue;
         case 94:
-          handler.setForegroundBrightBlue();
+          handler.setForegroundColor16(NamedColor.brightBlue);
           continue;
         case 95:
-          handler.setForegroundBrightMagenta();
+          handler.setForegroundColor16(NamedColor.brightMagenta);
           continue;
         case 96:
-          handler.setForegroundBrightCyan();
+          handler.setForegroundColor16(NamedColor.brightCyan);
           continue;
         case 97:
-          handler.setForegroundBrightWhite();
+          handler.setForegroundColor16(NamedColor.brightWhite);
           continue;
 
         case 100:
-          handler.setBackgroundBrightBlack();
+          handler.setBackgroundColor16(NamedColor.brightBlack);
           continue;
         case 101:
-          handler.setBackgroundBrightRed();
+          handler.setBackgroundColor16(NamedColor.brightRed);
           continue;
         case 102:
-          handler.setBackgroundBrightGreen();
+          handler.setBackgroundColor16(NamedColor.brightGreen);
           continue;
         case 103:
-          handler.setBackgroundBrightYellow();
+          handler.setBackgroundColor16(NamedColor.brightYellow);
           continue;
         case 104:
-          handler.setBackgroundBrightBlue();
+          handler.setBackgroundColor16(NamedColor.brightBlue);
           continue;
         case 105:
-          handler.setBackgroundBrightMagenta();
+          handler.setBackgroundColor16(NamedColor.brightMagenta);
           continue;
         case 106:
-          handler.setBackgroundBrightCyan();
+          handler.setBackgroundColor16(NamedColor.brightCyan);
           continue;
         case 107:
-          handler.setBackgroundBrightWhite();
+          handler.setBackgroundColor16(NamedColor.brightWhite);
           continue;
 
         default:
@@ -638,7 +639,7 @@ class TerminalParser {
       amount = _csi.params[0];
     }
 
-    handler.cursorUp(amount);
+    handler.moveCursorY(-amount);
   }
 
   /// `ESC [ Ps B` Cursor Down (CUD)
@@ -651,7 +652,7 @@ class TerminalParser {
       amount = _csi.params[0];
     }
 
-    handler.cursorDown(amount);
+    handler.moveCursorY(amount);
   }
 
   /// `ESC [ Ps C` Cursor Right (CUF)
@@ -875,7 +876,7 @@ class TerminalParser {
       case 6:
         return handler.setOriginMode(enabled);
       case 7:
-        return handler.setAutowrapMode(enabled);
+        return handler.setAutoWrapMode(enabled);
       case 9:
         return enabled
             ? handler.setMouseMode(MouseMode.clickOnly)
