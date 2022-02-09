@@ -16,66 +16,70 @@ const _cellContent = 3;
 
 class BufferLine {
   BufferLine(this._length)
-      : _buffer = Uint32List(_calcCapacity(_length) * _cellSize);
+      : _data = Uint32List(_calcCapacity(_length) * _cellSize);
 
   int _length;
 
-  Uint32List _buffer;
+  Uint32List _data;
 
   var isWrapped = false;
 
   int get length => _length;
 
   int getForeground(int index) {
-    return _buffer[index * _cellSize + _cellForeground];
+    return _data[index * _cellSize + _cellForeground];
   }
 
   int getBackground(int index) {
-    return _buffer[index * _cellSize + _cellBackground];
+    return _data[index * _cellSize + _cellBackground];
   }
 
   int getAttributes(int index) {
-    return _buffer[index * _cellSize + _cellAttributes];
+    return _data[index * _cellSize + _cellAttributes];
   }
 
   int getContent(int index) {
-    return _buffer[index * _cellSize + _cellContent];
+    return _data[index * _cellSize + _cellContent];
+  }
+
+  int getCodePoint(int index) {
+    return _data[index * _cellSize + _cellContent] & CellContent.codepointMask;
   }
 
   int getWidth(int index) {
-    return _buffer[index * _cellSize + _cellContent] >> CellContent.widthShift;
+    return _data[index * _cellSize + _cellContent] >> CellContent.widthShift;
   }
 
   void setForeground(int index, int value) {
-    _buffer[index * _cellSize + _cellForeground] = value;
+    _data[index * _cellSize + _cellForeground] = value;
   }
 
   void setBackground(int index, int value) {
-    _buffer[index * _cellSize + _cellBackground] = value;
+    _data[index * _cellSize + _cellBackground] = value;
   }
 
   void setAttributes(int index, int value) {
-    _buffer[index * _cellSize + _cellAttributes] = value;
+    _data[index * _cellSize + _cellAttributes] = value;
   }
 
   void setContent(int index, int value) {
-    _buffer[index * _cellSize + _cellContent] = value;
+    _data[index * _cellSize + _cellContent] = value;
   }
 
   void setCell(int index, int char, int witdh, CursorStyle style) {
     final offset = index * _cellSize;
-    _buffer[offset + _cellForeground] = style.foreground;
-    _buffer[offset + _cellBackground] = style.background;
-    _buffer[offset + _cellAttributes] = style.attrs;
-    _buffer[offset + _cellContent] = char | (witdh << CellContent.widthShift);
+    _data[offset + _cellForeground] = style.foreground;
+    _data[offset + _cellBackground] = style.background;
+    _data[offset + _cellAttributes] = style.attrs;
+    _data[offset + _cellContent] = char | (witdh << CellContent.widthShift);
   }
 
   void eraseCell(int index, CursorStyle style) {
     final offset = index * _cellSize;
-    _buffer[offset + _cellForeground] = style.foreground;
-    _buffer[offset + _cellBackground] = style.background;
-    _buffer[offset + _cellAttributes] = style.attrs;
-    _buffer[offset + _cellContent] = 0;
+    _data[offset + _cellForeground] = style.foreground;
+    _data[offset + _cellBackground] = style.background;
+    _data[offset + _cellAttributes] = style.attrs;
+    _data[offset + _cellContent] = 0;
   }
 
   void eraseRange(int start, int end, CursorStyle style) {
@@ -101,7 +105,7 @@ class BufferLine {
       final moveEnd = (_length - count) * _cellSize;
       final moveOffset = count * _cellSize;
       for (var i = moveStart; i < moveEnd; i++) {
-        _buffer[i] = _buffer[i + moveOffset];
+        _data[i] = _data[i + moveOffset];
       }
     }
 
@@ -124,7 +128,7 @@ class BufferLine {
       final moveEnd = (_length - count) * _cellSize;
       final moveOffset = count * _cellSize;
       for (var i = moveEnd - 1; i >= moveStart; i--) {
-        _buffer[i + moveOffset] = _buffer[i];
+        _data[i + moveOffset] = _data[i];
       }
     }
 
@@ -147,10 +151,10 @@ class BufferLine {
 
     final newBufferSize = _calcCapacity(length) * _cellSize;
 
-    if (newBufferSize > _buffer.length) {
+    if (newBufferSize > _data.length) {
       final newBuffer = Uint32List(newBufferSize);
-      newBuffer.setRange(0, _buffer.length, _buffer);
-      _buffer = newBuffer;
+      newBuffer.setRange(0, _data.length, _data);
+      _data = newBuffer;
     }
 
     _length = length;
@@ -173,5 +177,19 @@ class BufferLine {
     }
 
     return capacity;
+  }
+
+  @override
+  String toString() {
+    final builder = StringBuffer();
+    for (var i = 0; i < _length; i++) {
+      final codePoint = getCodePoint(i);
+      if (codePoint == 0) {
+        builder.write(' ');
+      } else {
+        builder.writeCharCode(codePoint);
+      }
+    }
+    return builder.toString();
   }
 }

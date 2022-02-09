@@ -6,9 +6,11 @@ import 'package:xterm/next/core/cursor.dart';
 import 'package:xterm/next/core/escape/emitter.dart';
 import 'package:xterm/next/core/escape/handler.dart';
 import 'package:xterm/next/core/escape/parser.dart';
+import 'package:xterm/next/core/line.dart';
 import 'package:xterm/next/core/mouse.dart';
 import 'package:xterm/next/core/state.dart';
 import 'package:xterm/next/core/tabs.dart';
+import 'package:xterm/util/circular_list.dart';
 
 class Terminal implements TerminalState, EscapeHandler {
   final int maxLines;
@@ -112,6 +114,8 @@ class Terminal implements TerminalState, EscapeHandler {
   bool get altBufferMouseScrollMode => _altBufferMouseScrollMode;
 
   bool get bracketedPasteMode => _bracketedPasteMode;
+
+  CircularList<BufferLine> get lines => _buffer.lines;
 
   void add(Uint8List data) {
     _parser.write(data);
