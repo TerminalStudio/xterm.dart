@@ -1,10 +1,9 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:xterm/buffer/cell_flags.dart';
 // import 'package:flutter/widgets.dart';
 import 'package:xterm/next/core/cell.dart';
 import 'package:xterm/next/core/line.dart';
+import 'package:xterm/next/core/state.dart';
 import 'package:xterm/next/terminal.dart';
 import 'package:xterm/next/ui/char_metrics.dart';
 import 'package:xterm/next/ui/palette_builder.dart';
@@ -79,6 +78,8 @@ class _TerminalViewState extends State<TerminalView> {
 
   @override
   Widget build(BuildContext context) {
+    final cursorX = widget.terminal.buffer.cursorX;
+    final cursorY = widget.terminal.buffer.absoluteCursorY;
     final lines = widget.terminal.lines;
 
     // Calculate everytime build happens, because some fonts library
@@ -96,9 +97,11 @@ class _TerminalViewState extends State<TerminalView> {
           lines[index],
           theme: widget.theme,
           palette: colorPalette,
+          terminalState: widget.terminal,
           textStyle: widget.textStyle,
           charMetrics: charMetrics,
-          cache: paragraphCache,
+          paragraphCache: paragraphCache,
+          cursorPosition: index == cursorY ? cursorX : null,
         );
       },
     );
@@ -111,9 +114,11 @@ class TerminalLineView extends StatelessWidget {
     Key? key,
     required this.theme,
     required this.palette,
+    required this.terminalState,
     required this.textStyle,
     required this.charMetrics,
-    required this.cache,
+    required this.paragraphCache,
+    this.cursorPosition,
   }) : super(key: key);
 
   final BufferLine line;
@@ -122,11 +127,15 @@ class TerminalLineView extends StatelessWidget {
 
   final List<Color> palette;
 
+  final TerminalState terminalState;
+
   final TerminalStyle textStyle;
 
   final CharMetrics charMetrics;
 
-  final ParagraphCache cache;
+  final ParagraphCache paragraphCache;
+
+  final int? cursorPosition;
 
   @override
   Widget build(BuildContext context) {
@@ -146,6 +155,7 @@ class _TerminalLinePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     paintBackground(canvas, size);
     paintForeground(canvas, size);
+    paintCursor(canvas, size);
   }
 
   void paintBackground(Canvas canvas, Size size) {
@@ -153,27 +163,14 @@ class _TerminalLinePainter extends CustomPainter {
 
     final line = widget.line;
 
+    final cellData = CellData.empty();
+
     for (var i = 0; i < line.length; i++) {
-      final cellColor = line.getBackground(i);
+      line.getCellData(i, cellData);
 
-      final colorType = cellColor & CellColor.typeMask;
-      final colorValue = cellColor & CellColor.valueMask;
-
-      late Color color;
-
-      switch (colorType) {
-        case CellColor.normal:
-          color = widget.theme.background;
-          break;
-        case CellColor.named:
-        case CellColor.palette:
-          color = widget.palette[colorValue];
-          break;
-        case CellColor.rgb:
-        default:
-          color = Color(cellColor | 0xFF000000);
-          break;
-      }
+      final color = cellData.flags & CellFlags.inverse == 0
+          ? resolveBackgroundColor(cellData.background)
+          : resolveForegroundColor(cellData.foreground);
 
       final paint = Paint()..color = color;
       canvas.drawRect(Rect.fromLTWH(i * step, 0, step + 1, size.height), paint);
@@ -182,7 +179,7 @@ class _TerminalLinePainter extends CustomPainter {
 
   void paintForeground(Canvas canvas, Size size) {
     final step = widget.charMetrics.width;
-    final cache = widget.cache;
+    final cache = widget.paragraphCache;
     final line = widget.line;
     final textStyle = widget.textStyle;
 
@@ -197,30 +194,17 @@ class _TerminalLinePainter extends CustomPainter {
       var paragraph = cache.getLayoutFromCache(hash);
       if (paragraph == null) {
         final charCode = cellData.content & CellContent.codepointMask;
+        final cellFlags = cellData.flags;
 
-        final colorType = cellData.foreground & CellColor.typeMask;
-        final colorValue = cellData.foreground & CellColor.valueMask;
-
-        late Color color;
-        switch (colorType) {
-          case CellColor.normal:
-            color = widget.theme.foreground;
-            break;
-          case CellColor.named:
-          case CellColor.palette:
-            color = widget.palette[colorValue];
-            break;
-          case CellColor.rgb:
-          default:
-            color = Color(cellData.foreground | 0xFF000000);
-            break;
-        }
+        final color = cellFlags & CellFlags.inverse == 0
+            ? resolveForegroundColor(cellData.foreground)
+            : resolveBackgroundColor(cellData.background);
 
         final style = textStyle.toTextStyle(
           color: color,
-          bold: cellData.flags & CellFlags.bold != 0,
-          italic: cellData.flags & CellFlags.italic != 0,
-          underline: cellData.flags & CellFlags.underline != 0,
+          bold: cellFlags & CellFlags.bold != 0,
+          italic: cellFlags & CellFlags.italic != 0,
+          underline: cellFlags & CellFlags.underline != 0,
         );
 
         paragraph = cache.performAndCacheLayout(
@@ -232,6 +216,64 @@ class _TerminalLinePainter extends CustomPainter {
       if (charWidth == 2) {
         i++;
       }
+    }
+  }
+
+  void paintCursor(Canvas canvas, Size size) {
+    final cursorPosition = widget.cursorPosition;
+
+    if (cursorPosition == null) {
+      return;
+    }
+
+    if (!widget.terminalState.cursorVisibleMode) {
+      return;
+    }
+
+    final step = widget.charMetrics.width;
+
+    final paint = Paint()
+      ..color = widget.theme.cursor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+
+    canvas.drawRect(
+      Rect.fromLTWH(cursorPosition * step, 0, step, size.height),
+      paint,
+    );
+  }
+
+  @pragma('vm:prefer-inline')
+  Color resolveForegroundColor(int cellColor) {
+    final colorType = cellColor & CellColor.typeMask;
+    final colorValue = cellColor & CellColor.valueMask;
+
+    switch (colorType) {
+      case CellColor.normal:
+        return widget.theme.foreground;
+      case CellColor.named:
+      case CellColor.palette:
+        return widget.palette[colorValue];
+      case CellColor.rgb:
+      default:
+        return Color(colorValue | 0xFF000000);
+    }
+  }
+
+  @pragma('vm:prefer-inline')
+  Color resolveBackgroundColor(int cellColor) {
+    final colorType = cellColor & CellColor.typeMask;
+    final colorValue = cellColor & CellColor.valueMask;
+
+    switch (colorType) {
+      case CellColor.normal:
+        return widget.theme.background;
+      case CellColor.named:
+      case CellColor.palette:
+        return widget.palette[colorValue];
+      case CellColor.rgb:
+      default:
+        return Color(colorValue | 0xFF000000);
     }
   }
 

@@ -50,7 +50,7 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
 
   int _viewHeight = 25;
 
-  CursorStyle _cursor = CursorStyle();
+  CursorStyle _cursorStyle = CursorStyle();
 
   bool _insertMode = false;
 
@@ -70,7 +70,7 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
 
   bool _cursorBlinkMode = false;
 
-  bool _cursorVisibleMode = false;
+  bool _cursorVisibleMode = true;
 
   bool _appKeypadMode = false;
 
@@ -86,7 +86,7 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
 
   int get viewHeight => _viewHeight;
 
-  CursorStyle get cursor => _cursor;
+  CursorStyle get cursor => _cursorStyle;
 
   bool get insertMode => _insertMode;
 
@@ -115,6 +115,8 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
   bool get altBufferMouseScrollMode => _altBufferMouseScrollMode;
 
   bool get bracketedPasteMode => _bracketedPasteMode;
+
+  Buffer get buffer => _buffer;
 
   CircularList<BufferLine> get lines => _buffer.lines;
 
@@ -478,127 +480,127 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
 
   @override
   void resetCursorStyle() {
-    _cursor.reset();
+    _cursorStyle.reset();
   }
 
   @override
   void setCursorBold() {
-    _cursor.setBold();
+    _cursorStyle.setBold();
   }
 
   @override
   void setCursorFaint() {
-    _cursor.setFaint();
+    _cursorStyle.setFaint();
   }
 
   @override
   void setCursorItalic() {
-    _cursor.setItalic();
+    _cursorStyle.setItalic();
   }
 
   @override
   void setCursorUnderline() {
-    _cursor.setUnderline();
+    _cursorStyle.setUnderline();
   }
 
   @override
   void setCursorBlink() {
-    _cursor.setBlink();
+    _cursorStyle.setBlink();
   }
 
   @override
   void setCursorInverse() {
-    _cursor.setInverse();
+    _cursorStyle.setInverse();
   }
 
   @override
   void setCursorInvisible() {
-    _cursor.setInvisible();
+    _cursorStyle.setInvisible();
   }
 
   @override
   void setCursorStrikethrough() {
-    _cursor.setStrikethrough();
+    _cursorStyle.setStrikethrough();
   }
 
   @override
   void unsetCursorBold() {
-    _cursor.unsetBold();
+    _cursorStyle.unsetBold();
   }
 
   @override
   void unsetCursorFaint() {
-    _cursor.unsetFaint();
+    _cursorStyle.unsetFaint();
   }
 
   @override
   void unsetCursorItalic() {
-    _cursor.unsetItalic();
+    _cursorStyle.unsetItalic();
   }
 
   @override
   void unsetCursorUnderline() {
-    _cursor.unsetUnderline();
+    _cursorStyle.unsetUnderline();
   }
 
   @override
   void unsetCursorBlink() {
-    _cursor.unsetBlink();
+    _cursorStyle.unsetBlink();
   }
 
   @override
   void unsetCursorInverse() {
-    _cursor.unsetInverse();
+    _cursorStyle.unsetInverse();
   }
 
   @override
   void unsetCursorInvisible() {
-    _cursor.unsetInvisible();
+    _cursorStyle.unsetInvisible();
   }
 
   @override
   void unsetCursorStrikethrough() {
-    _cursor.unsetStrikethrough();
+    _cursorStyle.unsetStrikethrough();
   }
 
   @override
   void setForegroundColor16(int color) {
-    _cursor.setForegroundColor16(color);
+    _cursorStyle.setForegroundColor16(color);
   }
 
   @override
   void setForegroundColor256(int index) {
-    _cursor.setForegroundColor256(index);
+    _cursorStyle.setForegroundColor256(index);
   }
 
   @override
   void setForegroundColorRgb(int r, int g, int b) {
-    _cursor.setForegroundColorRgb(r, g, b);
+    _cursorStyle.setForegroundColorRgb(r, g, b);
   }
 
   @override
   void resetForeground() {
-    _cursor.resetForegroundColor();
+    _cursorStyle.resetForegroundColor();
   }
 
   @override
   void setBackgroundColor16(int color) {
-    _cursor.setBackgroundColor16(color);
+    _cursorStyle.setBackgroundColor16(color);
   }
 
   @override
   void setBackgroundColor256(int index) {
-    _cursor.setBackgroundColor256(index);
+    _cursorStyle.setBackgroundColor256(index);
   }
 
   @override
   void setBackgroundColorRgb(int r, int g, int b) {
-    _cursor.setBackgroundColorRgb(r, g, b);
+    _cursorStyle.setBackgroundColorRgb(r, g, b);
   }
 
   @override
   void resetBackground() {
-    _cursor.resetBackgroundColor();
+    _cursorStyle.resetBackgroundColor();
   }
 
   @override
