@@ -3,9 +3,9 @@ import 'dart:collection';
 import 'dart:typed_data';
 
 class ByteConsumer {
-  final _queue = Queue<Uint8List>();
+  final _queue = Queue<List<int>>();
 
-  final _consumed = Queue<Uint8List>();
+  final _consumed = Queue<List<int>>();
 
   var _currentOffset = 0;
 
@@ -13,9 +13,9 @@ class ByteConsumer {
 
   var _totalConsumed = 0;
 
-  void add(Uint8List data) {
+  void add(String data) {
     if (data.isEmpty) return;
-    _queue.addLast(data);
+    _queue.addLast(data.runes.toList(growable: false));
     _length += data.length;
   }
 
@@ -78,24 +78,24 @@ class ByteConsumer {
   }
 }
 
-void main() {
-  final consumer = ByteConsumer();
-  consumer.add(Uint8List.fromList([1, 2, 3]));
-  consumer.add(Uint8List.fromList([4, 5, 6]));
+// void main() {
+//   final consumer = ByteConsumer();
+//   consumer.add(Uint8List.fromList([1, 2, 3]));
+//   consumer.add(Uint8List.fromList([4, 5, 6]));
 
-  while (consumer.isNotEmpty) {
-    print(consumer.consume());
-  }
+//   while (consumer.isNotEmpty) {
+//     print(consumer.consume());
+//   }
 
-  consumer.rollback(5);
+//   consumer.rollback(5);
 
-  while (consumer.isNotEmpty) {
-    print(consumer.consume());
-  }
+//   while (consumer.isNotEmpty) {
+//     print(consumer.consume());
+//   }
 
-  consumer.rollbackTo(3);
+//   consumer.rollbackTo(3);
 
-  while (consumer.isNotEmpty) {
-    print(consumer.consume());
-  }
-}
+//   while (consumer.isNotEmpty) {
+//     print(consumer.consume());
+//   }
+// }

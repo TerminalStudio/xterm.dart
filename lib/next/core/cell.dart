@@ -1,3 +1,5 @@
+import 'package:xterm/util/hash_values.dart';
+
 class CellData {
   CellData({
     required this.foreground,
@@ -6,6 +8,15 @@ class CellData {
     required this.content,
   });
 
+  factory CellData.empty() {
+    return CellData(
+      foreground: 0,
+      background: 0,
+      flags: 0,
+      content: 0,
+    );
+  }
+
   int foreground;
 
   int background;
@@ -13,6 +24,10 @@ class CellData {
   int flags;
 
   int content;
+
+  int hashForeground() {
+    return hashValues(foreground, flags, content);
+  }
 }
 
 abstract class CellAttr {
@@ -27,19 +42,20 @@ abstract class CellAttr {
 }
 
 abstract class CellColor {
-  static const shift = 25;
-  static const mask = 3 << shift;
+  static const valueMask = 0xFFFFFF;
 
-  static const normal = 0 << shift;
-  static const named = 1 << shift;
-  static const palette = 2 << shift;
-  static const rgb = 3 << shift;
+  static const typeShift = 25;
+  static const typeMask = 3 << typeShift;
+
+  static const normal = 0 << typeShift;
+  static const named = 1 << typeShift;
+  static const palette = 2 << typeShift;
+  static const rgb = 3 << typeShift;
 }
 
 abstract class CellContent {
   static const codepointMask = 0x1fffff;
 
   static const widthShift = 22;
-
-  static const widthMask = 3 << widthShift;
+  // static const widthMask = 3 << widthShift;
 }

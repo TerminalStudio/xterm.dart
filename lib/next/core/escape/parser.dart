@@ -27,9 +27,9 @@ class EscapeParser {
   /// End of sequence or character being processed. Useful for debugging.
   int get tokenEnd => _queue.totalConsumed;
 
-  void write(Uint8List data) {
+  void write(String chunk) {
     _queue.unrefConsumedBlocks();
-    _queue.add(data);
+    _queue.add(chunk);
     _process();
   }
 
@@ -162,11 +162,15 @@ class EscapeParser {
   }
 
   bool _escHandleDesignateCharset0() {
+    if (_queue.isEmpty) return false;
+    _queue.consume();
     handler.designateCharset(0);
     return true;
   }
 
   bool _escHandleDesignateCharset1() {
+    if (_queue.isEmpty) return false;
+    _queue.consume();
     handler.designateCharset(1);
     return true;
   }
@@ -326,15 +330,15 @@ class EscapeParser {
   ///
   /// https://terminalguide.namepad.de/seq/csi_sf/
   void _csiHandleCursorPosition() {
-    var x = 1;
-    var y = 1;
+    var row = 1;
+    var col = 1;
 
     if (_csi.params.length == 2) {
-      x = _csi.params[0];
-      y = _csi.params[1];
+      row = _csi.params[0];
+      col = _csi.params[1];
     }
 
-    handler.setCursor(x - 1, y - 1);
+    handler.setCursor(col - 1, row - 1);
   }
 
   /// `ESC [ Ps g` Tab Clear (TBC)
@@ -637,6 +641,7 @@ class EscapeParser {
 
     if (_csi.params.isNotEmpty) {
       amount = _csi.params[0];
+      if (amount == 0) amount = 1;
     }
 
     handler.moveCursorY(-amount);
@@ -650,6 +655,7 @@ class EscapeParser {
 
     if (_csi.params.isNotEmpty) {
       amount = _csi.params[0];
+      if (amount == 0) amount = 1;
     }
 
     handler.moveCursorY(amount);
@@ -663,6 +669,7 @@ class EscapeParser {
 
     if (_csi.params.isNotEmpty) {
       amount = _csi.params[0];
+      if (amount == 0) amount = 1;
     }
 
     handler.moveCursorX(amount);
@@ -676,6 +683,7 @@ class EscapeParser {
 
     if (_csi.params.isNotEmpty) {
       amount = _csi.params[0];
+      if (amount == 0) amount = 1;
     }
 
     handler.moveCursorX(-amount);
@@ -689,6 +697,7 @@ class EscapeParser {
 
     if (_csi.params.isNotEmpty) {
       amount = _csi.params[0];
+      if (amount == 0) amount = 1;
     }
 
     handler.cursorNextLine(amount);
@@ -702,6 +711,7 @@ class EscapeParser {
 
     if (_csi.params.isNotEmpty) {
       amount = _csi.params[0];
+      if (amount == 0) amount = 1;
     }
 
     handler.cursorPrecedingLine(amount);
@@ -712,6 +722,7 @@ class EscapeParser {
 
     if (_csi.params.isNotEmpty) {
       x = _csi.params[0];
+      if (x == 0) x = 1;
     }
 
     handler.setCursorX(x - 1);

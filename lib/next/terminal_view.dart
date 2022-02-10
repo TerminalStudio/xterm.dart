@@ -1,11 +1,14 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:xterm/buffer/cell_flags.dart';
 // import 'package:flutter/widgets.dart';
 import 'package:xterm/next/core/cell.dart';
 import 'package:xterm/next/core/line.dart';
 import 'package:xterm/next/terminal.dart';
+import 'package:xterm/next/ui/char_metrics.dart';
 import 'package:xterm/next/ui/palette_builder.dart';
+import 'package:xterm/next/ui/paragraph_cache.dart';
 import 'package:xterm/next/ui/text_style.dart';
 import 'package:xterm/next/ui/theme.dart';
 import 'package:xterm/next/ui/themes.dart';
@@ -36,148 +39,200 @@ class TerminalView extends StatefulWidget {
 }
 
 class _TerminalViewState extends State<TerminalView> {
-  var _palette = <Color>[];
+  var colorPalette = <Color>[];
 
-  void _rebuildPalette() {
-    _palette = PaletteBuilder(widget.theme).build();
-  }
+  final paragraphCache = ParagraphCache(1024);
 
   @override
   void initState() {
-    super.initState();
     _rebuildPalette();
-    // widget.terminal.addListener(_onTerminalChanged);
+    widget.terminal.addListener(_onTerminalChanged);
+    super.initState();
   }
 
   @override
   void didUpdateWidget(TerminalView oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.terminal != widget.terminal) {
-      // oldWidget.terminal.removeListener(_onTerminalChanged);
-      // widget.terminal.addListener(_onTerminalChanged);
-    }
     if (oldWidget.theme != widget.theme) {
       _rebuildPalette();
+      paragraphCache.clear();
     }
+    if (oldWidget.terminal != widget.terminal) {
+      oldWidget.terminal.removeListener(_onTerminalChanged);
+      widget.terminal.addListener(_onTerminalChanged);
+    }
+    super.didUpdateWidget(oldWidget);
   }
 
   @override
-  dispose() {
-    // widget.terminal.removeListener(_onTerminalChanged);
+  void dispose() {
+    widget.terminal.removeListener(_onTerminalChanged);
     super.dispose();
   }
 
-  void _onTerminalChanged() {}
+  void _rebuildPalette() {
+    colorPalette = PaletteBuilder(widget.theme).build();
+  }
+
+  void _onTerminalChanged() {
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
-    final style = TextStyle(
-      color: Colors.black,
-      fontSize: 12,
-      height: 1.5,
-      fontFamily: 'monospace',
-      fontFamilyFallback: [
-        'Menlo',
-        'Monaco',
-        'Consolas',
-        'Liberation Mono',
-        'Courier New',
-        'monospace',
-      ],
-    );
-    final builder = ParagraphBuilder(style.getParagraphStyle());
-    builder.pushStyle(style.getTextStyle());
-    builder.addText('m');
-
-    final paragraph = builder.build();
-    paragraph.layout(ParagraphConstraints(width: double.infinity));
-    print(paragraph.longestLine);
-
     final lines = widget.terminal.lines;
+
+    // Calculate everytime build happens, because some fonts library
+    // lazily load fonts (such as google_fonts) and this can change the
+    // font metrics while textStyle is still the same.
+    final charMetrics = calcCharMetrics(widget.textStyle);
+
     return ListView.builder(
       padding: widget.padding,
-      itemExtent: 20,
+      itemExtent: charMetrics.height,
       cacheExtent: 1200,
       itemCount: lines.length,
       itemBuilder: (context, index) {
-        return TerminalLineView(lines[index]);
+        return TerminalLineView(
+          lines[index],
+          theme: widget.theme,
+          palette: colorPalette,
+          textStyle: widget.textStyle,
+          charMetrics: charMetrics,
+          cache: paragraphCache,
+        );
       },
     );
   }
 }
 
 class TerminalLineView extends StatelessWidget {
-  const TerminalLineView(this.line, {Key? key}) : super(key: key);
+  const TerminalLineView(
+    this.line, {
+    Key? key,
+    required this.theme,
+    required this.palette,
+    required this.textStyle,
+    required this.charMetrics,
+    required this.cache,
+  }) : super(key: key);
 
   final BufferLine line;
+
+  final TerminalTheme theme;
+
+  final List<Color> palette;
+
+  final TerminalStyle textStyle;
+
+  final CharMetrics charMetrics;
+
+  final ParagraphCache cache;
 
   @override
   Widget build(BuildContext context) {
     // TextField
     return CustomPaint(
-      painter: _TerminalLinePainter(line),
+      painter: _TerminalLinePainter(this),
     );
   }
 }
 
 class _TerminalLinePainter extends CustomPainter {
-  final BufferLine line;
+  final TerminalLineView widget;
 
-  final List<Color> palette;
-
-  _TerminalLinePainter(this.line, this.palette);
+  _TerminalLinePainter(this.widget);
 
   @override
   void paint(Canvas canvas, Size size) {
-    final step = 7.2;
+    paintBackground(canvas, size);
+    paintForeground(canvas, size);
+  }
+
+  void paintBackground(Canvas canvas, Size size) {
+    final step = widget.charMetrics.width;
+
+    final line = widget.line;
 
     for (var i = 0; i < line.length; i++) {
-      final backgroundCellColor = line.getBackground(i);
+      final cellColor = line.getBackground(i);
 
-      late int backgroundColor;
+      final colorType = cellColor & CellColor.typeMask;
+      final colorValue = cellColor & CellColor.valueMask;
 
-      switch (backgroundCellColor & CellColor.mask) {
+      late Color color;
+
+      switch (colorType) {
         case CellColor.normal:
-          backgroundColor = Colors.grey.value;
+          color = widget.theme.background;
           break;
         case CellColor.named:
-          backgroundColor = Colors.blue.value;
-          break;
         case CellColor.palette:
-          backgroundColor = Colors.red.value;
+          color = widget.palette[colorValue];
           break;
         case CellColor.rgb:
         default:
-          // color = Colors.green.value;
-          backgroundColor = backgroundCellColor | 0xFF000000;
+          color = Color(cellColor | 0xFF000000);
           break;
       }
 
-      final paint = Paint()..color = Color(backgroundColor);
-      canvas.drawRect(Rect.fromLTWH(i * step, 0, 20, size.height), paint);
+      final paint = Paint()..color = color;
+      canvas.drawRect(Rect.fromLTWH(i * step, 0, step + 1, size.height), paint);
     }
+  }
 
-    final style = TextStyle(
-      color: Colors.black,
-      fontSize: 12,
-      height: 1.5,
-      fontFamily: 'monospace',
-      fontFamilyFallback: [
-        'Menlo',
-        'Monaco',
-        'Consolas',
-        'Liberation Mono',
-        'Courier New',
-        'monospace',
-      ],
-    );
-    final builder = ParagraphBuilder(style.getParagraphStyle());
-    builder.pushStyle(style.getTextStyle());
-    builder.addText(line.toString());
+  void paintForeground(Canvas canvas, Size size) {
+    final step = widget.charMetrics.width;
+    final cache = widget.cache;
+    final line = widget.line;
+    final textStyle = widget.textStyle;
 
-    final paragraph = builder.build();
-    paragraph.layout(ParagraphConstraints(width: double.infinity));
-    canvas.drawParagraph(paragraph, Offset.zero);
+    final cellData = CellData.empty();
+
+    for (var i = 0; i < line.length; i++) {
+      line.getCellData(i, cellData);
+
+      final hash = cellData.hashForeground();
+      final charWidth = cellData.content >> CellContent.widthShift;
+
+      var paragraph = cache.getLayoutFromCache(hash);
+      if (paragraph == null) {
+        final charCode = cellData.content & CellContent.codepointMask;
+
+        final colorType = cellData.foreground & CellColor.typeMask;
+        final colorValue = cellData.foreground & CellColor.valueMask;
+
+        late Color color;
+        switch (colorType) {
+          case CellColor.normal:
+            color = widget.theme.foreground;
+            break;
+          case CellColor.named:
+          case CellColor.palette:
+            color = widget.palette[colorValue];
+            break;
+          case CellColor.rgb:
+          default:
+            color = Color(cellData.foreground | 0xFF000000);
+            break;
+        }
+
+        final style = textStyle.toTextStyle(
+          color: color,
+          bold: cellData.flags & CellFlags.bold != 0,
+          italic: cellData.flags & CellFlags.italic != 0,
+          underline: cellData.flags & CellFlags.underline != 0,
+        );
+
+        paragraph = cache.performAndCacheLayout(
+            String.fromCharCode(charCode), style, hash);
+      }
+
+      canvas.drawParagraph(paragraph, Offset(i * step, 0));
+
+      if (charWidth == 2) {
+        i++;
+      }
+    }
   }
 
   @override

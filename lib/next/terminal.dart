@@ -11,8 +11,9 @@ import 'package:xterm/next/core/mouse.dart';
 import 'package:xterm/next/core/state.dart';
 import 'package:xterm/next/core/tabs.dart';
 import 'package:xterm/util/circular_list.dart';
+import 'package:xterm/util/observable.dart';
 
-class Terminal implements TerminalState, EscapeHandler {
+class Terminal with Observable implements TerminalState, EscapeHandler {
   final int maxLines;
 
   final void Function()? onBell;
@@ -117,12 +118,9 @@ class Terminal implements TerminalState, EscapeHandler {
 
   CircularList<BufferLine> get lines => _buffer.lines;
 
-  void add(Uint8List data) {
-    _parser.write(data);
-  }
-
   void write(String data) {
-    add(const Utf8Encoder().convert(data));
+    _parser.write(data);
+    notifyListeners();
   }
 
   /* Handlers */
@@ -141,7 +139,7 @@ class Terminal implements TerminalState, EscapeHandler {
 
   @override
   void backspaceReturn() {
-    _buffer.setCursorX(0);
+    _buffer.moveCursorX(-1);
   }
 
   @override

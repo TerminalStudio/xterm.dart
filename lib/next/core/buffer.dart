@@ -295,15 +295,15 @@ class Buffer {
   }
 
   void setCursor(int cursorX, int cursorY) {
-    var maxLine = viewHeight - 1;
+    var maxCursorY = viewHeight - 1;
 
     if (terminal.originMode) {
       cursorY += _marginTop;
-      maxLine = _marginBottom;
+      maxCursorY = _marginBottom;
     }
 
     _cursorX = cursorX.clamp(0, viewWidth - 1);
-    _cursorY = cursorY.clamp(0, maxLine);
+    _cursorY = cursorY.clamp(0, maxCursorY);
   }
 
   void moveCursor(int offsetX, int offsetY) {
