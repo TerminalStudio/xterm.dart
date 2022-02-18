@@ -501,7 +501,7 @@ class Terminal
   }
 
   void selectWordOrRow(Position position) {
-    if (position.y > buffer.lines.length) {
+    if (position.y >= buffer.lines.length) {
       return;
     }
 
@@ -558,25 +558,23 @@ class Terminal
     }
 
     final builder = StringBuffer();
+    final yStart = max(_selection.start!.y, 0);
+    final yEnd = min(_selection.end!.y, buffer.height - 1);
 
-    for (var row = _selection.start!.y; row <= _selection.end!.y; row++) {
-      if (row >= buffer.height) {
-        break;
-      }
-
+    for (var row = yStart; row <= yEnd; row++) {
       final line = buffer.lines[row];
 
       var xStart = 0;
       var xEnd = viewWidth - 1;
 
-      if (row == _selection.start!.y) {
-        xStart = _selection.start!.x;
+      if (row == yStart) {
+        xStart = max(_selection.start!.x, 0);
       } else if (!line.isWrapped) {
         builder.write("\n");
       }
 
-      if (row == _selection.end!.y) {
-        xEnd = _selection.end!.x;
+      if (row == yEnd) {
+        xEnd = min(_selection.end!.x, terminalWidth);
       }
 
       for (var col = xStart; col <= xEnd; col++) {
