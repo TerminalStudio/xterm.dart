@@ -27,7 +27,8 @@ dependencies:
   dartssh2:
     git:
       url: https://github.com/TerminalStudio/dartssh2
-
+  pty:
+    git: https://github.com/TerminalStudio/pty
   flutter:
     sdk: flutter
 
