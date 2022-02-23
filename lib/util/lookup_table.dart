@@ -29,4 +29,6 @@ class FastLookupTable<T> {
 
     return _table[index];
   }
+
+  int get maxIndex => _maxIndex;
 }

@@ -45,7 +45,9 @@ class CSI {
   });
 
   int? prefix;
+
   List<int> params;
+
   int finalByte;
   // final List<int> intermediates;
 
