@@ -1,3 +1,5 @@
+// ignore_for_file: constant_identifier_names
+
 import 'dart:typed_data';
 
 const BMP_COMBINING = [
@@ -477,7 +479,7 @@ Uint8List buildTable() {
 bool bisearch(int ucs, List<List<int>> data) {
   var min = 0;
   var max = data.length - 1;
-  var mid;
+  int mid;
   if (ucs < data[0][0] || ucs > data[max][1]) {
     return false;
   }

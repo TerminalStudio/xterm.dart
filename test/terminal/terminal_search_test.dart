@@ -31,7 +31,7 @@ void main() {
       final fixture = _TestFixture();
       verifyNoMoreInteractions(fixture.terminalSearchInteractionMock);
       final task = fixture.uut.createSearchTask('testsearch');
-      task.pattern = "some test";
+      task.pattern = 'some test';
       task.isActive = false;
       task.searchResult;
     });
@@ -42,7 +42,7 @@ void main() {
       final task = fixture.uut.createSearchTask('testsearch');
       task.isActive = true;
       task.pattern = 'content';
-      task.options = TerminalSearchOptions(
+      task.options = const TerminalSearchOptions(
           caseSensitive: false, matchWholeWord: false, useRegex: false);
       final result = task.searchResult;
       expect(result.allHits.length, 1);
@@ -58,7 +58,7 @@ void main() {
       final task = fixture.uut.createSearchTask('testsearch');
       task.isActive = true;
       task.pattern = 'line';
-      task.options = TerminalSearchOptions(
+      task.options = const TerminalSearchOptions(
           caseSensitive: false, matchWholeWord: false, useRegex: false);
       final result = task.searchResult;
       expect(result.allHits.length, 1);
@@ -88,7 +88,7 @@ void main() {
       final task = fixture.uut.createSearchTask('testsearch');
       task.isActive = true;
       task.pattern = '🍋';
-      task.options = TerminalSearchOptions(
+      task.options = const TerminalSearchOptions(
           caseSensitive: false, matchWholeWord: false, useRegex: false);
       final result = task.searchResult;
       expect(result.allHits.length, 1);
@@ -104,7 +104,7 @@ void main() {
       final task = fixture.uut.createSearchTask('testsearch');
       task.isActive = true;
       task.pattern = 'は';
-      task.options = TerminalSearchOptions(
+      task.options = const TerminalSearchOptions(
           caseSensitive: false, matchWholeWord: false, useRegex: false);
       final result = task.searchResult;
       expect(result.allHits.length, 1);
@@ -123,7 +123,7 @@ void main() {
       final task = fixture.uut.createSearchTask('testsearch');
       task.isActive = true;
       task.pattern = 'split';
-      task.options = TerminalSearchOptions(
+      task.options = const TerminalSearchOptions(
           caseSensitive: false, matchWholeWord: false, useRegex: false);
       final result = task.searchResult;
       expect(result.allHits.length, 1);
@@ -140,7 +140,7 @@ void main() {
     final task = fixture.uut.createSearchTask('testsearch');
     task.isActive = true;
     task.pattern = 'line';
-    task.options = TerminalSearchOptions(
+    task.options = const TerminalSearchOptions(
         caseSensitive: true, matchWholeWord: false, useRegex: false);
 
     final result = task.searchResult;
@@ -161,7 +161,7 @@ void main() {
     final task = fixture.uut.createSearchTask('testsearch');
     task.isActive = true;
     task.pattern = 'lin';
-    task.options = TerminalSearchOptions(
+    task.options = const TerminalSearchOptions(
         caseSensitive: false, matchWholeWord: true, useRegex: false);
 
     final result = task.searchResult;
@@ -181,7 +181,7 @@ void main() {
     fixture.expectTerminalSearchContent(['Simple Content', 'Second Line']);
     final task = fixture.uut.createSearchTask('testsearch');
     task.isActive = true;
-    task.options = TerminalSearchOptions(
+    task.options = const TerminalSearchOptions(
         caseSensitive: false, matchWholeWord: false, useRegex: true);
 
     task.pattern =
@@ -200,7 +200,7 @@ void main() {
         ['Simple Content', 'Second Line', 'Third row']);
     final task = fixture.uut.createSearchTask('testsearch');
     task.isActive = true;
-    task.options = TerminalSearchOptions(
+    task.options = const TerminalSearchOptions(
         caseSensitive: false, matchWholeWord: false, useRegex: false);
 
     task.pattern = 'line';
@@ -244,7 +244,7 @@ void main() {
     final task = fixture.uut.createSearchTask('testsearch');
     task.isActive = true;
     task.pattern = 'line.\\{';
-    task.options = TerminalSearchOptions(
+    task.options = const TerminalSearchOptions(
         caseSensitive: false, matchWholeWord: false, useRegex: false);
 
     final result = task.searchResult;
@@ -260,7 +260,7 @@ void main() {
     final task = fixture.uut.createSearchTask('testsearch');
     task.isActive = true;
     task.pattern = 'line';
-    task.options = TerminalSearchOptions(
+    task.options = const TerminalSearchOptions(
         caseSensitive: false, matchWholeWord: false, useRegex: false);
 
     final result = task.searchResult;

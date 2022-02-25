@@ -9,14 +9,14 @@ import 'package:xterm/util/unicode_v11.dart';
 /// It stores the hits the search produced and the navigation state inside
 /// the search results
 class TerminalSearchResult {
-  late final _allHits;
+  late final List<TerminalSearchHit> _allHits;
   int? _currentSearchHit;
 
   /// creates a new search result instance from the given hits
   TerminalSearchResult.fromHits(List<TerminalSearchHit> hits) {
     _allHits = hits;
 
-    if (_allHits.length > 0) {
+    if (_allHits.isNotEmpty) {
       _currentSearchHit = _allHits.length;
     } else {
       _currentSearchHit = null;
@@ -35,12 +35,10 @@ class TerminalSearchResult {
 
   /// sets the current search hit number
   set currentSearchHit(int? currentSearchHit) {
-    if (_allHits.length <= 0) {
+    if (_allHits.isEmpty) {
       _currentSearchHit = null;
     } else {
-      _currentSearchHit = currentSearchHit != null
-          ? currentSearchHit.clamp(1, _allHits.length).toInt()
-          : null;
+      _currentSearchHit = currentSearchHit?.clamp(1, _allHits.length).toInt();
     }
   }
 }
@@ -83,7 +81,7 @@ class TerminalSearchHit {
 
 /// represents options for a terminal search
 class TerminalSearchOptions extends Equatable {
-  TerminalSearchOptions({
+  const TerminalSearchOptions({
     this.caseSensitive = false,
     this.matchWholeWord = false,
     this.useRegex = false,
@@ -339,7 +337,7 @@ class TerminalSearch {
   /// of the terminal search string
   TerminalSearchTask createSearchTask(String dirtyTagName) {
     return TerminalSearchTask(
-        this, _terminal, dirtyTagName, TerminalSearchOptions());
+        this, _terminal, dirtyTagName, const TerminalSearchOptions());
   }
 
   /// returns the current terminal search string. The search string will be

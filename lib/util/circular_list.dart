@@ -16,9 +16,10 @@ class CircularList<T> {
   }
 
   set maxLength(int value) {
-    if (value <= 0)
+    if (value <= 0) {
       throw ArgumentError.value(
           value, 'value', 'maxLength can\'t be negative!');
+    }
 
     if (value == _array.length) return;
 
@@ -75,9 +76,9 @@ class CircularList<T> {
   }
 
   void pushAll(Iterable<T> items) {
-    items.forEach((element) {
+    for (var element in items) {
       push(element);
-    });
+    }
   }
 
   void push(T value) {
@@ -154,10 +155,12 @@ class CircularList<T> {
 
   void shiftElements(int start, int count, int offset) {
     if (count < 0) return;
-    if (start < 0 || start >= _length)
+    if (start < 0 || start >= _length) {
       throw Exception('Start argument is out of range');
-    if (start + offset < 0)
+    }
+    if (start + offset < 0) {
       throw Exception('Can not shift elements in list beyond index 0');
+    }
     if (offset > 0) {
       for (var i = count - 1; i >= 0; i--) {
         this[start + i + offset] = this[start + i];

@@ -3,13 +3,13 @@ import 'package:xterm/buffer/line/line.dart';
 import 'package:xterm/terminal/cursor.dart';
 
 void main() {
-  group("BufferLine Tests", () {
-    test("creation test", () {
+  group('BufferLine Tests', () {
+    test('creation test', () {
       final line = BufferLine();
       expect(line, isNotNull);
     });
 
-    test("set isWrapped", () {
+    test('set isWrapped', () {
       final line = BufferLine(isWrapped: false);
       expect(line.isWrapped, isFalse);
 
@@ -20,7 +20,7 @@ void main() {
       expect(line.isWrapped, isFalse);
     });
 
-    test("ensure() works", () {
+    test('ensure() works', () {
       final line = BufferLine(length: 10);
       expect(() => line.cellSetContent(1000, 65), throwsRangeError);
 
@@ -28,7 +28,7 @@ void main() {
       line.cellSetContent(1000, 65);
     });
 
-    test("insert() works", () {
+    test('insert() works', () {
       final line = BufferLine(length: 10);
       line.cellSetContent(0, 65);
       line.cellSetContent(1, 66);
@@ -46,7 +46,7 @@ void main() {
       expect(result, equals([65, 0, 66, 67]));
     });
 
-    test("insertN() works", () {
+    test('insertN() works', () {
       final line = BufferLine(length: 10);
       line.cellSetContent(0, 65);
       line.cellSetContent(1, 66);
@@ -65,7 +65,7 @@ void main() {
       expect(result, equals([65, 0, 0, 66, 67]));
     });
 
-    test("removeN() works", () {
+    test('removeN() works', () {
       final line = BufferLine(length: 10);
       line.cellSetContent(0, 65);
       line.cellSetContent(1, 66);
@@ -86,7 +86,7 @@ void main() {
       expect(result, equals([65, 68, 69, 0, 0]));
     });
 
-    test("clear() works", () {
+    test('clear() works', () {
       final line = BufferLine(length: 10);
       line.cellSetContent(1, 65);
       line.cellSetContent(2, 66);
@@ -107,7 +107,7 @@ void main() {
       expect(result, equals([0, 0, 0, 0, 0]));
     });
 
-    test("cellInitialize() works", () {
+    test('cellInitialize() works', () {
       final line = BufferLine(length: 10);
       line.cellInitialize(
         0,
@@ -127,7 +127,7 @@ void main() {
       expect(result, equals([0x01, 0x02, 0x03, 0x04, 0x05]));
     });
 
-    test("cellHasContent() works", () {
+    test('cellHasContent() works', () {
       final line = BufferLine(length: 10);
 
       line.cellSetContent(0, 0x01);
@@ -137,49 +137,49 @@ void main() {
       expect(line.cellHasContent(0), isFalse);
     });
 
-    test("cellGetContent() and cellSetContent() works", () {
+    test('cellGetContent() and cellSetContent() works', () {
       final line = BufferLine(length: 10);
-      final content = 0x01;
+      const content = 0x01;
       line.cellSetContent(0, content);
       expect(line.cellGetContent(0), equals(content));
     });
 
-    test("cellGetFgColor() and cellSetFgColor() works", () {
+    test('cellGetFgColor() and cellSetFgColor() works', () {
       final line = BufferLine(length: 10);
-      final content = 0x01;
+      const content = 0x01;
       line.cellSetFgColor(0, content);
       expect(line.cellGetFgColor(0), equals(content));
     });
 
-    test("cellGetBgColor() and cellSetBgColor() works", () {
+    test('cellGetBgColor() and cellSetBgColor() works', () {
       final line = BufferLine(length: 10);
-      final content = 0x01;
+      const content = 0x01;
       line.cellSetBgColor(0, content);
       expect(line.cellGetBgColor(0), equals(content));
     });
 
-    test("cellHasFlag() and cellSetFlag() works", () {
+    test('cellHasFlag() and cellSetFlag() works', () {
       final line = BufferLine(length: 10);
-      final flag = 0x03;
+      const flag = 0x03;
       line.cellSetFlag(0, flag);
       expect(line.cellHasFlag(0, flag), isTrue);
     });
 
-    test("cellGetFlags() and cellSetFlags() works", () {
+    test('cellGetFlags() and cellSetFlags() works', () {
       final line = BufferLine(length: 10);
-      final content = 0x01;
+      const content = 0x01;
       line.cellSetFlags(0, content);
       expect(line.cellGetFlags(0), equals(content));
     });
 
-    test("cellGetWidth() and cellSetWidth() works", () {
+    test('cellGetWidth() and cellSetWidth() works', () {
       final line = BufferLine(length: 10);
-      final content = 0x01;
+      const content = 0x01;
       line.cellSetWidth(0, content);
       expect(line.cellGetWidth(0), equals(content));
     });
 
-    test("getTrimmedLength() works", () {
+    test('getTrimmedLength() works', () {
       final line = BufferLine(length: 10);
       expect(line.getTrimmedLength(), equals(0));
 
@@ -190,7 +190,7 @@ void main() {
       expect(line.getTrimmedLength(), equals(0));
     });
 
-    test("copyCellsFrom() works", () {
+    test('copyCellsFrom() works', () {
       final line1 = BufferLine(length: 10);
       final line2 = BufferLine(length: 10);
 
@@ -206,7 +206,7 @@ void main() {
       expect(line2.cellGetContent(5), equals(0));
     });
 
-    test("removeRange() works", () {
+    test('removeRange() works', () {
       final line = BufferLine(length: 10);
       line.cellSetContent(0, 65);
       line.cellSetContent(1, 66);
@@ -227,7 +227,7 @@ void main() {
       expect(result, equals([65, 68, 69, 0, 0]));
     });
 
-    test("clearRange() works", () {
+    test('clearRange() works', () {
       final line = BufferLine(length: 10);
       line.cellSetContent(0, 65);
       line.cellSetContent(1, 66);

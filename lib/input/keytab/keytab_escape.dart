@@ -4,7 +4,7 @@ String keytabUnescape(String str) {
   str = str
       .replaceAll(r'\E', _esc)
       .replaceAll(r'\\', '\\')
-      .replaceAll(r'\"', '\"')
+      .replaceAll(r'\"', '"')
       .replaceAll(r'\t', '\t')
       .replaceAll(r'\r', '\r')
       .replaceAll(r'\n', '\n')

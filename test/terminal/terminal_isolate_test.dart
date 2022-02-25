@@ -81,6 +81,6 @@ class FakeBackend implements TerminalBackend {
   int? _pixelWidth;
   int? _pixelHeight;
 
-  late final _exitCodeCompleter;
-  late final _outStream;
+  late final Completer<int> _exitCodeCompleter;
+  late final StreamController<String> _outStream;
 }

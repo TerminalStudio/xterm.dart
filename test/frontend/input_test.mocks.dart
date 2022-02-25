@@ -232,8 +232,6 @@ class MockTerminalUiInteraction extends _i1.Mock
       super.noSuchMethod(Invocation.method(#updateComposingString, [value]),
           returnValueForMissingStub: null);
   @override
-  String toString() => super.toString();
-  @override
   void addListener(void Function()? listener) =>
       super.noSuchMethod(Invocation.method(#addListener, [listener]),
           returnValueForMissingStub: null);

@@ -4,10 +4,11 @@ import 'package:flutter/widgets.dart';
 typedef ScrollHandler = void Function(Offset);
 
 class MouseListener extends StatelessWidget {
-  MouseListener({
+  const MouseListener({
     required this.child,
     required this.onScroll,
-  });
+    Key? key,
+  }) : super(key: key);
 
   final Widget child;
   final ScrollHandler onScroll;

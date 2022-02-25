@@ -206,7 +206,7 @@ void csiEraseInDisplayHandler(CSI csi, Terminal terminal) {
       terminal.buffer.eraseDisplay();
       break;
     default:
-      terminal.debug.onError("Unsupported ED: CSI $ps J");
+      terminal.debug.onError('Unsupported ED: CSI $ps J');
   }
 }
 
@@ -228,7 +228,7 @@ void csiEraseInLineHandler(CSI csi, Terminal terminal) {
       terminal.buffer.eraseLine();
       break;
     default:
-      terminal.debug.onError("Unsupported EL: CSI $ps K");
+      terminal.debug.onError('Unsupported EL: CSI $ps K');
   }
 }
 
@@ -305,11 +305,11 @@ void csiDeviceStatusReportHandler(CSI csi, Terminal terminal) {
 
   switch (csi.params[0]) {
     case 5:
-      terminal.backend?.write("\x1b[0n");
+      terminal.backend?.write('\x1b[0n');
       break;
     case 6: // report cursor position
       terminal.backend
-          ?.write("\x1b[${terminal.cursorX + 1};${terminal.cursorY + 1}R");
+          ?.write('\x1b[${terminal.cursorX + 1};${terminal.cursorY + 1}R');
       break;
     default:
       terminal.debug

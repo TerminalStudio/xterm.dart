@@ -10,7 +10,7 @@ class FastLookupTable<T> {
       }
     }
 
-    this._maxIndex = maxIndex;
+    _maxIndex = maxIndex;
 
     _table = List<T?>.filled(maxIndex + 1, null);
 

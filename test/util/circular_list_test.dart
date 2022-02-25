@@ -2,22 +2,22 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:xterm/util/circular_list.dart';
 
 void main() {
-  group("CircularList Tests", () {
-    test("normal creation test", () {
+  group('CircularList Tests', () {
+    test('normal creation test', () {
       final cl = CircularList<int>(1000);
 
       expect(cl, isNotNull);
       expect(cl.maxLength, 1000);
     });
 
-    test("change max value", () {
+    test('change max value', () {
       final cl = CircularList<int>(2000);
       expect(cl.maxLength, 2000);
       cl.maxLength = 3000;
       expect(cl.maxLength, 3000);
     });
 
-    test("circle works", () {
+    test('circle works', () {
       final cl = CircularList<int>(10);
       expect(cl.maxLength, 10);
       cl.pushAll(List<int>.generate(10, (index) => index));
@@ -33,7 +33,7 @@ void main() {
       expect(cl[9], 10);
     });
 
-    test("change max value after circle", () {
+    test('change max value after circle', () {
       final cl = CircularList<int>(10);
       cl.pushAll(List<int>.generate(15, (index) => index));
 
@@ -54,7 +54,7 @@ void main() {
       expect(cl[14], 19);
     });
 
-    test("setting the length erases trail", () {
+    test('setting the length erases trail', () {
       final cl = CircularList<int>(10);
       cl.pushAll(List<int>.generate(10, (index) => index));
 
@@ -69,7 +69,7 @@ void main() {
       expect(() => cl[5], throwsRangeError);
     });
 
-    test("foreach works", () {
+    test('foreach works', () {
       final cl = CircularList<int>(10);
       cl.pushAll(List<int>.generate(10, (index) => index));
 
@@ -84,7 +84,7 @@ void main() {
       expect(collectedItems[9], 9);
     });
 
-    test("index operator set works", () {
+    test('index operator set works', () {
       final cl = CircularList<int>(10);
       cl.pushAll(List<int>.generate(10, (index) => index));
 
@@ -96,7 +96,7 @@ void main() {
       expect(cl[5], 50);
     });
 
-    test("clear works", () {
+    test('clear works', () {
       final cl = CircularList<int>(10);
       cl.pushAll(List<int>.generate(10, (index) => index));
       expect(cl[5], 5);
@@ -107,7 +107,7 @@ void main() {
       expect(() => cl[5], throwsRangeError);
     });
 
-    test("pop works", () {
+    test('pop works', () {
       final cl = CircularList<int>(10);
       cl.pushAll(List<int>.generate(10, (index) => index));
       expect(cl.length, 10);
@@ -121,12 +121,12 @@ void main() {
       expect(cl[8], 8);
     });
 
-    test("pop on empty throws", () {
+    test('pop on empty throws', () {
       final cl = CircularList<int>(10);
       expect(() => cl.pop(), throwsA(anything));
     });
 
-    test("remove one works", () {
+    test('remove one works', () {
       final cl = CircularList<int>(10);
       cl.pushAll(List<int>.generate(10, (index) => index));
       expect(cl.length, 10);
@@ -138,7 +138,7 @@ void main() {
       expect(cl[5], 6);
     });
 
-    test("remove multiple works", () {
+    test('remove multiple works', () {
       final cl = CircularList<int>(10);
       cl.pushAll(List<int>.generate(10, (index) => index));
       expect(cl.length, 10);
@@ -150,7 +150,7 @@ void main() {
       expect(cl[5], 8);
     });
 
-    test("remove circle works", () {
+    test('remove circle works', () {
       final cl = CircularList<int>(10);
       cl.pushAll(List<int>.generate(15, (index) => index));
       expect(cl.length, 10);
@@ -162,7 +162,7 @@ void main() {
       expect(cl[0], 14);
     });
 
-    test("remove too much works", () {
+    test('remove too much works', () {
       final cl = CircularList<int>(10);
       cl.pushAll(List<int>.generate(10, (index) => index));
       expect(cl.length, 10);
@@ -174,7 +174,7 @@ void main() {
       expect(cl[0], 0);
     });
 
-    test("insert works", () {
+    test('insert works', () {
       final cl = CircularList<int>(10);
       cl.pushAll(List<int>.generate(5, (index) => index));
       expect(cl.length, 5);
@@ -186,7 +186,7 @@ void main() {
       expect(cl[1], 0);
     });
 
-    test("insert circular works", () {
+    test('insert circular works', () {
       final cl = CircularList<int>(10);
       cl.pushAll(List<int>.generate(10, (index) => index));
       expect(cl.length, 10);
@@ -201,7 +201,7 @@ void main() {
       expect(cl[1], 1);
     });
 
-    test("insert circular immediately remove works", () {
+    test('insert circular immediately remove works', () {
       final cl = CircularList<int>(10);
       cl.pushAll(List<int>.generate(10, (index) => index));
       expect(cl.length, 10);
@@ -216,7 +216,7 @@ void main() {
       expect(cl[1], 1);
     });
 
-    test("insert all works", () {
+    test('insert all works', () {
       final cl = CircularList<int>(10);
       cl.pushAll(List<int>.generate(10, (index) => index));
       expect(cl.length, 10);
@@ -233,7 +233,7 @@ void main() {
       expect(cl[9], 9);
     });
 
-    test("trim start works", () {
+    test('trim start works', () {
       final cl = CircularList<int>(10);
       cl.pushAll(List<int>.generate(10, (index) => index));
       expect(cl.length, 10);
@@ -249,7 +249,7 @@ void main() {
       expect(cl[4], 9);
     });
 
-    test("trim start with more than length works", () {
+    test('trim start with more than length works', () {
       final cl = CircularList<int>(10);
       cl.pushAll(List<int>.generate(10, (index) => index));
       expect(cl.length, 10);
@@ -262,7 +262,7 @@ void main() {
       expect(cl.length, 0);
     });
 
-    test("shift elements works", () {
+    test('shift elements works', () {
       final cl = CircularList<int>(20);
       cl.pushAll(List<int>.generate(20, (index) => index));
       expect(cl.length, 20);
@@ -284,7 +284,7 @@ void main() {
       expect(cl[11], 11); // untouched
     });
 
-    test("shift elements over bounds throws", () {
+    test('shift elements over bounds throws', () {
       final cl = CircularList<int>(10);
       cl.pushAll(List<int>.generate(10, (index) => index));
       expect(cl.length, 10);

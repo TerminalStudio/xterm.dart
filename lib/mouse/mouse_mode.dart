@@ -44,7 +44,7 @@ class MouseModeX10 extends MouseMode {
 
   @override
   void onTap(Terminal terminal, Position offset) {
-    final btn = 1;
+    const btn = 1;
 
     final px = offset.x + 1;
     final py = terminal.buffer.convertRawLineToViewLine(offset.y) + 1;

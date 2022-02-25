@@ -17,7 +17,7 @@ class BufferLine {
   }
 
   late BufferLineData _data;
-  final _nonDirtyTags = Set<String>();
+  final _nonDirtyTags = <String>{};
 
   void markTagAsNonDirty(String tag) {
     _nonDirtyTags.add(tag);

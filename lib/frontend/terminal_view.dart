@@ -164,7 +164,7 @@ class _TerminalViewState extends State<TerminalView> {
     super.dispose();
   }
 
-  GlobalKey _keyCursor = GlobalKey();
+  final GlobalKey _keyCursor = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
@@ -238,7 +238,7 @@ class _TerminalViewState extends State<TerminalView> {
                   offset.applyViewportDimension(viewPortHeight);
 
                   if (widget.terminal.isReady) {
-                    final minScrollExtent = 0.0;
+                    const minScrollExtent = 0.0;
 
                     final maxScrollExtent = math.max(
                         0.0,
@@ -309,7 +309,7 @@ class _TerminalViewState extends State<TerminalView> {
         widget.terminal.refresh();
       },
       child: Container(
-        constraints: BoxConstraints.expand(),
+        constraints: const BoxConstraints.expand(),
         child: Padding(
           padding: EdgeInsets.all(widget.padding),
           child: Stack(
@@ -444,14 +444,15 @@ class CursorView extends StatefulWidget {
   final TerminalStyle style;
   final TextLayoutCache textLayoutCache;
 
-  CursorView({
+  const CursorView({
     required this.terminal,
     required this.cellSize,
     required this.focusNode,
     required this.blinkOscillator,
     required this.style,
     required this.textLayoutCache,
-  });
+    Key? key,
+  }) : super(key: key);
 
   @override
   State<StatefulWidget> createState() => _CursorViewState();
@@ -547,15 +548,19 @@ class _EmptyScrollActivity extends IdleScrollActivity {
   @override
   final isScrolling = true;
 
+  @override
   void dispatchScrollStartNotification(
       ScrollMetrics metrics, BuildContext? context) {}
 
+  @override
   void dispatchScrollUpdateNotification(
       ScrollMetrics metrics, BuildContext context, double scrollDelta) {}
 
+  @override
   void dispatchOverscrollNotification(
       ScrollMetrics metrics, BuildContext context, double overscroll) {}
 
+  @override
   void dispatchScrollEndNotification(
       ScrollMetrics metrics, BuildContext context) {}
 }

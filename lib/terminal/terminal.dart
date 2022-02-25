@@ -49,7 +49,7 @@ class Terminal
     required int maxLines,
   }) : _maxLines = maxLines {
     _search = TerminalSearch(this);
-    _userSearchTask = _search.createSearchTask("UserSearch");
+    _userSearchTask = _search.createSearchTask('UserSearch');
     backend?.init();
     backend?.exitCode.then((value) {
       _isTerminated = true;
@@ -83,7 +83,7 @@ class Terminal
     }
   }
 
-  int _maxLines;
+  final int _maxLines;
   int get maxLines {
     return max(viewHeight, _maxLines);
   }
@@ -214,6 +214,7 @@ class Terminal
   @override
   final PlatformBehavior platform;
 
+  @override
   Buffer get buffer {
     return _buffer;
   }
@@ -373,6 +374,7 @@ class Terminal
     return _buffer == _mainBuffer;
   }
 
+  @override
   bool isUsingAltBuffer() {
     return _buffer == _altBuffer;
   }
@@ -572,7 +574,7 @@ class Terminal
       if (row == _selection.start!.y) {
         xStart = _selection.start!.x;
       } else if (!line.isWrapped) {
-        builder.write("\n");
+        builder.write('\n');
       }
 
       if (row == _selection.end!.y) {
@@ -731,7 +733,7 @@ class Terminal
 
   @override
   void selectAll() {
-    _selection.init(Position(0, 0));
+    _selection.init(const Position(0, 0));
     _selection.update(Position(terminalWidth, bufferHeight));
     refresh();
   }

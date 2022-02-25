@@ -5,10 +5,12 @@ import 'package:xterm/flutter.dart';
 import 'package:xterm/xterm.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -17,13 +19,13 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: MyHomePage(),
+      home: const MyHomePage(),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key? key}) : super(key: key);
+  const MyHomePage({Key? key}) : super(key: key);
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
@@ -54,7 +56,7 @@ class FakeTerminalBackend extends TerminalBackend {
 
   @override
   void write(String input) {
-    if (input.length <= 0) {
+    if (input.isEmpty) {
       return;
     }
     // in a "real" terminal emulation you would connect onInput to the backend
@@ -98,7 +100,7 @@ class _MyHomePageState extends State<MyHomePage> {
       body: SafeArea(
         child: TerminalView(
           terminal: terminal,
-          style: TerminalStyle(fontFamily: ['Cascadia Mono']),
+          style: const TerminalStyle(fontFamily: ['Cascadia Mono']),
         ),
       ),
     );

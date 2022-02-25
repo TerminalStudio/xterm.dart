@@ -8,10 +8,12 @@ import 'package:xterm/theme/terminal_themes.dart';
 import 'package:xterm/xterm.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -20,7 +22,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: MyHomePage(
+      home: const MyHomePage(
         theme: TerminalThemes.defaultTheme,
         terminalOpacity: 0.8,
       ),
@@ -29,7 +31,7 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({
+  const MyHomePage({
     Key? key,
     required this.theme,
     required this.terminalOpacity,
@@ -49,9 +51,9 @@ class FakeTerminalBackend extends TerminalBackend {
   // to not exist in our member types.
   // The Isolate will call init() once it starts (from its context) and that is
   // the place where we initialize those members
-  late final _exitCodeCompleter;
+  late final Completer<int> _exitCodeCompleter;
   // ignore: close_sinks
-  late final _outStream;
+  late final StreamController<String> _outStream;
 
   @override
   Future<int> get exitCode => _exitCodeCompleter.future;
@@ -75,7 +77,7 @@ class FakeTerminalBackend extends TerminalBackend {
 
   @override
   void write(String input) {
-    if (input.length <= 0) {
+    if (input.isEmpty) {
       return;
     }
     // in a "real" terminal emulation you would connect onInput to the backend
@@ -109,13 +111,11 @@ class _MyHomePageState extends State<MyHomePage> {
   TerminalIsolate? terminal;
 
   Future<TerminalIsolate> _ensureTerminalStarted() async {
-    if (terminal == null) {
-      terminal = TerminalIsolate(
-        backend: FakeTerminalBackend(),
-        maxLines: 10000,
-        theme: widget.theme,
-      );
-    }
+    terminal ??= TerminalIsolate(
+      backend: FakeTerminalBackend(),
+      maxLines: 10000,
+      theme: widget.theme,
+    );
 
     if (!terminal!.isReady) {
       await terminal!.start();

@@ -383,7 +383,7 @@ class CursorPainter extends CustomPainter {
       final styleToUse = PaintHelper.getStyleToUse(style, Color(textColor));
       final character = textLayoutCache.performAndCacheLayout(
           composingString, styleToUse, null);
-      canvas.drawParagraph(character, Offset(0, 0));
+      canvas.drawParagraph(character, const Offset(0, 0));
     }
   }
 }

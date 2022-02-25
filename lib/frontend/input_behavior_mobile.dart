@@ -6,13 +6,16 @@ import 'package:xterm/xterm.dart';
 class InputBehaviorMobile extends InputBehaviorDefault {
   InputBehaviorMobile();
 
+  @override
   final acceptKeyStroke = false;
 
+  @override
   final initEditingState = const TextEditingValue(
     text: '  ',
     selection: TextSelection.collapsed(offset: 1),
   );
 
+  @override
   TextEditingValue onTextEdit(
       TextEditingValue value, TerminalUiInteraction terminal) {
     if (value.text.length > initEditingState.text.length) {
@@ -30,6 +33,7 @@ class InputBehaviorMobile extends InputBehaviorDefault {
     return initEditingState;
   }
 
+  @override
   void onAction(TextInputAction action, TerminalUiInteraction terminal) {
     print('action $action');
     switch (action) {

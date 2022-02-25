@@ -54,8 +54,6 @@ class MockTerminalSearchInteraction extends _i1.Mock
   bool isUsingAltBuffer() =>
       (super.noSuchMethod(Invocation.method(#isUsingAltBuffer, []),
           returnValue: false) as bool);
-  @override
-  String toString() => super.toString();
 }
 
 /// A class which mocks [Buffer].
@@ -308,8 +306,6 @@ class MockBuffer extends _i1.Mock implements _i2.Buffer {
   @override
   dynamic adjustSavedCursor(int? dx, int? dy) =>
       super.noSuchMethod(Invocation.method(#adjustSavedCursor, [dx, dy]));
-  @override
-  String toString() => super.toString();
 }
 
 /// A class which mocks [TerminalSearchTestCircularList].
@@ -394,8 +390,6 @@ class MockTerminalSearchTestCircularList extends _i1.Mock
   List<_i5.BufferLine> toList() =>
       (super.noSuchMethod(Invocation.method(#toList, []),
           returnValue: <_i5.BufferLine>[]) as List<_i5.BufferLine>);
-  @override
-  String toString() => super.toString();
 }
 
 /// A class which mocks [BufferLine].
@@ -550,6 +544,4 @@ class MockBufferLine extends _i1.Mock implements _i5.BufferLine {
   String toSearchString(int? cols) =>
       (super.noSuchMethod(Invocation.method(#toSearchString, [cols]),
           returnValue: '') as String);
-  @override
-  String toString() => super.toString();
 }

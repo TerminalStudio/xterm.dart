@@ -14,7 +14,7 @@ abstract class InputListenerController {
 }
 
 class InputListener extends StatefulWidget {
-  InputListener({
+  const InputListener({
     required this.child,
     required this.onKeyStroke,
     required this.onTextInput,
@@ -30,7 +30,8 @@ class InputListener extends StatefulWidget {
     this.inputAction = TextInputAction.done,
     this.keyboardAppearance = Brightness.light,
     this.autocorrect = false,
-  });
+    Key? key,
+  }) : super(key: key);
 
   final Widget child;
   final InputHandler onTextInput;
@@ -184,10 +185,10 @@ class InputListenerState extends State<InputListener>
 
       _conn!.show();
 
-      final dx = 0.0;
-      final dy = 0.0;
+      const dx = 0.0;
+      const dy = 0.0;
       _conn!.setEditableSizeAndTransform(
-        Size(10, 10),
+        const Size(10, 10),
         Matrix4.translationValues(dx, dy, 0.0),
       );
 
@@ -225,14 +226,17 @@ class TerminalTextInputClient extends TextInputClient {
 
   TextEditingValue? _savedValue;
 
+  @override
   TextEditingValue? get currentTextEditingValue {
     return _savedValue;
   }
 
+  @override
   AutofillScope? get currentAutofillScope {
     return null;
   }
 
+  @override
   void updateEditingValue(TextEditingValue value) {
     // print('updateEditingValue $value');
 
@@ -244,19 +248,23 @@ class TerminalTextInputClient extends TextInputClient {
     // print('updateEditingValue $value');
   }
 
+  @override
   void performAction(TextInputAction action) {
     // print('performAction $action');
     onAction(action);
   }
 
+  @override
   void updateFloatingCursor(RawFloatingCursorPoint point) {
     // print('updateFloatingCursor');
   }
 
+  @override
   void showAutocorrectionPromptRect(int start, int end) {
     // print('showAutocorrectionPromptRect');
   }
 
+  @override
   void connectionClosed() {
     // print('connectionClosed');
   }

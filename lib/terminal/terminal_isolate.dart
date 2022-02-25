@@ -441,13 +441,13 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
       _IsolateEvent action = message[0];
       switch (action) {
         case _IsolateEvent.bell:
-          this.onBell();
+          onBell();
           break;
         case _IsolateEvent.titleChanged:
-          this.onTitleChange(message[1]);
+          onTitleChange(message[1]);
           break;
         case _IsolateEvent.iconChanged:
-          this.onIconChange(message[1]);
+          onIconChange(message[1]);
           break;
         case _IsolateEvent.notifyChange:
           _refreshEventDebouncer.notifyEvent(() {
@@ -459,7 +459,7 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
           if (!initialRefreshCompleted.isCompleted) {
             initialRefreshCompleted.complete(true);
           }
-          this.notifyListeners();
+          notifyListeners();
           break;
         case _IsolateEvent.exit:
           _isTerminated = true;
@@ -469,7 +469,7 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
     });
     _sendPort!.send([
       _IsolateCommand.init,
-      TerminalInitData(this.backend, this.platform, this.theme, this.maxLines)
+      TerminalInitData(backend, platform, theme, maxLines)
     ]);
     if (!testingDontWaitForBootup) {
       await initialRefreshCompleted.future;
@@ -487,10 +487,12 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
     _sendPort?.send([_IsolateCommand.requestNewStateWhenDirty]);
   }
 
+  @override
   void refresh() {
     _sendPort?.send([_IsolateCommand.refresh]);
   }
 
+  @override
   void clearSelection() {
     _sendPort?.send([_IsolateCommand.clearSelection]);
   }
@@ -629,7 +631,7 @@ class TerminalIsolate with Observable implements TerminalUiInteraction {
 
   @override
   TerminalSearchOptions get userSearchOptions =>
-      _lastState?.userSearchOptions ?? TerminalSearchOptions();
+      _lastState?.userSearchOptions ?? const TerminalSearchOptions();
 
   @override
   set userSearchOptions(TerminalSearchOptions options) {
