@@ -58,11 +58,12 @@ class TerminalView extends StatefulWidget {
   final ScrollBehavior? scrollBehavior;
 
   // get the dimensions of a rendered character
-  CellSize measureCellSize(double fontSize) {
+  CellSize measureCellSize(double fontSize, double textScaleFactor) {
     final testString = 'xxxxxxxxxx' * 1000;
 
     final text = Text(
       testString,
+      textScaleFactor: textScaleFactor,
       maxLines: 1,
       style: (style.textStyleProvider != null)
           ? style.textStyleProvider!(
@@ -108,6 +109,7 @@ class _TerminalViewState extends State<TerminalView> {
   }
 
   late CellSize _cellSize;
+  double? _textScaleFactor;
   Position? _tapPosition;
 
   /// Scroll position from the terminal. Not null if terminal scroll extent has
@@ -133,12 +135,22 @@ class _TerminalViewState extends State<TerminalView> {
     blinkOscillator.start();
     // oscillator.addListener(onTick);
 
-    // measureCellSize is expensive so we cache the result.
-    _cellSize = widget.measureCellSize(widget.style.fontSize);
-
     widget.terminal.addListener(onTerminalChange);
 
     super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    var newTextScaleFactor = MediaQuery.textScaleFactorOf(context);
+    // measureCellSize is expensive so we cache the result.
+    if (_textScaleFactor != newTextScaleFactor) {
+      _textScaleFactor = newTextScaleFactor;
+      _cellSize = widget.measureCellSize(widget.style.fontSize, _textScaleFactor!);
+      textLayoutCache.clear();
+    }
+
+    super.didChangeDependencies();
   }
 
   @override
@@ -147,7 +159,7 @@ class _TerminalViewState extends State<TerminalView> {
     widget.terminal.addListener(onTerminalChange);
 
     if (oldWidget.style != widget.style) {
-      _cellSize = widget.measureCellSize(widget.style.fontSize);
+      _cellSize = widget.measureCellSize(widget.style.fontSize, _textScaleFactor!);
       textLayoutCache.clear();
       updateTerminalSize();
     }
@@ -318,6 +330,7 @@ class _TerminalViewState extends State<TerminalView> {
                 painter: TerminalPainter(
                   terminal: widget.terminal,
                   style: widget.style,
+                  textScaleFactor: MediaQuery.textScaleFactorOf(context),
                   charSize: _cellSize,
                   textLayoutCache: textLayoutCache,
                 ),
@@ -485,6 +498,7 @@ class _CursorViewState extends State<CursorView> {
         cursorColor: widget.terminal.cursorColor,
         textColor: widget.terminal.backgroundColor,
         style: widget.style,
+        textScaleFactor: MediaQuery.textScaleFactorOf(context),
         composingString: widget.terminal.composingString,
         textLayoutCache: widget.textLayoutCache,
       ),

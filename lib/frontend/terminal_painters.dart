@@ -16,12 +16,14 @@ class TerminalPainter extends CustomPainter {
   TerminalPainter({
     required this.terminal,
     required this.style,
+    required this.textScaleFactor,
     required this.charSize,
     required this.textLayoutCache,
   });
 
   final TerminalUiInteraction terminal;
   final TerminalStyle style;
+  final double textScaleFactor;
   final CellSize charSize;
   final TextLayoutCache textLayoutCache;
 
@@ -306,6 +308,7 @@ class TerminalPainter extends CustomPainter {
 
     final styleToUse = PaintHelper.getStyleToUse(
       style,
+      textScaleFactor,
       color,
       bold: flags.hasFlag(CellFlags.bold),
       italic: flags.hasFlag(CellFlags.italic),
@@ -335,6 +338,7 @@ class CursorPainter extends CustomPainter {
   final String composingString;
   final TextLayoutCache textLayoutCache;
   final TerminalStyle style;
+  final double textScaleFactor;
 
   CursorPainter({
     required this.visible,
@@ -346,6 +350,7 @@ class CursorPainter extends CustomPainter {
     required this.composingString,
     required this.textLayoutCache,
     required this.style,
+    required this.textScaleFactor
   });
 
   @override
@@ -380,7 +385,7 @@ class CursorPainter extends CustomPainter {
         Rect.fromLTWH(0, 0, charSize.cellWidth, charSize.cellHeight), paint);
 
     if (composingString != '') {
-      final styleToUse = PaintHelper.getStyleToUse(style, Color(textColor));
+      final styleToUse = PaintHelper.getStyleToUse(style, textScaleFactor, Color(textColor));
       final character = textLayoutCache.performAndCacheLayout(
           composingString, styleToUse, null);
       canvas.drawParagraph(character, Offset(0, 0));
@@ -391,15 +396,17 @@ class CursorPainter extends CustomPainter {
 class PaintHelper {
   static TextStyle getStyleToUse(
     TerminalStyle style,
+    double textScaleFactor,
     Color color, {
     bool bold = false,
     bool italic = false,
     bool underline = false,
   }) {
+    var fontSize = style.fontSize * textScaleFactor;
     return (style.textStyleProvider != null)
         ? style.textStyleProvider!(
             color: color,
-            fontSize: style.fontSize,
+            fontSize: fontSize,
             fontWeight: bold && !style.ignoreBoldFlag
                 ? FontWeight.bold
                 : FontWeight.normal,
@@ -409,7 +416,7 @@ class PaintHelper {
           )
         : TextStyle(
             color: color,
-            fontSize: style.fontSize,
+            fontSize: fontSize,
             fontWeight: bold && !style.ignoreBoldFlag
                 ? FontWeight.bold
                 : FontWeight.normal,
