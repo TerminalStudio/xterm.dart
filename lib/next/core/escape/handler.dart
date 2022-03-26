@@ -19,7 +19,7 @@ abstract class EscapeHandler {
 
   void shiftIn();
 
-  void unkownSBC(int char);
+  void unknownSBC(int char);
 
   /* ANSI sequence */
 
@@ -41,7 +41,7 @@ abstract class EscapeHandler {
 
   /* CSI */
 
-  void unkownCSI(int finalByte);
+  void repeatPreviousCharacter(int n);
 
   void setCursor(int x, int y);
 
@@ -100,6 +100,8 @@ abstract class EscapeHandler {
   void eraseChars(int amount);
 
   void insertBlankChars(int amount);
+
+  void unknownCSI(int finalByte);
 
   /* Modes */
 

@@ -14,7 +14,7 @@ class TerminalDebuggerView extends StatefulWidget {
 
   final ScrollController? scrollController;
 
-  final void Function(int)? onSeek;
+  final void Function(int?)? onSeek;
 
   @override
   State<TerminalDebuggerView> createState() => _TerminalDebuggerViewState();
@@ -61,9 +61,13 @@ class _TerminalDebuggerViewState extends State<TerminalDebuggerView> {
           index,
           command,
           selected: selectedCommand == index,
-          select: () {
-            setState(() => selectedCommand = index);
-            widget.onSeek?.call(index);
+          onTap: () {
+            if (selectedCommand == index) {
+              selectedCommand = null;
+            } else {
+              setState(() => selectedCommand = index);
+            }
+            widget.onSeek?.call(selectedCommand);
           },
         );
       },
@@ -76,7 +80,7 @@ class _CommandItem extends StatelessWidget {
     this.index,
     this.command, {
     Key? key,
-    this.select,
+    this.onTap,
     this.selected = false,
   }) : super(key: key);
 
@@ -86,17 +90,17 @@ class _CommandItem extends StatelessWidget {
 
   final bool selected;
 
-  final void Function()? select;
+  final void Function()? onTap;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: select,
+      onTap: onTap,
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         onEnter: (event) {
           if (event.down) {
-            select?.call();
+            onTap?.call();
           }
         },
         child: Container(
@@ -139,11 +143,17 @@ class _CommandItem extends StatelessWidget {
               SizedBox(width: 20),
               Container(
                 width: 100,
-                child: Text(command.escapedChars),
+                child: Text(
+                  command.escapedChars,
+                  style: TextStyle(color: command.error ? Colors.red : null),
+                ),
               ),
               Expanded(
                 child: Container(
-                  child: Text(command.explanation.join(',')),
+                  child: Text(
+                    command.explanation.join(','),
+                    style: TextStyle(color: command.error ? Colors.red : null),
+                  ),
                 ),
               ),
             ],

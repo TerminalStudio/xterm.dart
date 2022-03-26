@@ -178,7 +178,7 @@ class KeytabParser {
       appCursorKeys: appCursorKeys,
       appKeyPad: appKeyPad,
       newLine: newLine,
-      mac: mac,
+      macos: mac,
     );
 
     _records.add(record);

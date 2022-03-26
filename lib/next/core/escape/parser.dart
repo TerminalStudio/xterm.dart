@@ -198,7 +198,7 @@ class EscapeParser {
     final csiHandler = _csiHandlers[_csi.finalByte];
 
     if (csiHandler == null) {
-      handler.unkownCSI(_csi.finalByte);
+      handler.unknownCSI(_csi.finalByte);
     } else {
       csiHandler();
     }
@@ -270,6 +270,8 @@ class EscapeParser {
   }
 
   late final _csiHandlers = FastLookupTable<_CsiHandler>({
+    // 'a'.codeUnitAt(0): _csiHandleCursorHorizontalRelative,
+    'b'.codeUnitAt(0): _csiHandleRepeatPreviousCharacter,
     'c'.codeUnitAt(0): _csiHandleSendDeviceAttributes,
     'd'.codeUnitAt(0): _csiHandleLinePositionAbsolute,
     'f'.codeUnitAt(0): _csiHandleCursorPosition,
@@ -298,6 +300,31 @@ class EscapeParser {
     'X'.codeUnitAt(0): _csiHandleEraseCharacters,
     '@'.codeUnitAt(0): _csiHandleInsertBlankCharacters,
   });
+
+  /// `ESC [ Ps a` Cursor Horizontal Position Relative (HPR)
+  ///
+  /// https://terminalguide.namepad.de/seq/csi_sa/
+  // void _csiHandleCursorHorizontalRelative() {
+  //   if (_csi.params.isEmpty) {
+  //     handler.cursorHorizontal(1);
+  //   } else {
+  //     handler.cursorHorizontal(_csi.params[0]);
+  //   }
+  // }
+
+  /// `ESC [ Ps b` Repeat Previous Character (REP)
+  ///
+  /// https://terminalguide.namepad.de/seq/csi_sb/
+  void _csiHandleRepeatPreviousCharacter() {
+    var amount = 1;
+
+    if (_csi.params.isNotEmpty) {
+      amount = _csi.params[0];
+      if (amount == 0) amount = 1;
+    }
+
+    handler.repeatPreviousCharacter(amount);
+  }
 
   /// `ESC [ Ps c` Device Attributes (DA)
   ///
@@ -619,7 +646,7 @@ class EscapeParser {
       top = _csi.params[0];
 
       if (_csi.params.length == 2) {
-        bottom = _csi.params[1];
+        bottom = _csi.params[1] - 1;
       }
     }
 

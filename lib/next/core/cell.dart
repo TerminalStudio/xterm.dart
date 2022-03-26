@@ -25,8 +25,8 @@ class CellData {
 
   int content;
 
-  int hashForeground() {
-    return hashValues(foreground, flags, content);
+  int getHash() {
+    return hashValues(foreground, background, flags, content);
   }
 }
 

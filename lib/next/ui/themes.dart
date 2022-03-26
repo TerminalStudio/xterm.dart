@@ -1,9 +1,9 @@
 import 'package:flutter/widgets.dart';
-import 'package:xterm/next/ui/theme.dart';
+import 'package:xterm/next/ui/terminal_theme.dart';
 
 class TerminalThemes {
   static const defaultTheme = TerminalTheme(
-    cursor: Color(0XFFAEAFAD),
+    cursor: Color(0XAAAEAFAD),
     selection: Color(0XFFFFFF40),
     foreground: Color(0XFFCCCCCC),
     background: Color(0XFF1E1E1E),

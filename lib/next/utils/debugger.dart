@@ -13,6 +13,7 @@ class TerminalCommand {
     this.chars,
     this.escapedChars,
     this.explanation,
+    this.error,
   );
 
   final int start;
@@ -24,6 +25,8 @@ class TerminalCommand {
   final String escapedChars;
 
   final List<String> explanation;
+
+  final bool error;
 }
 
 class TerminalDebugger with Observable {
@@ -41,7 +44,7 @@ class TerminalDebugger with Observable {
     notifyListeners();
   }
 
-  void recordCommand(String explanation) {
+  void recordCommand(String explanation, {bool error = false}) {
     final start = _parser.tokenBegin;
     final end = _parser.tokenEnd;
 
@@ -51,8 +54,8 @@ class TerminalDebugger with Observable {
       final charCodes = recorded.sublist(start, end);
       final chars = String.fromCharCodes(charCodes);
       final escapedChars = _escape(chars);
-      commands
-          .add(TerminalCommand(start, end, chars, escapedChars, [explanation]));
+      commands.add(TerminalCommand(
+          start, end, chars, escapedChars, [explanation], error));
     }
   }
 
@@ -81,7 +84,7 @@ class TerminalDebugger with Observable {
 class _TerminalDebuggerHandler implements EscapeHandler {
   _TerminalDebuggerHandler(this.onCommand);
 
-  final void Function(String explanation) onCommand;
+  final void Function(String explanation, {bool error}) onCommand;
 
   @override
   void writeChar(int char) {
@@ -126,8 +129,8 @@ class _TerminalDebuggerHandler implements EscapeHandler {
   }
 
   @override
-  void unkownSBC(int char) {
-    onCommand('unkownSBC(${String.fromCharCode(char)})');
+  void unknownSBC(int char) {
+    onCommand('unkownSBC(${String.fromCharCode(char)})', error: true);
   }
 
   /* ANSI sequence */
@@ -169,14 +172,19 @@ class _TerminalDebuggerHandler implements EscapeHandler {
 
   @override
   void unkownEscape(int char) {
-    onCommand('unkownEscape(${String.fromCharCode(char)})');
+    onCommand('unkownEscape(${String.fromCharCode(char)})', error: true);
   }
 
   /* CSI */
 
   @override
-  void unkownCSI(int finalByte) {
-    onCommand('unkownCSI');
+  void repeatPreviousCharacter(int count) {
+    onCommand('repeatPreviousCharacter($count)');
+  }
+
+  @override
+  void unknownCSI(int finalByte) {
+    onCommand('unkownCSI(${String.fromCharCode(finalByte)})', error: true);
   }
 
   @override
@@ -338,7 +346,7 @@ class _TerminalDebuggerHandler implements EscapeHandler {
 
   @override
   void setUnknownMode(int mode, bool enabled) {
-    onCommand('setUnknownMode($mode, $enabled)');
+    onCommand('setUnknownMode($mode, $enabled)', error: true);
   }
 
   /* DEC Private modes */
@@ -425,7 +433,7 @@ class _TerminalDebuggerHandler implements EscapeHandler {
 
   @override
   void setUnknownDecMode(int mode, bool enabled) {
-    onCommand('setUnknownDecMode($mode, $enabled)');
+    onCommand('setUnknownDecMode($mode, $enabled)', error: true);
   }
 
   /* Select Graphic Rendition (SGR) */
@@ -557,7 +565,7 @@ class _TerminalDebuggerHandler implements EscapeHandler {
 
   @override
   void unsupportedStyle(int param) {
-    onCommand('unsupportedStyle($param)');
+    onCommand('unsupportedStyle($param)', error: true);
   }
 
   /* OSC */
@@ -574,6 +582,6 @@ class _TerminalDebuggerHandler implements EscapeHandler {
 
   @override
   void unknownOSC(String ps) {
-    onCommand('unknownOSC($ps)');
+    onCommand('unknownOSC($ps)', error: true);
   }
 }

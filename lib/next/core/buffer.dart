@@ -126,7 +126,12 @@ class Buffer {
 
   /// The line at the current cursor position.
   BufferLine get currentLine {
-    return lines[absoluteCursorY];
+    try {
+      return lines[absoluteCursorY];
+    } catch (e) {
+      print(absoluteCursorY);
+      rethrow;
+    }
   }
 
   // void newLine() {
@@ -235,11 +240,11 @@ class Buffer {
   /// changing the column position. If the active position is at the bottom
   /// margin, a scroll up is performed.
   void index() {
-    if (isInScrollableRegion) {
-      if (_cursorY < _marginBottom) {
-        moveCursorY(1);
-      } else {
+    if (isInVerticalMargin) {
+      if (_cursorY == _marginBottom) {
         scrollUp(1);
+      } else {
+        moveCursorY(1);
       }
       return;
     }
@@ -263,7 +268,7 @@ class Buffer {
 
   /// https://terminalguide.namepad.de/seq/a_esc_cm/
   void reverseIndex() {
-    if (isInScrollableRegion) {
+    if (isInVerticalMargin) {
       if (_cursorY == _marginTop) {
         scrollDown(1);
       } else {
@@ -342,12 +347,12 @@ class Buffer {
     _marginBottom = max(_marginTop, _marginBottom);
   }
 
-  bool get hasScrollableRegion {
+  bool get hasVerticalMargin {
     return _marginTop > 0 || _marginBottom < (viewHeight - 1);
   }
 
-  bool get isInScrollableRegion {
-    return hasScrollableRegion &&
+  bool get isInVerticalMargin {
+    return hasVerticalMargin &&
         _cursorY >= _marginTop &&
         _cursorY <= _marginBottom;
   }
@@ -384,7 +389,7 @@ class Buffer {
   }
 
   void insertLines(int count) {
-    if (!isInScrollableRegion) {
+    if (!isInVerticalMargin) {
       return;
     }
 
@@ -397,7 +402,7 @@ class Buffer {
   }
 
   void deleteLines(int count) {
-    if (!isInScrollableRegion) {
+    if (!isInVerticalMargin) {
       return;
     }
 
@@ -415,12 +420,9 @@ class Buffer {
     }
 
     if (newHeight > oldHeight) {
-      while (lines.length < newHeight) {
-        lines.push(_newEmptyLine());
-      }
       // Grow larger
       for (var i = 0; i < newHeight - oldHeight; i++) {
-        if (_cursorY < oldHeight - 1) {
+        if (lines.length < newHeight) {
           lines.push(_newEmptyLine());
         } else {
           _cursorY++;
@@ -429,10 +431,10 @@ class Buffer {
     } else {
       // Shrink smaller
       for (var i = 0; i < oldHeight - newHeight; i++) {
-        if (_cursorY < oldHeight - 1) {
-          lines.pop();
+        if (_cursorY >= newHeight - 1) {
+          _cursorY--;
         } else {
-          _cursorY++;
+          lines.pop();
         }
       }
     }

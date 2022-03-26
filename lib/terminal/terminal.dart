@@ -456,7 +456,7 @@ class Terminal
         continue;
       }
 
-      if (record.mac != null && record.mac != mac) {
+      if (record.macos != null && record.macos != mac) {
         continue;
       }
 

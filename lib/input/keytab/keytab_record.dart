@@ -1,4 +1,5 @@
 import 'package:xterm/input/keys.dart';
+import 'package:xterm/input/keytab/keytab_escape.dart';
 
 enum KeytabActionType {
   input,
@@ -9,7 +10,16 @@ class KeytabAction {
   KeytabAction(this.type, this.value);
 
   final KeytabActionType type;
+
   final String value;
+
+  String unescapedValue() {
+    if (type == KeytabActionType.input) {
+      return keytabUnescape(value);
+    } else {
+      return value;
+    }
+  }
 
   @override
   String toString() {
@@ -18,8 +28,6 @@ class KeytabAction {
         return '"$value"';
       case KeytabActionType.shortcut:
         return value;
-      default:
-        return '(no value)';
     }
   }
 }
@@ -39,7 +47,7 @@ class KeytabRecord {
     required this.appCursorKeys,
     required this.appKeyPad,
     required this.newLine,
-    required this.mac,
+    required this.macos,
   });
 
   String qtKeyName;
@@ -56,7 +64,7 @@ class KeytabRecord {
   bool? appCursorKeys;
   bool? appKeyPad;
   bool? newLine;
-  bool? mac;
+  bool? macos;
 
   @override
   String toString() {
@@ -64,63 +72,63 @@ class KeytabRecord {
     buffer.write('$qtKeyName ');
 
     if (alt != null) {
-      buffer.write(modeStatus(alt!, 'Alt'));
+      buffer.write(_toMode(alt!, 'Alt'));
     }
 
     if (ctrl != null) {
-      buffer.write(modeStatus(ctrl!, 'Control'));
+      buffer.write(_toMode(ctrl!, 'Control'));
     }
 
     if (shift != null) {
-      buffer.write(modeStatus(shift!, 'Shift'));
+      buffer.write(_toMode(shift!, 'Shift'));
     }
 
     if (anyModifier != null) {
-      buffer.write(modeStatus(anyModifier!, 'AnyMod'));
+      buffer.write(_toMode(anyModifier!, 'AnyMod'));
     }
 
     if (ansi != null) {
-      buffer.write(modeStatus(ansi!, 'Ansi'));
+      buffer.write(_toMode(ansi!, 'Ansi'));
     }
 
     if (appScreen != null) {
-      buffer.write(modeStatus(appScreen!, 'AppScreen'));
+      buffer.write(_toMode(appScreen!, 'AppScreen'));
     }
 
     if (keyPad != null) {
-      buffer.write(modeStatus(keyPad!, 'KeyPad'));
+      buffer.write(_toMode(keyPad!, 'KeyPad'));
     }
 
     if (appCursorKeys != null) {
-      buffer.write(modeStatus(appCursorKeys!, 'AppCuKeys'));
+      buffer.write(_toMode(appCursorKeys!, 'AppCuKeys'));
     }
 
     if (appKeyPad != null) {
-      buffer.write(modeStatus(appKeyPad!, 'AppKeyPad'));
+      buffer.write(_toMode(appKeyPad!, 'AppKeyPad'));
     }
 
     if (newLine != null) {
-      buffer.write(modeStatus(newLine!, 'NewLine'));
+      buffer.write(_toMode(newLine!, 'NewLine'));
     }
 
-    if (mac != null) {
-      buffer.write(modeStatus(mac!, 'Mac'));
+    if (macos != null) {
+      buffer.write(_toMode(macos!, 'Mac'));
     }
 
     buffer.write(' : $action');
 
     return buffer.toString();
   }
-}
 
-String modeStatus(bool status, String mode) {
-  if (status == true) {
-    return '+$mode';
+  static String _toMode(bool status, String mode) {
+    if (status == true) {
+      return '+$mode';
+    }
+
+    if (status == false) {
+      return '-$mode';
+    }
+
+    return '';
   }
-
-  if (status == false) {
-    return '-$mode';
-  }
-
-  return '';
 }

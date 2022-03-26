@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:xterm/next/ui/theme.dart';
+import 'package:xterm/next/ui/terminal_theme.dart';
 import 'package:xterm/util/lookup_table.dart';
 
 class PaletteBuilder {

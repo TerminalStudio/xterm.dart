@@ -1,3 +1,4 @@
+import 'package:xterm/input/keys.dart';
 import 'package:xterm/input/keytab/keytab_default.dart';
 import 'package:xterm/input/keytab/keytab_parse.dart';
 import 'package:xterm/input/keytab/keytab_record.dart';
@@ -20,7 +21,79 @@ class Keytab {
   }
 
   final String? name;
+
   final List<KeytabRecord> records;
+
+  KeytabRecord? find(
+    TerminalKey key, {
+    bool ctrl = false,
+    bool alt = false,
+    bool shift = false,
+    bool newLineMode = false,
+    bool appCursorKeys = false,
+    bool appKeyPad = false,
+    bool appScreen = false,
+    bool macos = false,
+    // bool meta,
+  }) {
+    for (var record in records) {
+      if (record.key != key) {
+        continue;
+      }
+
+      if (record.anyModifier == true) {
+        if (ctrl == false && alt == false && shift == false) {
+          continue;
+        }
+      } else if (record.anyModifier == false) {
+        if (ctrl != false || alt != false || shift != false) {
+          continue;
+        }
+      } else {
+        if (record.ctrl != null && record.ctrl != ctrl) {
+          continue;
+        }
+
+        if (record.shift != null && record.shift != shift) {
+          continue;
+        }
+
+        if (record.alt != null && record.alt != alt) {
+          continue;
+        }
+      }
+
+      if (record.newLine != null && record.newLine != newLineMode) {
+        continue;
+      }
+
+      if (record.appCursorKeys != null &&
+          record.appCursorKeys != appCursorKeys) {
+        continue;
+      }
+
+      if (record.appKeyPad != null && record.appKeyPad != appKeyPad) {
+        continue;
+      }
+
+      if (record.appScreen != null && record.appScreen != appScreen) {
+        continue;
+      }
+
+      if (record.macos != null && record.macos != macos) {
+        continue;
+      }
+
+      // TODO: support VT52
+      if (record.ansi == false) {
+        continue;
+      }
+
+      return record;
+    }
+
+    return null;
+  }
 
   @override
   String toString() {

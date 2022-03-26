@@ -1,11 +1,9 @@
 import 'dart:collection';
 
-import 'dart:typed_data';
-
 class ByteConsumer {
-  final _queue = Queue<List<int>>();
+  final _queue = ListQueue<List<int>>();
 
-  final _consumed = Queue<List<int>>();
+  final _consumed = ListQueue<List<int>>();
 
   var _currentOffset = 0;
 
@@ -20,7 +18,14 @@ class ByteConsumer {
   }
 
   int peek() {
-    return _queue.first[_currentOffset];
+    final data = _queue.first;
+    if (_currentOffset < data.length) {
+      return data[_currentOffset];
+    } else {
+      final result = consume();
+      rollback();
+      return result;
+    }
   }
 
   int consume() {

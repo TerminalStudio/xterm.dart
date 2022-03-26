@@ -1,6 +1,8 @@
-import 'dart:convert';
-import 'dart:typed_data';
+import 'dart:math' show max;
 
+import 'package:xterm/input/keys.dart';
+import 'package:xterm/input/keytab/keytab.dart';
+import 'package:xterm/input/keytab/keytab_record.dart';
 import 'package:xterm/next/core/buffer.dart';
 import 'package:xterm/next/core/cursor.dart';
 import 'package:xterm/next/core/escape/emitter.dart';
@@ -16,13 +18,20 @@ import 'package:xterm/util/observable.dart';
 class Terminal with Observable implements TerminalState, EscapeHandler {
   final int maxLines;
 
-  final void Function()? onBell;
+  void Function()? onBell;
 
-  final void Function(String)? onTitleChange;
+  void Function(String)? onTitleChange;
 
-  final void Function(String)? onIconChange;
+  void Function(String)? onIconChange;
 
-  final void Function(String)? onOutput;
+  void Function(String)? onOutput;
+
+  void Function(int width, int height, int pixelWidth, int pixelHeight)?
+      onResize;
+
+  /// Flag to toggle MacOS specific behaviors. Enable this if you are
+  /// interacting with a TTY running in a MacOS environment.
+  final bool macos;
 
   Terminal({
     this.maxLines = 1000,
@@ -30,6 +39,7 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
     this.onTitleChange,
     this.onIconChange,
     this.onOutput,
+    this.macos = false,
   });
 
   late final _parser = EscapeParser(this);
@@ -44,11 +54,15 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
 
   final tabStops = TabStops();
 
+  final _keytab = Keytab.defaultKeytab();
+
+  var _precedingCodepoint = 0;
+
   /* TerminalState */
 
   int _viewWidth = 80;
 
-  int _viewHeight = 25;
+  int _viewHeight = 24;
 
   CursorStyle _cursorStyle = CursorStyle();
 
@@ -118,6 +132,12 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
 
   Buffer get buffer => _buffer;
 
+  Buffer get mainBuffer => _mainBuffer;
+
+  Buffer get altBuffer => _altBuffer;
+
+  bool get isUsingAltBuffer => _buffer == _altBuffer;
+
   CircularList<BufferLine> get lines => _buffer.lines;
 
   void write(String data) {
@@ -125,10 +145,85 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
     notifyListeners();
   }
 
+  bool keyInput(
+    TerminalKey key, {
+    bool shift = false,
+    bool alt = false,
+    bool ctrl = false,
+  }) {
+    final keyChord = _keytab.find(
+      key,
+      shift: shift,
+      alt: alt,
+      ctrl: ctrl,
+      newLineMode: _lineFeedMode,
+      appCursorKeys: _appKeypadMode,
+      appKeyPad: _appKeypadMode,
+      appScreen: isUsingAltBuffer,
+      macos: macos,
+    );
+
+    if (keyChord != null && keyChord.action.type == KeytabActionType.input) {
+      onOutput?.call(keyChord.action.unescapedValue());
+      return true;
+    }
+
+    if (ctrl) {
+      if (key.index >= TerminalKey.keyA.index &&
+          key.index <= TerminalKey.keyZ.index) {
+        final input = key.index - TerminalKey.keyA.index + 1;
+        onOutput?.call(String.fromCharCode(input));
+        return true;
+      }
+    }
+
+    if (alt && !macos) {
+      if (key.index >= TerminalKey.keyA.index &&
+          key.index <= TerminalKey.keyZ.index) {
+        final charCode = key.index - TerminalKey.keyA.index + 65;
+        final input = [0x1b, charCode];
+        onOutput?.call(String.fromCharCodes(input));
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /// Resize the terminal screen. [newWidth] and [newHeight] should be greater
+  /// than 0. Text reflow is currently not implemented and will be avaliable in
+  /// the future.
+  void resize(
+    int newWidth,
+    int newHeight, [
+    int? pixelWidth,
+    int? pixelHeight,
+  ]) {
+    newWidth = max(newWidth, 1);
+    newHeight = max(newHeight, 1);
+
+    onResize?.call(newWidth, newHeight, pixelWidth ?? 0, pixelHeight ?? 0);
+
+    //we need to resize both buffers so that they are ready when we switch between them
+    _altBuffer.resize(_viewWidth, _viewHeight, newWidth, newHeight);
+    _mainBuffer.resize(_viewWidth, _viewHeight, newWidth, newHeight);
+
+    _viewWidth = newWidth;
+    _viewHeight = newHeight;
+
+    if (buffer == _altBuffer) {
+      buffer.clearScrollback();
+    }
+
+    _altBuffer.resetVerticalMargins();
+    _mainBuffer.resetVerticalMargins();
+  }
+
   /* Handlers */
 
   @override
   void writeChar(int char) {
+    _precedingCodepoint = char;
     _buffer.writeChar(char);
   }
 
@@ -171,7 +266,7 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
   }
 
   @override
-  void unkownSBC(int char) {
+  void unknownSBC(int char) {
     // no-op
   }
 
@@ -219,6 +314,17 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
   }
 
   /* CSI */
+
+  @override
+  void repeatPreviousCharacter(int count) {
+    if (_precedingCodepoint == 0) {
+      return;
+    }
+
+    for (var i = 0; i < count; i++) {
+      _buffer.writeChar(_precedingCodepoint);
+    }
+  }
 
   @override
   void setCursor(int x, int y) {
@@ -368,7 +474,7 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
   }
 
   @override
-  void unkownCSI(int finalByte) {
+  void unknownCSI(int finalByte) {
     // no-op
   }
 
