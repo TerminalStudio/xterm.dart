@@ -337,6 +337,8 @@ class _RenderTerminalViewport extends RenderBox {
 
   // var lineOffset = 0;
 
+  var _stickToBottom = false;
+
   void _hasScrolled() {
     // For static scroll:
     //
@@ -345,6 +347,9 @@ class _RenderTerminalViewport extends RenderBox {
     //   markNeedsLayout();
     //   this.lineOffset = lineOffset;
     // }
+
+    _stickToBottom = _offset.pixels >= _maxScrollExtent;
+
     markNeedsLayout();
   }
 
@@ -376,8 +381,16 @@ class _RenderTerminalViewport extends RenderBox {
   @override
   void performLayout() {
     size = constraints.biggest;
+
     _updateViewportSize();
+
     _updateScrollOffset();
+
+    if (_stickToBottom) {
+      _offset.correctBy(
+        _maxScrollExtent - _offset.pixels,
+      );
+    }
   }
 
   void _updateViewportSize() {
@@ -398,11 +411,14 @@ class _RenderTerminalViewport extends RenderBox {
     _viewportSize = viewportSize;
   }
 
-  void _updateScrollOffset() {
+  double get _maxScrollExtent {
     final terminalHeight = _terminal.buffer.lines.length * _charMetrics.height;
-    final maxScrollExtent = max(terminalHeight - size.height, 0.0);
+    return max(terminalHeight - size.height, 0.0);
+  }
+
+  void _updateScrollOffset() {
     _offset.applyViewportDimension(size.height);
-    _offset.applyContentDimensions(0, maxScrollExtent);
+    _offset.applyContentDimensions(0, _maxScrollExtent);
   }
 
   @override
