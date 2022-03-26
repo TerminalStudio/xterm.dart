@@ -81,12 +81,10 @@ packages:
   dartssh2:
     dependency: "direct main"
     description:
-      path: "."
-      ref: HEAD
-      resolved-ref: "3316b252ace4948f64812b7e5eca11f466d3f62d"
-      url: "https://github.com/TerminalStudio/dartssh2"
-    source: git
-    version: "1.2.0-pre"
+      name: dartssh2
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.5.0"
   equatable:
     dependency: transitive
     description:
@@ -118,20 +116,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  http:
-    dependency: transitive
-    description:
-      name: http
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.13.4"
-  http_parser:
-    dependency: transitive
-    description:
-      name: http_parser
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "4.0.0"
   js:
     dependency: transitive
     description:
@@ -152,7 +136,7 @@ packages:
       name: material_color_utilities
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.1.2"
+    version: "0.1.3"
   meta:
     dependency: transitive
     description:
@@ -180,7 +164,7 @@ packages:
       name: platform_info
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "3.0.0-nullsafety.1"
+    version: "3.1.0"
   pointycastle:
     dependency: transitive
     description:
@@ -249,13 +233,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.3.0"
-  validators:
-    dependency: transitive
-    description:
-      name: validators
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "3.0.0"
   vector_math:
     dependency: transitive
     description:
@@ -276,7 +253,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "2.5.0-pre"
+    version: "2.6.0"
 sdks:
   dart: ">=2.14.0 <3.0.0"
   flutter: ">=2.0.0"
