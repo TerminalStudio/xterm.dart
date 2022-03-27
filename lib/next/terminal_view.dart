@@ -7,16 +7,14 @@ import 'package:flutter/services.dart';
 import 'package:xterm/buffer/cell_flags.dart';
 import 'package:xterm/frontend/input_map.dart';
 import 'package:xterm/input/keys.dart';
+import 'package:xterm/next.dart';
 import 'package:xterm/next/core/cell.dart';
 import 'package:xterm/next/core/line.dart';
-import 'package:xterm/next/terminal.dart';
 import 'package:xterm/next/ui/char_metrics.dart';
-import 'package:xterm/next/ui/cursor_type.dart';
 import 'package:xterm/next/ui/custom_text_edit.dart';
 import 'package:xterm/next/ui/palette_builder.dart';
 import 'package:xterm/next/ui/paragraph_cache.dart';
 import 'package:xterm/next/ui/terminal_size.dart';
-import 'package:xterm/next/ui/terminal_text_style.dart';
 import 'package:xterm/next/ui/terminal_theme.dart';
 import 'package:xterm/next/ui/themes.dart';
 
@@ -72,6 +70,7 @@ class _TerminalViewState extends State<TerminalView> {
   @override
   void initState() {
     focusNode = widget.focusNode ?? FocusNode();
+    KeyboardVisibilty.of(context)?.isVisible.addListener(_onToggleKeyboard);
     super.initState();
   }
 
@@ -86,6 +85,7 @@ class _TerminalViewState extends State<TerminalView> {
   @override
   void dispose() {
     focusNode.dispose();
+    KeyboardVisibilty.of(context)?.isVisible.removeListener(_onToggleKeyboard);
     super.dispose();
   }
 
@@ -110,8 +110,18 @@ class _TerminalViewState extends State<TerminalView> {
     return handled ? KeyEventResult.handled : KeyEventResult.ignored;
   }
 
+  void _onToggleKeyboard() {
+    final visible = KeyboardVisibilty.of(context)!.isVisible.value;
+    if (visible) {
+      WidgetsBinding.instance?.addPostFrameCallback((_) {
+        _scrollToBottom();
+      });
+    }
+  }
+
   void _scrollToBottom() {
     final position = scrollableKey.currentState?.position;
+    print(position?.maxScrollExtent);
     if (position != null) {
       position.moveTo(position.maxScrollExtent);
     }
@@ -337,7 +347,7 @@ class _RenderTerminalViewport extends RenderBox {
 
   // var lineOffset = 0;
 
-  var _stickToBottom = false;
+  var _stickToBottom = true;
 
   void _hasScrolled() {
     // For static scroll:
@@ -387,9 +397,11 @@ class _RenderTerminalViewport extends RenderBox {
     _updateScrollOffset();
 
     if (_stickToBottom) {
-      _offset.correctBy(
-        _maxScrollExtent - _offset.pixels,
-      );
+      if (_offset.pixels <= _maxScrollExtent) {
+        _offset.correctBy(
+          _maxScrollExtent - _offset.pixels,
+        );
+      }
     }
   }
 
