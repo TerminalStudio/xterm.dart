@@ -1,18 +1,18 @@
-import 'dart:io';
+// import 'dart:io';
 
 // import 'dart:typed_data';
 
 // import 'package:xterm/next/terminal_parser.dart';
 
 void main(List<String> args) async {
-  if (args.isEmpty) {
-    print('Usage: xterm_bench <test_fixture>');
-  }
+  // if (args.isEmpty) {
+  //   print('Usage: xterm_bench <test_fixture>');
+  // }
 
-  final fixturePath = args[0];
-  final fixture = await File(fixturePath).readAsBytes();
+  // final fixturePath = args[0];
+  // final fixture = await File(fixturePath).readAsBytes();
 
-  throw 'todo';
+  // throw 'todo';
 }
 
 // void bench(Uint8List fixture) {
