@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:xterm/next/core/color.dart';
 import 'package:xterm/next/core/mouse.dart';
 import 'package:xterm/next/core/escape/handler.dart';

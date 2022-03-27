@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:xterm/buffer/cell_flags.dart';
 import 'package:xterm/next/core/cell.dart';
 import 'package:xterm/next/core/line.dart';
-import 'package:xterm/next/ui/char_metrics.dart';
 import 'package:xterm/next/ui/cursor_type.dart';
 import 'package:xterm/next/ui/paragraph_cache.dart';
 import 'package:xterm/next/ui/terminal_text_style.dart';

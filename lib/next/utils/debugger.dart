@@ -1,6 +1,3 @@
-import 'dart:convert';
-import 'dart:typed_data';
-
 import 'package:xterm/next/core/escape/handler.dart';
 import 'package:xterm/next/core/escape/parser.dart';
 import 'package:xterm/next/core/mouse.dart';
