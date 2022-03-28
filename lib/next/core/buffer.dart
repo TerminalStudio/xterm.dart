@@ -15,12 +15,12 @@ class Buffer {
 
   final int maxLines;
 
-  final bool reflow;
+  final bool isAltBuffer;
 
   Buffer(
     this.terminal, {
     required this.maxLines,
-    required this.reflow,
+    required this.isAltBuffer,
   }) {
     for (int i = 0; i < terminal.viewHeight; i++) {
       lines.push(_newEmptyLine());
@@ -126,12 +126,7 @@ class Buffer {
 
   /// The line at the current cursor position.
   BufferLine get currentLine {
-    try {
-      return lines[absoluteCursorY];
-    } catch (e) {
-      print(absoluteCursorY);
-      rethrow;
-    }
+    return lines[absoluteCursorY];
   }
 
   // void newLine() {
@@ -242,7 +237,11 @@ class Buffer {
   void index() {
     if (isInVerticalMargin) {
       if (_cursorY == _marginBottom) {
-        scrollUp(1);
+        if (marginTop == 0 && !isAltBuffer) {
+          lines.insert(absoluteMarginBottom + 1, _newEmptyLine());
+        } else {
+          scrollUp(1);
+        }
       } else {
         moveCursorY(1);
       }
@@ -251,8 +250,12 @@ class Buffer {
 
     // the cursor is not in the scrollable region
     if (_cursorY >= viewHeight - 1) {
-      // we are at the bottom so a new line is created.
-      lines.push(_newEmptyLine());
+      // we are at the bottom
+      if (isAltBuffer) {
+        scrollUp(1);
+      } else {
+        lines.push(_newEmptyLine());
+      }
     } else {
       // there're still lines so we simply move cursor down.
       moveCursorY(1);
@@ -347,14 +350,8 @@ class Buffer {
     _marginBottom = max(_marginTop, _marginBottom);
   }
 
-  bool get hasVerticalMargin {
-    return _marginTop > 0 || _marginBottom < (viewHeight - 1);
-  }
-
   bool get isInVerticalMargin {
-    return hasVerticalMargin &&
-        _cursorY >= _marginTop &&
-        _cursorY <= _marginBottom;
+    return _cursorY >= _marginTop && _cursorY <= _marginBottom;
   }
 
   void resetVerticalMargins() {
@@ -396,10 +393,10 @@ class Buffer {
     setCursorX(0);
 
     for (var i = 0; i < count; i++) {
-      // lines.remove will make [absoluteCursorY] temporarily invalid
-      final insertIndex = absoluteCursorY;
-      lines.remove(absoluteMarginBottom);
-      lines.insert(insertIndex, _newEmptyLine());
+      final shiftStart = absoluteCursorY;
+      final shiftCount = absoluteMarginBottom - absoluteCursorY;
+      lines.shiftElements(shiftStart, shiftCount, 1);
+      lines[absoluteCursorY] = _newEmptyLine();
     }
   }
 

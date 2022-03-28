@@ -48,9 +48,9 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
 
   late var _buffer = _mainBuffer;
 
-  late final _mainBuffer = Buffer(this, maxLines: maxLines, reflow: true);
+  late final _mainBuffer = Buffer(this, maxLines: maxLines, isAltBuffer: false);
 
-  late final _altBuffer = Buffer(this, maxLines: maxLines, reflow: false);
+  late final _altBuffer = Buffer(this, maxLines: maxLines, isAltBuffer: true);
 
   final tabStops = TabStops();
 
@@ -388,6 +388,7 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
 
   @override
   void setMargins(int top, [int? bottom]) {
+    print('setMargins($top, $bottom)');
     _buffer.setVerticalMargins(top, bottom ?? viewHeight - 1);
   }
 

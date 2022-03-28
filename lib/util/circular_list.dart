@@ -119,6 +119,10 @@ class CircularList<T> {
       throw RangeError.range(index, 0, _length);
     }
 
+    if (index == _length) {
+      return push(item);
+    }
+
     if (index == 0 && _length >= _array.length) {
       // when something is inserted at index 0 and the list is full then
       // the new value immediately gets removed => nothing changes
