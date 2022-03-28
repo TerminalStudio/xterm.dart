@@ -1060,6 +1060,8 @@ class EscapeParser {
         param.clear();
         continue;
       }
+
+      param.writeCharCode(char);
     }
   }
 }
