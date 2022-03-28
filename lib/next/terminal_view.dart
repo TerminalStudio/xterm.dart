@@ -277,9 +277,9 @@ class _RenderTerminalViewport extends RenderBox {
   Terminal _terminal;
   set terminal(Terminal terminal) {
     if (_terminal == terminal) return;
-    if (attached) _terminal.removeListener(_terminalChanged);
+    if (attached) _terminal.removeListener(_onTerminalChange);
     _terminal = terminal;
-    if (attached) _terminal.addListener(_terminalChanged);
+    if (attached) _terminal.addListener(_onTerminalChange);
     markNeedsLayout();
   }
 
@@ -369,7 +369,7 @@ class _RenderTerminalViewport extends RenderBox {
     markNeedsPaint();
   }
 
-  void _terminalChanged() {
+  void _onTerminalChange() {
     markNeedsLayout();
   }
 
@@ -380,13 +380,15 @@ class _RenderTerminalViewport extends RenderBox {
   void attach(PipelineOwner owner) {
     super.attach(owner);
     _offset.addListener(_hasScrolled);
-    _terminal.addListener(_terminalChanged);
+    _terminal.addListener(_onTerminalChange);
+    _focusNode.addListener(_onFocusChange);
   }
 
   @override
   void detach() {
     _offset.removeListener(_hasScrolled);
-    _terminal.removeListener(_terminalChanged);
+    _terminal.removeListener(_onTerminalChange);
+    _focusNode.removeListener(_onFocusChange);
     super.detach();
   }
 
