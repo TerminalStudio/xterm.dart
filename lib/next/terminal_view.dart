@@ -119,7 +119,6 @@ class _TerminalViewState extends State<TerminalView> {
 
   void _scrollToBottom() {
     final position = scrollableKey.currentState?.position;
-    print(position?.maxScrollExtent);
     if (position != null) {
       position.moveTo(position.maxScrollExtent);
     }
