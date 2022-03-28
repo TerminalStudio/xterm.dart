@@ -23,9 +23,7 @@ class MyApp extends StatelessWidget {
       theme: CupertinoThemeData(
         brightness: Brightness.dark,
       ),
-      home: KeyboardVisibilty(
-        child: MyHomePage(),
-      ),
+      home: MyHomePage(),
     );
   }
 }
