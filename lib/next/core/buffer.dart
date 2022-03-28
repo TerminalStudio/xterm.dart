@@ -396,8 +396,10 @@ class Buffer {
     setCursorX(0);
 
     for (var i = 0; i < count; i++) {
+      // lines.remove will make [absoluteCursorY] temporarily invalid
+      final insertIndex = absoluteCursorY;
       lines.remove(absoluteMarginBottom);
-      lines.insert(absoluteCursorY, _newEmptyLine());
+      lines.insert(insertIndex, _newEmptyLine());
     }
   }
 
@@ -422,7 +424,7 @@ class Buffer {
     if (newHeight > oldHeight) {
       // Grow larger
       for (var i = 0; i < newHeight - oldHeight; i++) {
-        if (lines.length < newHeight) {
+        if (newHeight > lines.length) {
           lines.push(_newEmptyLine());
         } else {
           _cursorY++;

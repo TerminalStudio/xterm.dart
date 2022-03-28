@@ -2,11 +2,14 @@ class CircularList<T> {
   CircularList(int maxLength) : _array = List<T?>.filled(maxLength, null);
 
   late List<T?> _array;
+
   var _length = 0;
+
   var _startIndex = 0;
 
   // Gets the cyclic index for the specified regular index. The cyclic index can then be used on the
   // backing array to get the element associated with the regular index.
+  @pragma('vm:prefer-inline')
   int _getCyclicIndex(int index) {
     return (_startIndex + index) % _array.length;
   }
@@ -16,9 +19,9 @@ class CircularList<T> {
   }
 
   set maxLength(int value) {
-    if (value <= 0)
-      throw ArgumentError.value(
-          value, 'value', 'maxLength can\'t be negative!');
+    if (value <= 0) {
+      throw ArgumentError.value(value, 'value', "maxLength can't be negative!");
+    }
 
     if (value == _array.length) return;
 
@@ -62,7 +65,7 @@ class CircularList<T> {
   }
 
   operator []=(int index, T value) {
-    if (index >= length) {
+    if (index >= length || index < 0) {
       throw RangeError.range(index, 0, length - 1);
     }
 
@@ -112,18 +115,23 @@ class CircularList<T> {
 
   /// Inserts [item] at [index].
   void insert(int index, T item) {
+    if (index < 0 || index > _length) {
+      throw RangeError.range(index, 0, _length);
+    }
+
     if (index == 0 && _length >= _array.length) {
       // when something is inserted at index 0 and the list is full then
       // the new value immediately gets removed => nothing changes
       return;
     }
+
     for (var i = _length - 1; i >= index; i--) {
       _array[_getCyclicIndex(i + 1)] = _array[_getCyclicIndex(i)];
     }
 
     _array[_getCyclicIndex(index)] = item;
 
-    if (_length + 1 > _array.length) {
+    if (_length >= _array.length) {
       _startIndex += 1;
     } else {
       _length++;

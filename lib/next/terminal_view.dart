@@ -145,6 +145,7 @@ class _TerminalViewState extends State<TerminalView> {
           theme: widget.theme,
           focusNode: focusNode,
           cursorType: widget.cursorType,
+          alwaysShowCursor: widget.alwaysShowCursor,
         );
       },
     );
@@ -206,6 +207,7 @@ class _TerminalViewport extends LeafRenderObjectWidget {
     required this.theme,
     required this.focusNode,
     required this.cursorType,
+    required this.alwaysShowCursor,
   }) : super(key: key);
 
   final Terminal terminal;
@@ -224,6 +226,8 @@ class _TerminalViewport extends LeafRenderObjectWidget {
 
   final TerminalCursorType cursorType;
 
+  final bool alwaysShowCursor;
+
   @override
   _RenderTerminalViewport createRenderObject(BuildContext context) {
     return _RenderTerminalViewport(
@@ -235,6 +239,7 @@ class _TerminalViewport extends LeafRenderObjectWidget {
       theme: theme,
       focusNode: focusNode,
       cursorType: cursorType,
+      alwaysShowCursor: alwaysShowCursor,
     );
   }
 
@@ -249,7 +254,8 @@ class _TerminalViewport extends LeafRenderObjectWidget {
       ..textStyle = textStyle
       ..theme = theme
       ..focusNode = focusNode
-      ..cursorType = cursorType;
+      ..cursorType = cursorType
+      ..alwaysShowCursor = alwaysShowCursor;
   }
 }
 
@@ -263,6 +269,7 @@ class _RenderTerminalViewport extends RenderBox {
     required TerminalTheme theme,
     required FocusNode focusNode,
     required TerminalCursorType cursorType,
+    required bool alwaysShowCursor,
   })  : _terminal = terminal,
         _offset = offset,
         _autoResize = autoResize,
@@ -270,7 +277,8 @@ class _RenderTerminalViewport extends RenderBox {
         _textStyle = textStyle,
         _theme = theme,
         _focusNode = focusNode,
-        _cursorType = cursorType {
+        _cursorType = cursorType,
+        _alwaysShowCursor = alwaysShowCursor {
     _updateColorPalette();
   }
 
@@ -280,6 +288,7 @@ class _RenderTerminalViewport extends RenderBox {
     if (attached) _terminal.removeListener(_onTerminalChange);
     _terminal = terminal;
     if (attached) _terminal.addListener(_onTerminalChange);
+    _resizeTerminalIfNeeded();
     markNeedsLayout();
   }
 
@@ -334,6 +343,13 @@ class _RenderTerminalViewport extends RenderBox {
   set cursorType(TerminalCursorType value) {
     if (value == _cursorType) return;
     _cursorType = value;
+    markNeedsPaint();
+  }
+
+  bool _alwaysShowCursor;
+  set alwaysShowCursor(bool value) {
+    if (value == _alwaysShowCursor) return;
+    _alwaysShowCursor = value;
     markNeedsPaint();
   }
 
@@ -415,16 +431,21 @@ class _RenderTerminalViewport extends RenderBox {
       size.height ~/ _charMetrics.height,
     );
 
-    if (_autoResize && _viewportSize != viewportSize) {
+    if (_viewportSize != viewportSize) {
+      _viewportSize = viewportSize;
+      _resizeTerminalIfNeeded();
+    }
+  }
+
+  void _resizeTerminalIfNeeded() {
+    if (_autoResize && _viewportSize != null) {
       _terminal.resize(
-        viewportSize.width,
-        viewportSize.height,
+        _viewportSize!.width,
+        _viewportSize!.height,
         _charMetrics.width.round(),
         _charMetrics.height.round(),
       );
     }
-
-    _viewportSize = viewportSize;
   }
 
   double get _maxScrollExtent {
@@ -462,7 +483,8 @@ class _RenderTerminalViewport extends RenderBox {
       );
     }
 
-    if (_terminal.buffer.absoluteCursorY >= firstLine &&
+    if ((_terminal.cursorVisibleMode || _alwaysShowCursor) &&
+        _terminal.buffer.absoluteCursorY >= firstLine &&
         _terminal.buffer.absoluteCursorY <= lastLine) {
       final cursorOffset = offset.translate(
         _terminal.buffer.cursorX * _charMetrics.width,
