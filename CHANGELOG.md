@@ -1,3 +1,9 @@
+## [3.0.3-alpha] - 2022-3-28
+* Improved scroll handing
+* Improved resize handing
+* Fix focus repaint
+* Fix OSC title update
+
 ## [3.0.2-alpha] - 2022-3-28
 * Re-design `KeyboardVisibilty`
 
