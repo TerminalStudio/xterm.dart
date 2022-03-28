@@ -159,7 +159,6 @@ class _TerminalViewState extends State<TerminalView> {
       focusNode: focusNode,
       onTextInput: (textEditingValue) {
         if (textEditingValue.text.isNotEmpty) {
-          print(textEditingValue);
           _scrollToBottom();
           widget.terminal.onOutput?.call(textEditingValue.text);
           customTextEditKey.currentState
