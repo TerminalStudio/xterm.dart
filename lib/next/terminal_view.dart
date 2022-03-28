@@ -12,6 +12,7 @@ import 'package:xterm/next/core/cell.dart';
 import 'package:xterm/next/core/line.dart';
 import 'package:xterm/next/ui/char_metrics.dart';
 import 'package:xterm/next/ui/custom_text_edit.dart';
+import 'package:xterm/next/ui/keyboard_visibility.dart';
 import 'package:xterm/next/ui/palette_builder.dart';
 import 'package:xterm/next/ui/paragraph_cache.dart';
 import 'package:xterm/next/ui/terminal_size.dart';
@@ -70,7 +71,6 @@ class _TerminalViewState extends State<TerminalView> {
   @override
   void initState() {
     focusNode = widget.focusNode ?? FocusNode();
-    KeyboardVisibilty.of(context)?.isVisible.addListener(_onToggleKeyboard);
     super.initState();
   }
 
@@ -85,7 +85,6 @@ class _TerminalViewState extends State<TerminalView> {
   @override
   void dispose() {
     focusNode.dispose();
-    KeyboardVisibilty.of(context)?.isVisible.removeListener(_onToggleKeyboard);
     super.dispose();
   }
 
@@ -110,9 +109,8 @@ class _TerminalViewState extends State<TerminalView> {
     return handled ? KeyEventResult.handled : KeyEventResult.ignored;
   }
 
-  void _onToggleKeyboard() {
-    final visible = KeyboardVisibilty.of(context)!.isVisible.value;
-    if (visible) {
+  void _onKeyboardShow() {
+    if (focusNode.hasFocus) {
       WidgetsBinding.instance?.addPostFrameCallback((_) {
         _scrollToBottom();
       });
@@ -181,6 +179,11 @@ class _TerminalViewState extends State<TerminalView> {
       focusNode: focusNode,
       autofocus: widget.autofocus,
       onKey: _onKeyEvent,
+      child: child,
+    );
+
+    child = KeyboardVisibilty(
+      onKeyboardShow: _onKeyboardShow,
       child: child,
     );
 
