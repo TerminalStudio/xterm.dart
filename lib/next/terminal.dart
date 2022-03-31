@@ -388,7 +388,6 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
 
   @override
   void setMargins(int top, [int? bottom]) {
-    print('setMargins($top, $bottom)');
     _buffer.setVerticalMargins(top, bottom ?? viewHeight - 1);
   }
 
