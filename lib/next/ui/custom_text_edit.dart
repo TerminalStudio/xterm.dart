@@ -6,46 +6,50 @@ class CustomTextEdit extends StatefulWidget {
   CustomTextEdit({
     Key? key,
     required this.child,
-    required this.onTextInput,
+    required this.onInsert,
+    required this.onDelete,
+    required this.onComposing,
     required this.onAction,
+    required this.onKey,
     required this.focusNode,
+    this.autofocus = false,
     this.readOnly = false,
-    this.initEditingState = TextEditingValue.empty,
+    // this.initEditingState = TextEditingValue.empty,
     this.inputType = TextInputType.text,
-    this.enableSuggestions = false,
     this.inputAction = TextInputAction.done,
     this.keyboardAppearance = Brightness.light,
-    this.autocorrect = false,
   }) : super(key: key);
 
   final Widget child;
 
-  final void Function(TextEditingValue) onTextInput;
+  final void Function(String) onInsert;
+
+  final void Function() onDelete;
+
+  final void Function(String?) onComposing;
 
   final void Function(TextInputAction) onAction;
 
+  final KeyEventResult Function(RawKeyEvent) onKey;
+
   final FocusNode focusNode;
+
+  final bool autofocus;
 
   final bool readOnly;
 
-  final TextEditingValue initEditingState;
-
   final TextInputType inputType;
-
-  final bool enableSuggestions;
 
   final TextInputAction inputAction;
 
   final Brightness keyboardAppearance;
-
-  final bool autocorrect;
 
   @override
   CustomTextEditState createState() => CustomTextEditState();
 }
 
 class CustomTextEditState extends State<CustomTextEdit>
-    implements TextInputClient {
+    implements DeltaTextInputClient {
   TextInputConnection? _connection;
 
   @override
@@ -53,10 +57,6 @@ class CustomTextEditState extends State<CustomTextEdit>
     widget.focusNode.addListener(_onFocusChange);
     super.initState();
   }
-
-  bool get _shouldCreateInputConnection => kIsWeb || !widget.readOnly;
-
-  bool get _hasInputConnection => _connection != null && _connection!.attached;
 
   @override
   void didUpdateWidget(CustomTextEdit oldWidget) {
@@ -78,8 +78,15 @@ class CustomTextEditState extends State<CustomTextEdit>
 
   @override
   Widget build(BuildContext context) {
-    return widget.child;
+    return Focus(
+      focusNode: widget.focusNode,
+      autofocus: widget.autofocus,
+      onKey: _onKey,
+      child: widget.child,
+    );
   }
+
+  bool get hasInputConnection => _connection != null && _connection!.attached;
 
   void requestKeyboard() {
     if (widget.focusNode.hasFocus) {
@@ -89,17 +96,34 @@ class CustomTextEditState extends State<CustomTextEdit>
     }
   }
 
-  void setCaretRect(Rect rect) {
-    _connection?.setCaretRect(rect);
-  }
-
   void setEditingState(TextEditingValue value) {
     _currentEditingValue = value;
     _connection?.setEditingState(value);
   }
 
+  void setEditableRect(Rect rect, Rect caretRect) {
+    if (!hasInputConnection) {
+      return;
+    }
+
+    _connection?.setEditableSizeAndTransform(
+      rect.size,
+      Matrix4.translationValues(0, 0, 0),
+    );
+
+    _connection?.setCaretRect(caretRect);
+  }
+
   void _onFocusChange() {
     _openOrCloseInputConnectionIfNeeded();
+  }
+
+  KeyEventResult _onKey(FocusNode focusNode, RawKeyEvent event) {
+    if (hasInputConnection && !_currentEditingValue.composing.isCollapsed) {
+      return KeyEventResult.skipRemainingHandlers;
+    }
+
+    return widget.onKey(event);
   }
 
   void _openOrCloseInputConnectionIfNeeded() {
@@ -110,34 +134,33 @@ class CustomTextEditState extends State<CustomTextEdit>
     }
   }
 
+  bool get _shouldCreateInputConnection => kIsWeb || !widget.readOnly;
+
   void _openInputConnection() {
     if (!_shouldCreateInputConnection) {
       return;
     }
 
-    if (_hasInputConnection) {
+    if (hasInputConnection) {
       _connection!.show();
     } else {
       final config = TextInputConfiguration(
         inputType: widget.inputType,
-        enableSuggestions: widget.enableSuggestions,
         inputAction: widget.inputAction,
         keyboardAppearance: widget.keyboardAppearance,
-        autocorrect: widget.autocorrect,
+        autocorrect: false,
+        enableSuggestions: false,
+        enableIMEPersonalizedLearning: false,
+        enableDeltaModel: true,
       );
 
       _connection = TextInput.attach(this, config);
 
       _connection!.show();
 
-      final dx = 0.0;
-      final dy = 0.0;
-      _connection!.setEditableSizeAndTransform(
-        Size(10, 10),
-        Matrix4.translationValues(dx, dy, 0.0),
-      );
+      // setEditableRect(Rect.zero, Rect.zero);
 
-      _connection!.setEditingState(widget.initEditingState);
+      _connection!.setEditingState(_initEditingValue);
     }
   }
 
@@ -148,7 +171,12 @@ class CustomTextEditState extends State<CustomTextEdit>
     }
   }
 
-  TextEditingValue? _currentEditingValue;
+  final _initEditingValue = TextEditingValue(
+    text: '  ',
+    selection: TextSelection.collapsed(offset: 2),
+  );
+
+  late var _currentEditingValue = _initEditingValue.copyWith();
 
   @override
   TextEditingValue? get currentTextEditingValue {
@@ -163,9 +191,6 @@ class CustomTextEditState extends State<CustomTextEdit>
   @override
   void updateEditingValue(TextEditingValue value) {
     // print('updateEditingValue $value');
-
-    widget.onTextInput(value);
-
     _currentEditingValue = value;
   }
 
@@ -193,5 +218,55 @@ class CustomTextEditState extends State<CustomTextEdit>
   @override
   void performPrivateCommand(String action, Map<String, dynamic> data) {
     // print('performPrivateCommand $action');
+  }
+
+  @override
+  void updateEditingValueWithDeltas(List<TextEditingDelta> textEditingDeltas) {
+    final oldEditingValue = _currentEditingValue;
+
+    var haveInsert = false;
+
+    for (var delta in textEditingDeltas) {
+      _currentEditingValue = delta.apply(_currentEditingValue);
+
+      if (delta is TextEditingDeltaInsertion) {
+        if (_currentEditingValue.composing.isCollapsed) {
+          widget.onInsert(delta.textInserted);
+          haveInsert = true;
+        }
+      } else if (delta is TextEditingDeltaDeletion) {
+        if (_currentEditingValue.text.length < _initEditingValue.text.length) {
+          widget.onDelete();
+        }
+      } else if (delta is TextEditingDeltaNonTextUpdate) {
+        // if (_currentEditingValue.composing.isCollapsed) {
+        //   widget.onInsert(delta.textInserted);
+        // }
+      } else if (delta is TextEditingDeltaReplacement) {
+        // print('TextEditingDeltaReplacement');
+      } else {
+        // print('${delta.runtimeType}');
+      }
+    }
+
+    if (!haveInsert &&
+        !oldEditingValue.composing.isCollapsed &&
+        _currentEditingValue.composing.isCollapsed) {
+      final composeStart = oldEditingValue.composing.start;
+      final composedText = _currentEditingValue.text.substring(composeStart);
+      widget.onInsert(composedText);
+    }
+
+    if (_currentEditingValue.composing.isCollapsed) {
+      widget.onComposing(null);
+    } else {
+      final text = _currentEditingValue.text;
+      widget.onComposing(_currentEditingValue.composing.textInside(text));
+    }
+
+    if (_currentEditingValue.composing.isCollapsed &&
+        _currentEditingValue != _initEditingValue) {
+      _connection!.setEditingState(_initEditingValue);
+    }
   }
 }

@@ -3,6 +3,7 @@ import 'dart:math' show min, max;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:xterm/buffer/cell_flags.dart';
 import 'package:xterm/frontend/input_map.dart';
@@ -19,6 +20,8 @@ import 'package:xterm/next/ui/terminal_size.dart';
 import 'package:xterm/next/ui/terminal_theme.dart';
 import 'package:xterm/next/ui/themes.dart';
 
+typedef _EditableRectCallback = void Function(Rect rect, Rect caretRect);
+
 class TerminalView extends StatefulWidget {
   const TerminalView(
     this.terminal, {
@@ -31,6 +34,8 @@ class TerminalView extends StatefulWidget {
     this.backgroundOpacity = 1,
     this.focusNode,
     this.autofocus = false,
+    this.keyboardType = TextInputType.emailAddress,
+    this.keyboardAppearance = Brightness.dark,
     this.cursorType = TerminalCursorType.block,
     this.alwaysShowCursor = false,
   }) : super(key: key);
@@ -52,6 +57,10 @@ class TerminalView extends StatefulWidget {
   final FocusNode? focusNode;
 
   final bool autofocus;
+
+  final TextInputType keyboardType;
+
+  final Brightness keyboardAppearance;
 
   final TerminalCursorType cursorType;
 
@@ -88,7 +97,7 @@ class _TerminalViewState extends State<TerminalView> {
     super.dispose();
   }
 
-  KeyEventResult _onKeyEvent(FocusNode node, RawKeyEvent event) {
+  KeyEventResult _onKeyEvent(RawKeyEvent event) {
     if (event is! RawKeyDownEvent) {
       return KeyEventResult.ignored;
     }
@@ -115,6 +124,10 @@ class _TerminalViewState extends State<TerminalView> {
         _scrollToBottom();
       });
     }
+  }
+
+  void _onEditableRect(Rect rect, Rect caretRect) {
+    customTextEditKey.currentState?.setEditableRect(rect, caretRect);
   }
 
   void _scrollToBottom() {
@@ -145,6 +158,7 @@ class _TerminalViewState extends State<TerminalView> {
           focusNode: focusNode,
           cursorType: widget.cursorType,
           alwaysShowCursor: widget.alwaysShowCursor,
+          onEditableRect: _onEditableRect,
         );
       },
     );
@@ -157,13 +171,18 @@ class _TerminalViewState extends State<TerminalView> {
     child = CustomTextEdit(
       key: customTextEditKey,
       focusNode: focusNode,
-      onTextInput: (textEditingValue) {
-        if (textEditingValue.text.isNotEmpty) {
-          _scrollToBottom();
-          widget.terminal.onOutput?.call(textEditingValue.text);
-          customTextEditKey.currentState
-              ?.setEditingState(TextEditingValue.empty);
-        }
+      inputType: widget.keyboardType,
+      keyboardAppearance: widget.keyboardAppearance,
+      onInsert: (text) {
+        _scrollToBottom();
+        widget.terminal.onOutput?.call(text);
+      },
+      onDelete: () {
+        _scrollToBottom();
+        widget.terminal.keyInput(TerminalKey.backspace);
+      },
+      onComposing: (text) {
+        // todo
       },
       onAction: (action) {
         _scrollToBottom();
@@ -171,12 +190,6 @@ class _TerminalViewState extends State<TerminalView> {
           widget.terminal.keyInput(TerminalKey.enter);
         }
       },
-      child: child,
-    );
-
-    child = Focus(
-      focusNode: focusNode,
-      autofocus: widget.autofocus,
       onKey: _onKeyEvent,
       child: child,
     );
@@ -207,6 +220,7 @@ class _TerminalViewport extends LeafRenderObjectWidget {
     required this.focusNode,
     required this.cursorType,
     required this.alwaysShowCursor,
+    this.onEditableRect,
   }) : super(key: key);
 
   final Terminal terminal;
@@ -227,6 +241,8 @@ class _TerminalViewport extends LeafRenderObjectWidget {
 
   final bool alwaysShowCursor;
 
+  final _EditableRectCallback? onEditableRect;
+
   @override
   _RenderTerminalViewport createRenderObject(BuildContext context) {
     return _RenderTerminalViewport(
@@ -239,6 +255,7 @@ class _TerminalViewport extends LeafRenderObjectWidget {
       focusNode: focusNode,
       cursorType: cursorType,
       alwaysShowCursor: alwaysShowCursor,
+      onEditableRect: onEditableRect,
     );
   }
 
@@ -254,7 +271,8 @@ class _TerminalViewport extends LeafRenderObjectWidget {
       ..theme = theme
       ..focusNode = focusNode
       ..cursorType = cursorType
-      ..alwaysShowCursor = alwaysShowCursor;
+      ..alwaysShowCursor = alwaysShowCursor
+      .._onEditableRect = onEditableRect;
   }
 }
 
@@ -269,6 +287,7 @@ class _RenderTerminalViewport extends RenderBox {
     required FocusNode focusNode,
     required TerminalCursorType cursorType,
     required bool alwaysShowCursor,
+    _EditableRectCallback? onEditableRect,
   })  : _terminal = terminal,
         _offset = offset,
         _autoResize = autoResize,
@@ -277,7 +296,8 @@ class _RenderTerminalViewport extends RenderBox {
         _theme = theme,
         _focusNode = focusNode,
         _cursorType = cursorType,
-        _alwaysShowCursor = alwaysShowCursor {
+        _alwaysShowCursor = alwaysShowCursor,
+        _onEditableRect = onEditableRect {
     _updateColorPalette();
   }
 
@@ -352,6 +372,13 @@ class _RenderTerminalViewport extends RenderBox {
     markNeedsPaint();
   }
 
+  _EditableRectCallback? _onEditableRect;
+  set setOnEditableRect(_EditableRectCallback? value) {
+    if (value == _onEditableRect) return;
+    _onEditableRect = value;
+    markNeedsLayout();
+  }
+
   final _paragraphCache = ParagraphCache(10240);
 
   late List<Color> _colorPalette;
@@ -422,6 +449,24 @@ class _RenderTerminalViewport extends RenderBox {
         );
       }
     }
+
+    SchedulerBinding.instance!
+        .addPostFrameCallback((_) => _notifyEditableRect());
+  }
+
+  void _notifyEditableRect() {
+    final cursor = localToGlobal(_cursorOffset);
+
+    final rect = Rect.fromLTRB(
+      cursor.dx,
+      cursor.dy,
+      size.width,
+      cursor.dy + _charMetrics.height,
+    );
+
+    final caretRect = cursor & _charMetrics;
+
+    _onEditableRect?.call(rect, caretRect);
   }
 
   void _updateViewportSize() {
@@ -450,6 +495,13 @@ class _RenderTerminalViewport extends RenderBox {
   double get _maxScrollExtent {
     final terminalHeight = _terminal.buffer.lines.length * _charMetrics.height;
     return max(terminalHeight - size.height, 0.0);
+  }
+
+  Offset get _cursorOffset {
+    return Offset(
+      _terminal.buffer.cursorX * _charMetrics.width,
+      _terminal.buffer.absoluteCursorY * _charMetrics.height - _offset.pixels,
+    );
   }
 
   void _updateScrollOffset() {
@@ -485,10 +537,7 @@ class _RenderTerminalViewport extends RenderBox {
     if ((_terminal.cursorVisibleMode || _alwaysShowCursor) &&
         _terminal.buffer.absoluteCursorY >= firstLine &&
         _terminal.buffer.absoluteCursorY <= lastLine) {
-      final cursorOffset = offset.translate(
-        _terminal.buffer.cursorX * _charMetrics.width,
-        _terminal.buffer.absoluteCursorY * charHeight - _offset.pixels,
-      );
+      final cursorOffset = offset + _cursorOffset;
       _paintCursor(canvas, cursorOffset);
     }
   }
