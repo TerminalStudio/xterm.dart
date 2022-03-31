@@ -143,7 +143,6 @@ class _TerminalViewState extends State<TerminalView> {
     // lazily load fonts (such as google_fonts) and this can change the
     // font metrics while textStyle is still the same.
     final charMetrics = calcCharMetrics(widget.textStyle);
-
     Widget child = Scrollable(
       key: scrollableKey,
       controller: widget.scrollController,
@@ -151,6 +150,7 @@ class _TerminalViewState extends State<TerminalView> {
         return _TerminalViewport(
           terminal: widget.terminal,
           offset: offset,
+          padding: MediaQuery.of(context).padding,
           autoResize: widget.autoResize,
           charMetrics: charMetrics,
           textStyle: widget.textStyle,
@@ -165,6 +165,7 @@ class _TerminalViewState extends State<TerminalView> {
 
     child = Container(
       color: widget.theme.background.withOpacity(widget.backgroundOpacity),
+      padding: widget.padding,
       child: child,
     );
 
@@ -213,6 +214,7 @@ class _TerminalViewport extends LeafRenderObjectWidget {
     Key? key,
     required this.terminal,
     required this.offset,
+    required this.padding,
     required this.autoResize,
     required this.charMetrics,
     required this.textStyle,
@@ -226,6 +228,8 @@ class _TerminalViewport extends LeafRenderObjectWidget {
   final Terminal terminal;
 
   final ViewportOffset offset;
+
+  final EdgeInsets padding;
 
   final bool autoResize;
 
@@ -248,6 +252,7 @@ class _TerminalViewport extends LeafRenderObjectWidget {
     return _RenderTerminalViewport(
       terminal: terminal,
       offset: offset,
+      padding: padding,
       autoResize: autoResize,
       charMetrics: charMetrics,
       textStyle: textStyle,
@@ -265,6 +270,7 @@ class _TerminalViewport extends LeafRenderObjectWidget {
     renderObject
       ..terminal = terminal
       ..offset = offset
+      ..padding = padding
       ..autoResize = autoResize
       ..charMetrics = charMetrics
       ..textStyle = textStyle
@@ -280,6 +286,7 @@ class _RenderTerminalViewport extends RenderBox {
   _RenderTerminalViewport({
     required Terminal terminal,
     required ViewportOffset offset,
+    required EdgeInsets padding,
     required bool autoResize,
     required Size charMetrics,
     required TerminalStyle textStyle,
@@ -290,6 +297,7 @@ class _RenderTerminalViewport extends RenderBox {
     _EditableRectCallback? onEditableRect,
   })  : _terminal = terminal,
         _offset = offset,
+        _padding = padding,
         _autoResize = autoResize,
         _charMetrics = charMetrics,
         _textStyle = textStyle,
@@ -317,6 +325,13 @@ class _RenderTerminalViewport extends RenderBox {
     if (attached) _offset.removeListener(_hasScrolled);
     _offset = value;
     if (attached) _offset.addListener(_hasScrolled);
+    markNeedsLayout();
+  }
+
+  EdgeInsets _padding;
+  set padding(EdgeInsets value) {
+    if (value == _padding) return;
+    _padding = value;
     markNeedsLayout();
   }
 
@@ -472,7 +487,7 @@ class _RenderTerminalViewport extends RenderBox {
   void _updateViewportSize() {
     final viewportSize = TerminalSize(
       size.width ~/ _charMetrics.width,
-      size.height ~/ _charMetrics.height,
+      _viewportHeight ~/ _charMetrics.height,
     );
 
     if (_viewportSize != viewportSize) {
@@ -492,20 +507,28 @@ class _RenderTerminalViewport extends RenderBox {
     }
   }
 
+  double get _viewportHeight {
+    return size.height - _padding.vertical;
+  }
+
   double get _maxScrollExtent {
     final terminalHeight = _terminal.buffer.lines.length * _charMetrics.height;
-    return max(terminalHeight - size.height, 0.0);
+    return max(terminalHeight - _viewportHeight, 0.0);
+  }
+
+  double get _lineOffset {
+    return -_offset.pixels + _padding.top;
   }
 
   Offset get _cursorOffset {
     return Offset(
       _terminal.buffer.cursorX * _charMetrics.width,
-      _terminal.buffer.absoluteCursorY * _charMetrics.height - _offset.pixels,
+      _terminal.buffer.absoluteCursorY * _charMetrics.height + _lineOffset,
     );
   }
 
   void _updateScrollOffset() {
-    _offset.applyViewportDimension(size.height);
+    _offset.applyViewportDimension(_viewportHeight);
     _offset.applyContentDimensions(0, _maxScrollExtent);
   }
 
@@ -519,24 +542,26 @@ class _RenderTerminalViewport extends RenderBox {
     final lines = _terminal.buffer.lines;
     final charHeight = _charMetrics.height;
 
-    const paddingLines = 5; // For transparent CupertinoNavigationBar
-    final firstVisibleLine = _offset.pixels ~/ charHeight - paddingLines; //
-    final lastVisibleLine = (_offset.pixels + size.height) ~/ charHeight;
+    final firstLineOffset = _offset.pixels - _padding.top;
+    final lastLineOffset = _offset.pixels + size.height + _padding.bottom;
 
-    final firstLine = firstVisibleLine.clamp(0, lines.length - 1);
-    final lastLine = lastVisibleLine.clamp(0, lines.length - 1);
+    final firstLine = firstLineOffset ~/ charHeight;
+    final lastLine = lastLineOffset ~/ charHeight;
 
-    for (var i = firstLine; i <= lastLine; i++) {
+    final effectFirstLine = firstLine.clamp(0, lines.length - 1);
+    final effectLastLine = lastLine.clamp(0, lines.length - 1);
+
+    for (var i = effectFirstLine; i <= effectLastLine; i++) {
       _paintLine(
         canvas,
         lines[i],
-        offset.translate(0, (i * charHeight - _offset.pixels).floorToDouble()),
+        offset.translate(0, (i * charHeight + _lineOffset).truncateToDouble()),
       );
     }
 
     if ((_terminal.cursorVisibleMode || _alwaysShowCursor) &&
-        _terminal.buffer.absoluteCursorY >= firstLine &&
-        _terminal.buffer.absoluteCursorY <= lastLine) {
+        _terminal.buffer.absoluteCursorY >= effectFirstLine &&
+        _terminal.buffer.absoluteCursorY <= effectLastLine) {
       final cursorOffset = offset + _cursorOffset;
       _paintCursor(canvas, cursorOffset);
     }
