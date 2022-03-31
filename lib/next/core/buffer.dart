@@ -430,7 +430,7 @@ class Buffer {
     } else {
       // Shrink smaller
       for (var i = 0; i < oldHeight - newHeight; i++) {
-        if (_cursorY >= newHeight - 1) {
+        if (_cursorY > newHeight - 1) {
           _cursorY--;
         } else {
           lines.pop();
