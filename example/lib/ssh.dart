@@ -20,9 +20,6 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return CupertinoApp(
       title: 'xterm.dart demo',
-      theme: CupertinoThemeData(
-        brightness: Brightness.dark,
-      ),
       home: MyHomePage(),
     );
   }
@@ -44,6 +41,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   final controller = ScrollController();
 
+  var title = host;
+
   @override
   void initState() {
     super.initState();
@@ -64,6 +63,18 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
 
+    terminal.onTitleChange = (title) {
+      setState(() => this.title = title);
+    };
+
+    terminal.onResize = (width, height, pixelWidth, pixelHeight) {
+      session!.resizeTerminal(width, height, pixelWidth, pixelHeight);
+    };
+
+    terminal.onOutput = (data) {
+      session!.write(utf8.encode(data) as Uint8List);
+    };
+
     session!.stdout
         .cast<List<int>>()
         .transform(Utf8Decoder())
@@ -73,27 +84,24 @@ class _MyHomePageState extends State<MyHomePage> {
         .cast<List<int>>()
         .transform(Utf8Decoder())
         .listen(terminal.write);
-
-    terminal.onResize = (width, height, pixelWidth, pixelHeight) {
-      session!.resizeTerminal(width, height, pixelWidth, pixelHeight);
-    };
-
-    terminal.onOutput = (data) {
-      session!.write(utf8.encode(data) as Uint8List);
-    };
   }
 
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
-        middle: Text(host),
-        backgroundColor: CupertinoColors.systemGrey.withOpacity(0.5),
+        middle: Text(title),
+        backgroundColor:
+            CupertinoTheme.of(context).barBackgroundColor.withOpacity(0.5),
       ),
-      child: SafeArea(
-        child: TerminalView(
-          terminal,
-        ),
+      child: Row(
+        children: [
+          Expanded(
+            child: TerminalView(
+              terminal,
+            ),
+          ),
+        ],
       ),
     );
   }
