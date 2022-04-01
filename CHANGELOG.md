@@ -1,3 +1,8 @@
+## [3.0.4-alpha] - 2022-4-1
+* Improved text editing
+* Added composing state painting
+* Adapt to `MediaQuery.padding`
+
 ## [3.0.3-alpha] - 2022-3-28
 * Improved scroll handing
 * Improved resize handing
