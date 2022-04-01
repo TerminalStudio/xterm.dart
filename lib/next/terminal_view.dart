@@ -1,4 +1,5 @@
 import 'dart:math' show min, max;
+import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -76,6 +77,8 @@ class _TerminalViewState extends State<TerminalView> {
   final customTextEditKey = GlobalKey<CustomTextEditState>();
 
   final scrollableKey = GlobalKey<ScrollableState>();
+
+  String? composingText;
 
   @override
   void initState() {
@@ -159,6 +162,7 @@ class _TerminalViewState extends State<TerminalView> {
           cursorType: widget.cursorType,
           alwaysShowCursor: widget.alwaysShowCursor,
           onEditableRect: _onEditableRect,
+          composingText: composingText,
         );
       },
     );
@@ -183,7 +187,7 @@ class _TerminalViewState extends State<TerminalView> {
         widget.terminal.keyInput(TerminalKey.backspace);
       },
       onComposing: (text) {
-        // todo
+        setState(() => composingText = text);
       },
       onAction: (action) {
         _scrollToBottom();
@@ -223,6 +227,7 @@ class _TerminalViewport extends LeafRenderObjectWidget {
     required this.cursorType,
     required this.alwaysShowCursor,
     this.onEditableRect,
+    this.composingText,
   }) : super(key: key);
 
   final Terminal terminal;
@@ -247,6 +252,8 @@ class _TerminalViewport extends LeafRenderObjectWidget {
 
   final _EditableRectCallback? onEditableRect;
 
+  final String? composingText;
+
   @override
   _RenderTerminalViewport createRenderObject(BuildContext context) {
     return _RenderTerminalViewport(
@@ -261,6 +268,7 @@ class _TerminalViewport extends LeafRenderObjectWidget {
       cursorType: cursorType,
       alwaysShowCursor: alwaysShowCursor,
       onEditableRect: onEditableRect,
+      composingText: composingText,
     );
   }
 
@@ -278,7 +286,8 @@ class _TerminalViewport extends LeafRenderObjectWidget {
       ..focusNode = focusNode
       ..cursorType = cursorType
       ..alwaysShowCursor = alwaysShowCursor
-      .._onEditableRect = onEditableRect;
+      .._onEditableRect = onEditableRect
+      ..composingText = composingText;
   }
 }
 
@@ -295,6 +304,7 @@ class _RenderTerminalViewport extends RenderBox {
     required TerminalCursorType cursorType,
     required bool alwaysShowCursor,
     _EditableRectCallback? onEditableRect,
+    String? composingText,
   })  : _terminal = terminal,
         _offset = offset,
         _padding = padding,
@@ -305,7 +315,8 @@ class _RenderTerminalViewport extends RenderBox {
         _focusNode = focusNode,
         _cursorType = cursorType,
         _alwaysShowCursor = alwaysShowCursor,
-        _onEditableRect = onEditableRect {
+        _onEditableRect = onEditableRect,
+        _composingText = composingText {
     _updateColorPalette();
   }
 
@@ -392,6 +403,13 @@ class _RenderTerminalViewport extends RenderBox {
     if (value == _onEditableRect) return;
     _onEditableRect = value;
     markNeedsLayout();
+  }
+
+  String? _composingText;
+  set composingText(String? value) {
+    if (value == _composingText) return;
+    _composingText = value;
+    markNeedsPaint();
   }
 
   final _paragraphCache = ParagraphCache(10240);
@@ -507,6 +525,14 @@ class _RenderTerminalViewport extends RenderBox {
     }
   }
 
+  bool get _isComposingText {
+    return _composingText != null && _composingText!.isNotEmpty;
+  }
+
+  bool get _shouldShowCursor {
+    return _terminal.cursorVisibleMode || _alwaysShowCursor || _isComposingText;
+  }
+
   double get _viewportHeight {
     return size.height - _padding.vertical;
   }
@@ -559,11 +585,17 @@ class _RenderTerminalViewport extends RenderBox {
       );
     }
 
-    if ((_terminal.cursorVisibleMode || _alwaysShowCursor) &&
-        _terminal.buffer.absoluteCursorY >= effectFirstLine &&
+    if (_terminal.buffer.absoluteCursorY >= effectFirstLine &&
         _terminal.buffer.absoluteCursorY <= effectLastLine) {
       final cursorOffset = offset + _cursorOffset;
-      _paintCursor(canvas, cursorOffset);
+
+      if (_isComposingText) {
+        _paintComposingText(canvas, cursorOffset);
+      }
+
+      if (_shouldShowCursor) {
+        _paintCursor(canvas, cursorOffset);
+      }
     }
   }
 
@@ -596,6 +628,31 @@ class _RenderTerminalViewport extends RenderBox {
           paint,
         );
     }
+  }
+
+  void _paintComposingText(Canvas canvas, Offset offset) {
+    final composingText = _composingText;
+
+    if (composingText == null) {
+      return;
+    }
+
+    final style = _textStyle.toTextStyle(
+      color: resolveForegroundColor(_terminal.cursor.foreground),
+      backgroundColor: _theme.background,
+      underline: true,
+    );
+
+    final builder = ParagraphBuilder(style.getParagraphStyle());
+    builder.addPlaceholder(
+        offset.dx, _charMetrics.height, PlaceholderAlignment.middle);
+    builder.pushStyle(style.getTextStyle());
+    builder.addText(composingText);
+
+    final paragraph = builder.build();
+    paragraph.layout(ParagraphConstraints(width: size.width));
+
+    canvas.drawParagraph(paragraph, Offset(0, offset.dy));
   }
 
   void _paintLine(Canvas canvas, BufferLine line, Offset offset) {

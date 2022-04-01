@@ -16,7 +16,7 @@ class CustomTextEdit extends StatefulWidget {
     this.readOnly = false,
     // this.initEditingState = TextEditingValue.empty,
     this.inputType = TextInputType.text,
-    this.inputAction = TextInputAction.done,
+    this.inputAction = TextInputAction.newline,
     this.keyboardAppearance = Brightness.light,
   }) : super(key: key);
 
@@ -49,7 +49,7 @@ class CustomTextEdit extends StatefulWidget {
 }
 
 class CustomTextEditState extends State<CustomTextEdit>
-    implements DeltaTextInputClient {
+    implements TextInputClient {
   TextInputConnection? _connection;
 
   @override
@@ -97,7 +97,7 @@ class CustomTextEditState extends State<CustomTextEdit>
   }
 
   void setEditingState(TextEditingValue value) {
-    _currentEditingValue = value;
+    _currentEditingState = value;
     _connection?.setEditingState(value);
   }
 
@@ -119,11 +119,11 @@ class CustomTextEditState extends State<CustomTextEdit>
   }
 
   KeyEventResult _onKey(FocusNode focusNode, RawKeyEvent event) {
-    if (hasInputConnection && !_currentEditingValue.composing.isCollapsed) {
-      return KeyEventResult.skipRemainingHandlers;
+    if (_currentEditingState.composing.isCollapsed) {
+      return widget.onKey(event);
     }
 
-    return widget.onKey(event);
+    return KeyEventResult.skipRemainingHandlers;
   }
 
   void _openOrCloseInputConnectionIfNeeded() {
@@ -151,7 +151,6 @@ class CustomTextEditState extends State<CustomTextEdit>
         autocorrect: false,
         enableSuggestions: false,
         enableIMEPersonalizedLearning: false,
-        enableDeltaModel: true,
       );
 
       _connection = TextInput.attach(this, config);
@@ -172,15 +171,15 @@ class CustomTextEditState extends State<CustomTextEdit>
   }
 
   final _initEditingValue = TextEditingValue(
-    text: '  ',
-    selection: TextSelection.collapsed(offset: 2),
+    text: '',
+    selection: TextSelection.collapsed(offset: 0),
   );
 
-  late var _currentEditingValue = _initEditingValue.copyWith();
+  late var _currentEditingState = _initEditingValue.copyWith();
 
   @override
   TextEditingValue? get currentTextEditingValue {
-    return _currentEditingValue;
+    return _currentEditingState;
   }
 
   @override
@@ -190,8 +189,34 @@ class CustomTextEditState extends State<CustomTextEdit>
 
   @override
   void updateEditingValue(TextEditingValue value) {
-    // print('updateEditingValue $value');
-    _currentEditingValue = value;
+    _currentEditingState = value;
+
+    // Get input after composing is done
+    if (!_currentEditingState.composing.isCollapsed) {
+      final text = _currentEditingState.text;
+      final composingText = _currentEditingState.composing.textInside(text);
+      widget.onComposing(composingText);
+      return;
+    }
+
+    widget.onComposing(null);
+
+    if (_currentEditingState.text.length < _initEditingValue.text.length) {
+      widget.onDelete();
+      return;
+    }
+
+    final textDelta = _currentEditingState.text.substring(
+      _initEditingValue.text.length,
+    );
+
+    widget.onInsert(textDelta);
+
+    // Reset editing state if composing is done
+    if (_currentEditingState.composing.isCollapsed &&
+        _currentEditingState.text != _initEditingValue.text) {
+      _connection!.setEditingState(_initEditingValue);
+    }
   }
 
   @override
@@ -218,55 +243,5 @@ class CustomTextEditState extends State<CustomTextEdit>
   @override
   void performPrivateCommand(String action, Map<String, dynamic> data) {
     // print('performPrivateCommand $action');
-  }
-
-  @override
-  void updateEditingValueWithDeltas(List<TextEditingDelta> textEditingDeltas) {
-    final oldEditingValue = _currentEditingValue;
-
-    var haveInsert = false;
-
-    for (var delta in textEditingDeltas) {
-      _currentEditingValue = delta.apply(_currentEditingValue);
-
-      if (delta is TextEditingDeltaInsertion) {
-        if (_currentEditingValue.composing.isCollapsed) {
-          widget.onInsert(delta.textInserted);
-          haveInsert = true;
-        }
-      } else if (delta is TextEditingDeltaDeletion) {
-        if (_currentEditingValue.text.length < _initEditingValue.text.length) {
-          widget.onDelete();
-        }
-      } else if (delta is TextEditingDeltaNonTextUpdate) {
-        // if (_currentEditingValue.composing.isCollapsed) {
-        //   widget.onInsert(delta.textInserted);
-        // }
-      } else if (delta is TextEditingDeltaReplacement) {
-        // print('TextEditingDeltaReplacement');
-      } else {
-        // print('${delta.runtimeType}');
-      }
-    }
-
-    if (!haveInsert &&
-        !oldEditingValue.composing.isCollapsed &&
-        _currentEditingValue.composing.isCollapsed) {
-      final composeStart = oldEditingValue.composing.start;
-      final composedText = _currentEditingValue.text.substring(composeStart);
-      widget.onInsert(composedText);
-    }
-
-    if (_currentEditingValue.composing.isCollapsed) {
-      widget.onComposing(null);
-    } else {
-      final text = _currentEditingValue.text;
-      widget.onComposing(_currentEditingValue.composing.textInside(text));
-    }
-
-    if (_currentEditingValue.composing.isCollapsed &&
-        _currentEditingValue != _initEditingValue) {
-      _connection!.setEditingState(_initEditingValue);
-    }
   }
 }

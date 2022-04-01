@@ -53,6 +53,7 @@ class TerminalStyle {
 
   TextStyle toTextStyle({
     Color? color,
+    Color? backgroundColor,
     bool bold = false,
     bool italic = false,
     bool underline = false,
@@ -63,6 +64,7 @@ class TerminalStyle {
       fontFamily: fontFamily,
       fontFamilyFallback: fontFamilyFallback,
       color: color,
+      backgroundColor: backgroundColor,
       fontWeight: bold ? FontWeight.bold : FontWeight.normal,
       fontStyle: italic ? FontStyle.italic : FontStyle.normal,
       decoration: underline ? TextDecoration.underline : TextDecoration.none,
