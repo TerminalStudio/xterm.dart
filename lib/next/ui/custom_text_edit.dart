@@ -18,6 +18,7 @@ class CustomTextEdit extends StatefulWidget {
     this.inputType = TextInputType.text,
     this.inputAction = TextInputAction.newline,
     this.keyboardAppearance = Brightness.light,
+    this.deleteDetection = false,
   }) : super(key: key);
 
   final Widget child;
@@ -43,6 +44,8 @@ class CustomTextEdit extends StatefulWidget {
   final TextInputAction inputAction;
 
   final Brightness keyboardAppearance;
+
+  final bool deleteDetection;
 
   @override
   CustomTextEditState createState() => CustomTextEditState();
@@ -159,7 +162,7 @@ class CustomTextEditState extends State<CustomTextEdit>
 
       // setEditableRect(Rect.zero, Rect.zero);
 
-      _connection!.setEditingState(_initEditingValue);
+      _connection!.setEditingState(_initEditingState);
     }
   }
 
@@ -170,12 +173,17 @@ class CustomTextEditState extends State<CustomTextEdit>
     }
   }
 
-  final _initEditingValue = TextEditingValue(
-    text: '',
-    selection: TextSelection.collapsed(offset: 0),
-  );
+  TextEditingValue get _initEditingState => widget.deleteDetection
+      ? const TextEditingValue(
+          text: '  ',
+          selection: TextSelection.collapsed(offset: 2),
+        )
+      : const TextEditingValue(
+          text: '',
+          selection: TextSelection.collapsed(offset: 0),
+        );
 
-  late var _currentEditingState = _initEditingValue.copyWith();
+  late var _currentEditingState = _initEditingState.copyWith();
 
   @override
   TextEditingValue? get currentTextEditingValue {
@@ -201,21 +209,20 @@ class CustomTextEditState extends State<CustomTextEdit>
 
     widget.onComposing(null);
 
-    if (_currentEditingState.text.length < _initEditingValue.text.length) {
+    if (_currentEditingState.text.length < _initEditingState.text.length) {
       widget.onDelete();
-      return;
+    } else {
+      final textDelta = _currentEditingState.text.substring(
+        _initEditingState.text.length,
+      );
+
+      widget.onInsert(textDelta);
     }
-
-    final textDelta = _currentEditingState.text.substring(
-      _initEditingValue.text.length,
-    );
-
-    widget.onInsert(textDelta);
 
     // Reset editing state if composing is done
     if (_currentEditingState.composing.isCollapsed &&
-        _currentEditingState.text != _initEditingValue.text) {
-      _connection!.setEditingState(_initEditingValue);
+        _currentEditingState.text != _initEditingState.text) {
+      _connection!.setEditingState(_initEditingState);
     }
   }
 

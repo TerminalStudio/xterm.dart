@@ -39,6 +39,7 @@ class TerminalView extends StatefulWidget {
     this.keyboardAppearance = Brightness.dark,
     this.cursorType = TerminalCursorType.block,
     this.alwaysShowCursor = false,
+    this.deleteDetection = false,
   }) : super(key: key);
 
   final Terminal terminal;
@@ -66,6 +67,10 @@ class TerminalView extends StatefulWidget {
   final TerminalCursorType cursorType;
 
   final bool alwaysShowCursor;
+
+  /// Workaround to detect delete key for platforms and IMEs that does not
+  /// emit hardware delete event.
+  final bool deleteDetection;
 
   @override
   State<TerminalView> createState() => _TerminalViewState();
@@ -178,6 +183,7 @@ class _TerminalViewState extends State<TerminalView> {
       focusNode: focusNode,
       inputType: widget.keyboardType,
       keyboardAppearance: widget.keyboardAppearance,
+      deleteDetection: widget.deleteDetection,
       onInsert: (text) {
         _scrollToBottom();
         widget.terminal.onOutput?.call(text);
