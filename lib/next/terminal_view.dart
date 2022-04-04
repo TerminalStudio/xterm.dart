@@ -520,6 +520,10 @@ class _RenderTerminalViewport extends RenderBox {
   }
 
   void _updateViewportSize() {
+    if (size <= _charMetrics) {
+      return;
+    }
+
     final viewportSize = TerminalSize(
       size.width ~/ _charMetrics.width,
       _viewportHeight ~/ _charMetrics.height,
