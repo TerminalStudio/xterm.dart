@@ -34,6 +34,7 @@ class TerminalView extends StatefulWidget {
     this.backgroundOpacity = 1,
     this.focusNode,
     this.autofocus = false,
+    this.onTap,
     this.keyboardType = TextInputType.emailAddress,
     this.keyboardAppearance = Brightness.dark,
     this.cursorType = TerminalCursorType.block,
@@ -59,6 +60,8 @@ class TerminalView extends StatefulWidget {
 
   final bool autofocus;
 
+  final VoidCallback? onTap;
+
   final TextInputType keyboardType;
 
   final Brightness keyboardAppearance;
@@ -72,10 +75,10 @@ class TerminalView extends StatefulWidget {
   final bool deleteDetection;
 
   @override
-  State<TerminalView> createState() => _TerminalViewState();
+  State<TerminalView> createState() => TerminalViewState();
 }
 
-class _TerminalViewState extends State<TerminalView> {
+class TerminalViewState extends State<TerminalView> {
   late final FocusNode focusNode;
 
   final customTextEditKey = GlobalKey<CustomTextEditState>();
@@ -224,6 +227,7 @@ class _TerminalViewState extends State<TerminalView> {
     return GestureDetector(
       onTap: () {
         customTextEditKey.currentState?.requestKeyboard();
+        widget.onTap?.call();
       },
       child: child,
     );
