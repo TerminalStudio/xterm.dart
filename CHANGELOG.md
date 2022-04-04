@@ -1,3 +1,9 @@
+## [3.0.5-alpha] - 2022-4-4
+* Avoid resize when `RenderBox.size` is zero.
+* Added `charInput` and `textInput`method.
+* Added `requestKeyboard`, `closeKeyboard` and `hasInputConnection`method.
+* Export `KeyboardVisibilty`
+
 ## [3.0.4-alpha] - 2022-4-1
 * Improved text editing
 * Added composing state painting
