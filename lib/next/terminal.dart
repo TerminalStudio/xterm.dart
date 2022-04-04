@@ -12,6 +12,7 @@ import 'package:xterm/next/core/line.dart';
 import 'package:xterm/next/core/mouse.dart';
 import 'package:xterm/next/core/state.dart';
 import 'package:xterm/next/core/tabs.dart';
+import 'package:xterm/util/ascii.dart';
 import 'package:xterm/util/circular_list.dart';
 import 'package:xterm/util/observable.dart';
 
@@ -188,6 +189,43 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
     }
 
     return false;
+  }
+
+  bool charInput(
+    int charCode, {
+    bool alt = false,
+    bool ctrl = false,
+  }) {
+    if (ctrl) {
+      // a(97) ~ z(122)
+      if (charCode >= Ascii.a && charCode <= Ascii.z) {
+        final output = charCode - Ascii.a + 1;
+        onOutput?.call(String.fromCharCode(output));
+        return true;
+      }
+
+      // [(91) ~ _(95)
+      if (charCode >= Ascii.openBracket && charCode <= Ascii.underscore) {
+        final output = charCode - Ascii.openBracket + 27;
+        onOutput?.call(String.fromCharCode(output));
+        return true;
+      }
+    }
+
+    if (alt && !macos) {
+      if (charCode >= Ascii.a && charCode <= Ascii.z) {
+        final code = charCode - Ascii.a + 65;
+        final input = [0x1b, code];
+        onOutput?.call(String.fromCharCodes(input));
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  void textInput(String text) {
+    onOutput?.call(text);
   }
 
   /// Resize the terminal screen. [newWidth] and [newHeight] should be greater

@@ -14,7 +14,6 @@ import 'package:xterm/next/core/cell.dart';
 import 'package:xterm/next/core/line.dart';
 import 'package:xterm/next/ui/char_metrics.dart';
 import 'package:xterm/next/ui/custom_text_edit.dart';
-import 'package:xterm/next/ui/keyboard_visibility.dart';
 import 'package:xterm/next/ui/palette_builder.dart';
 import 'package:xterm/next/ui/paragraph_cache.dart';
 import 'package:xterm/next/ui/terminal_size.dart';
@@ -198,7 +197,7 @@ class _TerminalViewState extends State<TerminalView> {
       deleteDetection: widget.deleteDetection,
       onInsert: (text) {
         _scrollToBottom();
-        widget.terminal.onOutput?.call(text);
+        widget.terminal.textInput(text);
       },
       onDelete: () {
         _scrollToBottom();
