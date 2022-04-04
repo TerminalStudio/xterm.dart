@@ -1,3 +1,7 @@
+## [3.0.6-alpha] - 2022-4-4
+* Export `TerminalViewState`
+* Added `onTap` callback to `TerminalView`
+
 ## [3.0.5-alpha] - 2022-4-4
 * Avoid resize when `RenderBox.size` is zero.
 * Added `charInput` and `textInput`method.
