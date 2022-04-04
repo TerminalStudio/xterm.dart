@@ -105,6 +105,14 @@ class _TerminalViewState extends State<TerminalView> {
     super.dispose();
   }
 
+  void requestKeyboard() {
+    customTextEditKey.currentState?.requestKeyboard();
+  }
+
+  void closeKeyboard() {
+    customTextEditKey.currentState?.closeKeyboard();
+  }
+
   KeyEventResult _onKeyEvent(RawKeyEvent event) {
     if (event is! RawKeyDownEvent) {
       return KeyEventResult.ignored;

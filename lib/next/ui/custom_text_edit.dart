@@ -99,6 +99,12 @@ class CustomTextEditState extends State<CustomTextEdit>
     }
   }
 
+  void closeKeyboard() {
+    if (hasInputConnection) {
+      _connection?.close();
+    }
+  }
+
   void setEditingState(TextEditingValue value) {
     _currentEditingState = value;
     _connection?.setEditingState(value);
