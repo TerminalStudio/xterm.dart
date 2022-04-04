@@ -113,6 +113,10 @@ class _TerminalViewState extends State<TerminalView> {
     customTextEditKey.currentState?.closeKeyboard();
   }
 
+  bool get hasInputConnection {
+    return customTextEditKey.currentState?.hasInputConnection == true;
+  }
+
   KeyEventResult _onKeyEvent(RawKeyEvent event) {
     if (event is! RawKeyDownEvent) {
       return KeyEventResult.ignored;
