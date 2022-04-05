@@ -33,13 +33,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final terminal = Terminal(maxLines: 10000);
-
-  SSHClient? client;
-
-  SSHSession? session;
-
-  final controller = ScrollController();
+  final terminal = Terminal();
 
   var title = host;
 
@@ -50,37 +44,44 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> initTerminal() async {
-    client = SSHClient(
+    terminal.write('Connecting...\r\n');
+
+    final client = SSHClient(
       await SSHSocket.connect(host, port),
       username: username,
       onPasswordRequest: () => password,
     );
 
-    session = await client!.shell(
+    terminal.write('Connected\r\n');
+
+    final session = await client.shell(
       pty: SSHPtyConfig(
         width: terminal.viewWidth,
         height: terminal.viewHeight,
       ),
     );
 
+    terminal.buffer.clear();
+    terminal.buffer.setCursor(0, 0);
+
     terminal.onTitleChange = (title) {
       setState(() => this.title = title);
     };
 
     terminal.onResize = (width, height, pixelWidth, pixelHeight) {
-      session!.resizeTerminal(width, height, pixelWidth, pixelHeight);
+      session.resizeTerminal(width, height, pixelWidth, pixelHeight);
     };
 
     terminal.onOutput = (data) {
-      session!.write(utf8.encode(data) as Uint8List);
+      session.write(utf8.encode(data) as Uint8List);
     };
 
-    session!.stdout
+    session.stdout
         .cast<List<int>>()
         .transform(Utf8Decoder())
         .listen(terminal.write);
 
-    session!.stderr
+    session.stderr
         .cast<List<int>>()
         .transform(Utf8Decoder())
         .listen(terminal.write);
@@ -94,14 +95,8 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor:
             CupertinoTheme.of(context).barBackgroundColor.withOpacity(0.5),
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TerminalView(
-              terminal,
-            ),
-          ),
-        ],
+      child: TerminalView(
+        terminal,
       ),
     );
   }
