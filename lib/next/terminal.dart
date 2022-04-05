@@ -40,6 +40,7 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
     this.onTitleChange,
     this.onIconChange,
     this.onOutput,
+    this.onResize,
     this.macos = false,
   });
 
