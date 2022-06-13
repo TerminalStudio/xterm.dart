@@ -86,6 +86,8 @@ class TerminalViewState extends State<TerminalView> {
   final scrollableKey = GlobalKey<ScrollableState>();
 
   String? composingText;
+  
+  T? _nonNullableWrap<T>(T? value) => value;
 
   @override
   void initState() {
@@ -142,7 +144,7 @@ class TerminalViewState extends State<TerminalView> {
 
   void _onKeyboardShow() {
     if (focusNode.hasFocus) {
-      WidgetsBinding.instance?.addPostFrameCallback((_) {
+       _nonNullableWrap(WidgetsBinding.instance)!.addPostFrameCallback((_) {
         _scrollToBottom();
       });
     }
@@ -504,7 +506,7 @@ class _RenderTerminalViewport extends RenderBox {
       }
     }
 
-    SchedulerBinding.instance!
+   _nonNullableWrap(WidgetsBinding.instance)!
         .addPostFrameCallback((_) => _notifyEditableRect());
   }
 
@@ -654,6 +656,8 @@ class _RenderTerminalViewport extends RenderBox {
         );
     }
   }
+  
+  
 
   void _paintComposingText(Canvas canvas, Offset offset) {
     final composingText = _composingText;
