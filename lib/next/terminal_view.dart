@@ -505,6 +505,8 @@ class _RenderTerminalViewport extends RenderBox {
         );
       }
     }
+    
+    T? _nonNullableWrap<T>(T? value) => value;
 
    _nonNullableWrap(WidgetsBinding.instance)!
         .addPostFrameCallback((_) => _notifyEditableRect());
