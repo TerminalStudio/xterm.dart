@@ -75,7 +75,7 @@ class BufferLine {
   }
 
   void setCell(int index, int char, int witdh, CursorStyle style) {
-    final offset = index * _cellSize-1;
+    final offset = index * _cellSize;
     _data[offset + _cellForeground] = style.foreground;
     _data[offset + _cellBackground] = style.background;
     _data[offset + _cellAttributes] = style.attrs;
@@ -83,7 +83,7 @@ class BufferLine {
   }
 
   void setCellData(int index, CellData cellData) {
-    final offset = index * _cellSize -1;
+    final offset = index * _cellSize;
     _data[offset + _cellForeground] = cellData.foreground;
     _data[offset + _cellBackground] = cellData.background;
     _data[offset + _cellAttributes] = cellData.flags;
@@ -91,7 +91,7 @@ class BufferLine {
   }
 
   void eraseCell(int index, CursorStyle style) {
-    final offset = index * _cellSize -1 ;
+    final offset = index * _cellSize;
     _data[offset + _cellForeground] = style.foreground;
     _data[offset + _cellBackground] = style.background;
     _data[offset + _cellAttributes] = style.attrs;
