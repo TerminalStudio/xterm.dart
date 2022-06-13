@@ -257,4 +257,13 @@ class CustomTextEditState extends State<CustomTextEdit>
   void performPrivateCommand(String action, Map<String, dynamic> data) {
     // print('performPrivateCommand $action');
   }
+  
+  @override
+  void showToolbar() {}
+
+  @override
+  void insertTextPlaceholder(Size size) {}
+
+  @override
+  void removeTextPlaceholder() {}
 }
