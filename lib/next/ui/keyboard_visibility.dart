@@ -22,15 +22,18 @@ class KeyboardVisibilty extends StatefulWidget {
 
 class _KeyboardVisibiltyState extends State<KeyboardVisibilty>
     with WidgetsBindingObserver {
+  
+  T? _nonNullableWrap<T>(T? value) => value;
+  
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance!.addObserver(this);
+    _nonNullableWrap(WidgetsBinding.instance)!.addObserver(this);
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance!.removeObserver(this);
+    _nonNullableWrap(WidgetsBinding.instance)!.removeObserver(this);
     super.dispose();
   }
 
