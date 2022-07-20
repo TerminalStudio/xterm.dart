@@ -54,7 +54,7 @@
 ```yml
 dependencies:
   ...
-  xterm: ^2.2.0-pre
+  xterm: ^2.6.0
 ```
 
 **2.** Create the terminal:
