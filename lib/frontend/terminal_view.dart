@@ -30,6 +30,7 @@ class TerminalView extends StatefulWidget {
     this.inputAction = TextInputAction.done,
     this.keyboardAppearance = Brightness.light,
     this.autocorrect = false,
+    this.readOnly = false,
     InputBehavior? inputBehavior,
     this.scrollBehavior,
     this.padding = 0.0,
@@ -47,6 +48,7 @@ class TerminalView extends StatefulWidget {
   final TextInputAction inputAction;
   final Brightness keyboardAppearance;
   final bool autocorrect;
+  final bool readOnly;
 
   final TerminalStyle style;
   final double opacity;
@@ -182,6 +184,7 @@ class _TerminalViewState extends State<TerminalView> {
       inputAction: widget.inputAction,
       keyboardAppearance: widget.keyboardAppearance,
       autocorrect: widget.autocorrect,
+      readOnly: widget.readOnly,
       child: MouseRegion(
         cursor: SystemMouseCursors.text,
         child: LayoutBuilder(builder: (context, constraints) {
