@@ -311,9 +311,16 @@ class TerminalPainter extends CustomPainter {
       italic: flags.hasFlag(CellFlags.italic),
       underline: flags.hasFlag(CellFlags.underline),
     );
-
-    character = textLayoutCache.performAndCacheLayout(
-        String.fromCharCode(codePoint), styleToUse, cellHash);
+    // Flutter does not draw an underline below a space which is not between
+    // other regular characters. As only single characters are drawn, this will
+    // never produce an underline below a space in the terminal. As a workaround
+    // the regular space CodePoint 0x20 is replaced with the CodePoint 0xA0.
+    // This is non breaking space and a underline can be drawn below it.
+    var c = String.fromCharCode(codePoint);
+    if (flags.hasFlag(CellFlags.underline) && codePoint == 0x20) {
+      c = String.fromCharCode(0xA0);
+    }
+    character = textLayoutCache.performAndCacheLayout(c, styleToUse, cellHash);
 
     canvas.drawParagraph(character, Offset(offsetX, offsetY));
   }
