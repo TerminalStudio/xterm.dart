@@ -1,12 +1,23 @@
 import 'package:xterm/mouse/position.dart';
 
+/// SelectionMode determines how the selected area is determined.
+enum SelectionMode {
+  /// Line selects full lines between start and end position.
+  Line,
+
+  /// Block selects the rectangle spanned by start and end.
+  Block,
+}
+
 class Selection {
   Position? _start;
   Position? _end;
+  SelectionMode _mode = SelectionMode.Block;
   var _endFixed = false;
 
   Position? get start => _start;
   Position? get end => _end;
+  SelectionMode get mode => _mode;
 
   void init(Position position) {
     _start = position;
@@ -49,11 +60,27 @@ class Selection {
     if (isEmpty) {
       return false;
     }
-
-    return _start!.isBeforeOrSame(position) && _end!.isAfterOrSame(position);
+    switch (_mode) {
+      case SelectionMode.Line:
+        // Check if the position is between _start and _end.
+        return _start!.isBeforeOrSame(position) &&
+            _end!.isAfterOrSame(position);
+      case SelectionMode.Block:
+        // Check if the position is within the rectangle
+        // spanned by _start and _end.
+        return _start!.x <= position.x &&
+            position.x <= _end!.x &&
+            _start!.y <= position.y &&
+            position.y <= _end!.y;
+    }
   }
 
   bool get isEmpty {
     return _start == null || _end == null;
   }
+
+  void setMode(SelectionMode mode) {
+    _mode = mode;
+  }
+
 }

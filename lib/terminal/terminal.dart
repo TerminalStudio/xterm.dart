@@ -361,6 +361,11 @@ class Terminal
     _mouseMode = mode;
   }
 
+  void setSelectionMode(SelectionMode mode) {
+    _selection.setMode(mode);
+    refresh();
+  }
+
   void useMainBuffer() {
     _buffer = _mainBuffer;
   }
@@ -594,8 +599,10 @@ class Terminal
           const blank = 32;
           char = blank;
         }
-
-        builder.writeCharCode(char);
+        // Check if the position is within the selection.
+        if (_selection.contains(Position(col, row))) {
+          builder.writeCharCode(char);
+        }
       }
     }
 
