@@ -574,14 +574,18 @@ class Terminal
       var xStart = 0;
       var xEnd = viewWidth - 1;
 
-      if (row == _selection.start!.y) {
+      if (row == _selection.start!.y && selection!.mode == SelectionMode.Line) {
         xStart = _selection.start!.x;
+      } else if (selection!.mode == SelectionMode.Block) {
+        xStart = min(_selection.start!.x, _selection.end!.x);
       } else if (!line.isWrapped) {
         builder.write("\n");
       }
 
-      if (row == _selection.end!.y) {
+      if (row == _selection.end!.y && selection!.mode == SelectionMode.Line) {
         xEnd = _selection.end!.x;
+      } else if (selection!.mode == SelectionMode.Block) {
+        xEnd = max(_selection.start!.x, _selection.end!.x);
       }
 
       for (var col = xStart; col <= xEnd; col++) {
