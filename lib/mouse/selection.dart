@@ -31,12 +31,16 @@ class Selection {
       return;
     }
 
+    // If the start of the selection is fixed and the new position is before it,
+    // the start position becomes the end of the selection and fixed.
     if (position.isBefore(start) && !_endFixed) {
       _endFixed = true;
       _end = _start;
     }
 
-    if (position.isAfter(start) && _endFixed) {
+    // If the end of the selection is fixed and the new position is after it,
+    // the end position becomes the start of the selection and fixed.
+    if (_end != null && position.isAfter(_end!) && _endFixed) {
       _endFixed = false;
       _start = _end;
     }
