@@ -12,7 +12,7 @@ enum SelectionMode {
 class Selection {
   Position? _start;
   Position? _end;
-  SelectionMode _mode = SelectionMode.Block;
+  SelectionMode _mode = SelectionMode.Line;
   var _endFixed = false;
 
   Position? get start => _start;
