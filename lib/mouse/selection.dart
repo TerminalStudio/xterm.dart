@@ -72,10 +72,7 @@ class Selection {
       case SelectionMode.Block:
         // Check if the position is within the rectangle
         // spanned by _start and _end.
-        return _start!.x <= position.x &&
-            position.x <= _end!.x &&
-            _start!.y <= position.y &&
-            position.y <= _end!.y;
+        return position.isWithinRectangle(_start!, _end!);
     }
   }
 
