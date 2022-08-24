@@ -578,7 +578,9 @@ class Terminal
         xStart = _selection.start!.x;
       } else if (selection!.mode == SelectionMode.Block) {
         xStart = min(_selection.start!.x, _selection.end!.x);
-      } else if (!line.isWrapped) {
+      }
+      // Add a new line character in every line after the first one.
+      if (row > _selection.start!.y && !line.isWrapped) {
         builder.write("\n");
       }
 
