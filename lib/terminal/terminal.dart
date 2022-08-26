@@ -473,7 +473,7 @@ class Terminal
       }
     }
 
-    if (ctrl) {
+    if (ctrl && !shift && !alt) {
       if (key.index >= TerminalKey.keyA.index &&
           key.index <= TerminalKey.keyZ.index) {
         final input = key.index - TerminalKey.keyA.index + 1;
@@ -482,7 +482,7 @@ class Terminal
       }
     }
 
-    if (alt) {
+    if (alt && !shift && !ctrl) {
       if (key.index >= TerminalKey.keyA.index &&
           key.index <= TerminalKey.keyZ.index) {
         final charCode = key.index - TerminalKey.keyA.index + 65;
