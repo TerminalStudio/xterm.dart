@@ -9,6 +9,9 @@ abstract class TerminalBackend {
   /// then strongly consider instantiating them here
   void init();
 
+  /// returns whether the backend is ready to be used
+  bool get isReady;
+
   /// Stream for data that gets read from the backend
   Stream<String> get out;
 

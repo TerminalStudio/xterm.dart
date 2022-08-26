@@ -37,6 +37,9 @@ class FakeBackend implements TerminalBackend {
   void ackProcessed() {}
 
   @override
+  bool get isReady => true;
+
+  @override
   // TODO: implement exitCode
   Future<int> get exitCode => _exitCodeCompleter.future;
 

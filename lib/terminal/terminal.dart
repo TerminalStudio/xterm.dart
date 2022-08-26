@@ -669,7 +669,7 @@ class Terminal
   String? get selectedText => getSelectedText();
 
   @override
-  bool get isReady => true;
+  bool get isReady => backend?.isReady ?? true;
 
   @override
   void onMouseTap(Position position) {
