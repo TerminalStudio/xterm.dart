@@ -217,7 +217,7 @@ class InputListenerState extends State<InputListener>
   }
 }
 
-class TerminalTextInputClient extends TextInputClient {
+class TerminalTextInputClient with TextInputClient {
   TerminalTextInputClient(this.onInput, this.onAction);
 
   final void Function(TextEditingValue) onInput;
