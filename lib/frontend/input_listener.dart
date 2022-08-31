@@ -75,7 +75,7 @@ class InputListenerState extends State<InputListener>
 
     if (!_didAutoFocus && widget.autofocus) {
       _didAutoFocus = true;
-      SchedulerBinding.instance!.addPostFrameCallback((_) {
+      SchedulerBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           FocusScope.of(context).autofocus(widget.focusNode);
         }
@@ -217,7 +217,7 @@ class InputListenerState extends State<InputListener>
   }
 }
 
-class TerminalTextInputClient extends TextInputClient {
+class TerminalTextInputClient with TextInputClient {
   TerminalTextInputClient(this.onInput, this.onAction);
 
   final void Function(TextEditingValue) onInput;

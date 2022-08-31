@@ -1,6 +1,7 @@
 import 'dart:async';
-
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:xterm/flutter.dart';
 import 'package:xterm/xterm.dart';
 
@@ -96,9 +97,19 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: TerminalView(
-          terminal: terminal,
-          style: TerminalStyle(fontFamily: ['Cascadia Mono']),
+        child: Listener(
+          onPointerDown: (e) {
+            if (e.kind == PointerDeviceKind.mouse && e.buttons == kSecondaryMouseButton) {
+              final text = terminal.selectedText;
+              terminal.clearSelection();
+              terminal.refresh();
+              Clipboard.setData(ClipboardData(text: text));
+            }
+          },
+          child: TerminalView(
+            terminal: terminal,
+            style: TerminalStyle(fontFamily: ['Cascadia Mono']),
+          ),
         ),
       ),
     );
