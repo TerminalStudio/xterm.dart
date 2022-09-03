@@ -45,9 +45,10 @@ class Terminal
     this.onTitleChange = _defaultTitleHandler,
     this.onIconChange = _defaultIconHandler,
     this.platform = PlatformBehaviors.unix,
-    this.theme = TerminalThemes.defaultTheme,
+    TerminalTheme theme = TerminalThemes.defaultTheme,
     required int maxLines,
-  }) : _maxLines = maxLines {
+  })  : _theme = theme,
+        _maxLines = maxLines {
     _search = TerminalSearch(this);
     _userSearchTask = _search.createSearchTask("UserSearch");
     backend?.init();
@@ -197,7 +198,17 @@ class Terminal
   MouseMode get mouseMode => _mouseMode;
 
   @override
-  final TerminalTheme theme;
+  TerminalTheme get theme => _theme;
+  TerminalTheme _theme;
+  set theme(TerminalTheme value) {
+    if (_theme != value) {
+      if (cursor.fg == _theme.foreground) {
+        cursor.fg = value.foreground;
+      }
+      _theme = value;
+      refresh();
+    }
+  }
 
   // final cellAttr = CellAttrTemplate();
   late final Cursor cursor;
