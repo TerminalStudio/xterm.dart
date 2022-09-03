@@ -361,9 +361,14 @@ class _TerminalViewState extends State<TerminalView> {
     final col = ((px - widget.padding) / _cellSize.cellWidth).floor();
     final row = ((py - widget.padding) / _cellSize.cellHeight).floor();
 
-    final x = col;
-    final y = widget.terminal.convertViewLineToRawLine(row) -
+    var x = col;
+    var y = widget.terminal.convertViewLineToRawLine(row) -
         widget.terminal.scrollOffsetFromBottom;
+
+    // The mouse position could be outside the terminal area,
+    // in this case it is clamped back into the terminal area.
+    x = math.min(math.max(x, 0), widget.terminal.terminalWidth - 1);
+    y = math.min(math.max(y, 0), widget.terminal.terminalHeight - 1);
 
     return Position(x, y);
   }
