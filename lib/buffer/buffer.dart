@@ -505,12 +505,9 @@ class Buffer {
     }
 
     if (newHeight > oldHeight) {
-      while (lines.length < newHeight) {
-        lines.push(_newEmptyLine());
-      }
       // Grow larger
       for (var i = 0; i < newHeight - oldHeight; i++) {
-        if (_cursorY < oldHeight - 1) {
+        if (newHeight > lines.length) {
           lines.push(_newEmptyLine());
         } else {
           _cursorY++;
@@ -522,7 +519,7 @@ class Buffer {
         if (_cursorY < oldHeight - 1) {
           lines.pop();
         } else {
-          _cursorY++;
+          _cursorY--;
         }
       }
     }
