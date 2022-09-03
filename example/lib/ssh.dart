@@ -53,6 +53,9 @@ class SSHTerminalBackend extends TerminalBackend {
   }
 
   @override
+  bool get isReady => true;
+
+  @override
   Future<int> get exitCode => _exitCodeCompleter.future;
 
   @override

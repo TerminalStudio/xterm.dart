@@ -34,6 +34,9 @@ class LocalTerminalBackend extends TerminalBackend {
   );
 
   @override
+  bool get isReady => true;
+
+  @override
   Future<int> get exitCode => pty.exitCode;
 
   @override

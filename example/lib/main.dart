@@ -35,6 +35,9 @@ class FakeTerminalBackend extends TerminalBackend {
   final _outStream = StreamController<String>();
 
   @override
+  bool get isReady => true;
+
+  @override
   Future<int> get exitCode => _exitCodeCompleter.future;
 
   @override
