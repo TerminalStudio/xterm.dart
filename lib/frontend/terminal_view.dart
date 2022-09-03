@@ -415,7 +415,9 @@ class _TerminalViewState extends State<TerminalView> {
     blinkOscillator.restart();
     // TODO: find a way to stop scrolling immediately after key stroke.
     widget.inputBehavior.onKeyStroke(event, widget.terminal);
-    widget.terminal.setScrollOffsetFromBottom(0);
+    if (event.character?.isNotEmpty == true) {
+      widget.terminal.setScrollOffsetFromBottom(0);
+    }
   }
 
   void onFocus(bool focused) {
