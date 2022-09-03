@@ -6,7 +6,7 @@ import 'package:xterm/xterm.dart';
 class InputBehaviorMobile extends InputBehaviorDefault {
   InputBehaviorMobile();
 
-  final acceptKeyStroke = false;
+  final acceptKeyStroke = true;
 
   final initEditingState = const TextEditingValue(
     text: '  ',
