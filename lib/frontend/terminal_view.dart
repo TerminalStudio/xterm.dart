@@ -424,7 +424,7 @@ class _TerminalViewState extends State<TerminalView> {
   }
 
   void onFocus(bool focused) {
-    SchedulerBinding.instance!.addPostFrameCallback((_) {
+    SchedulerBinding.instance.addPostFrameCallback((_) {
       widget.terminal.refresh();
     });
   }
