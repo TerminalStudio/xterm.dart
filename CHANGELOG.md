@@ -1,3 +1,32 @@
+## [3.0.6-alpha] - 2022-4-4
+* Export `TerminalViewState`
+* Added `onTap` callback to `TerminalView`
+
+## [3.0.5-alpha] - 2022-4-4
+* Avoid resize when `RenderBox.size` is zero.
+* Added `charInput` and `textInput`method.
+* Added `requestKeyboard`, `closeKeyboard` and `hasInputConnection`method.
+* Export `KeyboardVisibilty`
+
+## [3.0.4-alpha] - 2022-4-1
+* Improved text editing
+* Added composing state painting
+* Adapt to `MediaQuery.padding`
+
+## [3.0.3-alpha] - 2022-3-28
+* Improved scroll handing
+* Improved resize handing
+* Fix focus repaint
+* Fix OSC title update
+
+## [3.0.2-alpha] - 2022-3-28
+* Re-design `KeyboardVisibilty`
+
+## [3.0.1-alpha] - 2022-3-27
+* Add `KeyboardVisibilty`
+
+## [3.0.0-alpha] - 2022-3-26
+* Initial release of v3.
 
 ## [2.6.0] - 2021-12-28
 * Add scrollBehavior field to the TerminalView class [#55].

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:xterm/util/circular_list.dart';
+import 'package:xterm/utils/circular_list.dart';
 
 void main() {
   group("CircularList Tests", () {
