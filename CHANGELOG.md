@@ -1,3 +1,6 @@
+## [3.1.0-alpha] - 2022-9-4
+* Update dependencies & merge into master
+
 ## [3.0.6-alpha] - 2022-4-4
 * Export `TerminalViewState`
 * Added `onTap` callback to `TerminalView`
