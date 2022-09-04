@@ -1,2 +1,2 @@
-export 'core/terminal.dart';
-export 'ui/terminal_view.dart';
+export 'src/core/terminal.dart';
+export 'src/ui/terminal_view.dart';

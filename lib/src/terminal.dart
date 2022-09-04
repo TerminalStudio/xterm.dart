@@ -1,20 +1,20 @@
 import 'dart:math' show max;
 
-import 'package:xterm/core/input/handler.dart';
-import 'package:xterm/core/input/keys.dart';
-import 'package:xterm/core/buffer/buffer.dart';
-import 'package:xterm/core/cursor.dart';
-import 'package:xterm/core/escape/emitter.dart';
-import 'package:xterm/core/escape/handler.dart';
-import 'package:xterm/core/escape/parser.dart';
-import 'package:xterm/core/buffer/line.dart';
-import 'package:xterm/core/mouse.dart';
-import 'package:xterm/utils/platform.dart';
-import 'package:xterm/core/state.dart';
-import 'package:xterm/core/tabs.dart';
-import 'package:xterm/utils/ascii.dart';
-import 'package:xterm/utils/circular_list.dart';
-import 'package:xterm/utils/observable.dart';
+import 'package:xterm/src/core/buffer/buffer.dart';
+import 'package:xterm/src/core/buffer/line.dart';
+import 'package:xterm/src/core/cursor.dart';
+import 'package:xterm/src/core/escape/emitter.dart';
+import 'package:xterm/src/core/escape/handler.dart';
+import 'package:xterm/src/core/escape/parser.dart';
+import 'package:xterm/src/core/input/handler.dart';
+import 'package:xterm/src/core/input/keys.dart';
+import 'package:xterm/src/core/mouse.dart';
+import 'package:xterm/src/core/state.dart';
+import 'package:xterm/src/core/tabs.dart';
+import 'package:xterm/src/utils/ascii.dart';
+import 'package:xterm/src/utils/circular_list.dart';
+import 'package:xterm/src/utils/observable.dart';
+import 'package:xterm/src/utils/platform.dart';
 
 class Terminal with Observable implements TerminalState, EscapeHandler {
   final int maxLines;
