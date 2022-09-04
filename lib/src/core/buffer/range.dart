@@ -1,5 +1,5 @@
-import 'package:xterm/core/buffer/position.dart';
-import 'package:xterm/core/buffer/segment.dart';
+import 'package:xterm/src/core/buffer/position.dart';
+import 'package:xterm/src/core/buffer/segment.dart';
 
 class BufferRange {
   final BufferPosition begin;

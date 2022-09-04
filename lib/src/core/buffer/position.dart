@@ -1,4 +1,4 @@
-import 'package:xterm/core/buffer/range.dart';
+import 'package:xterm/src/core/buffer/range.dart';
 
 class BufferPosition {
   final int x;

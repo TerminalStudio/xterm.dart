@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'package:xterm/ui/terminal_text_style.dart';
+import 'package:xterm/src/ui/terminal_text_style.dart';
 
 Size calcCharMetrics(TerminalStyle style) {
   const test = 'mmmmmmmmmm';

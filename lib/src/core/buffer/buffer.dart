@@ -1,14 +1,14 @@
 import 'dart:math' show max, min;
 
-import 'package:xterm/core/buffer/position.dart';
-import 'package:xterm/core/buffer/range.dart';
-import 'package:xterm/core/cursor.dart';
-import 'package:xterm/core/buffer/line.dart';
-import 'package:xterm/core/reflow.dart';
-import 'package:xterm/core/state.dart';
-import 'package:xterm/core/charset.dart';
-import 'package:xterm/utils/circular_list.dart';
-import 'package:xterm/utils/unicode_v11.dart';
+import 'package:xterm/src/core/buffer/position.dart';
+import 'package:xterm/src/core/buffer/range.dart';
+import 'package:xterm/src/core/cursor.dart';
+import 'package:xterm/src/core/buffer/line.dart';
+import 'package:xterm/src/core/reflow.dart';
+import 'package:xterm/src/core/state.dart';
+import 'package:xterm/src/core/charset.dart';
+import 'package:xterm/src/utils/circular_list.dart';
+import 'package:xterm/src/utils/unicode_v11.dart';
 
 class Buffer {
   final TerminalState terminal;

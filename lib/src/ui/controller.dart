@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:xterm/core/buffer/range.dart';
+import 'package:xterm/src/core/buffer/range.dart';
 
 class TerminalController with ChangeNotifier {
   BufferRange? _selection;

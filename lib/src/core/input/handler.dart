@@ -1,7 +1,7 @@
-import 'package:xterm/core/input/keys.dart';
-import 'package:xterm/core/input/keytab/keytab.dart';
-import 'package:xterm/utils/platform.dart';
-import 'package:xterm/core/state.dart';
+import 'package:xterm/src/core/input/keys.dart';
+import 'package:xterm/src/core/input/keytab/keytab.dart';
+import 'package:xterm/src/utils/platform.dart';
+import 'package:xterm/src/core/state.dart';
 
 class TerminalInputEvent {
   final TerminalKey key;

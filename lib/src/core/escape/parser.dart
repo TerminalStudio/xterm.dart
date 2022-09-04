@@ -1,10 +1,10 @@
-import 'package:xterm/core/color.dart';
-import 'package:xterm/core/mouse.dart';
-import 'package:xterm/core/escape/handler.dart';
-import 'package:xterm/utils/ascii.dart';
-import 'package:xterm/utils/byte_consumer.dart';
-import 'package:xterm/utils/char_code.dart';
-import 'package:xterm/utils/lookup_table.dart';
+import 'package:xterm/src/core/color.dart';
+import 'package:xterm/src/core/mouse.dart';
+import 'package:xterm/src/core/escape/handler.dart';
+import 'package:xterm/src/utils/ascii.dart';
+import 'package:xterm/src/utils/byte_consumer.dart';
+import 'package:xterm/src/utils/char_code.dart';
+import 'package:xterm/src/utils/lookup_table.dart';
 
 /// [EscapeParser] translates control characters and escape sequences into
 /// function calls that the terminal can handle.

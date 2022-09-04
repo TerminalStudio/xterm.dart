@@ -1,5 +1,5 @@
 import 'package:test/test.dart';
-import 'package:xterm/core/buffer/line.dart';
+import 'package:xterm/src/core/buffer/line.dart';
 
 void main() {
   group('BufferLine', () {

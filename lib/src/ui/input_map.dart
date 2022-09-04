@@ -1,5 +1,5 @@
 import 'package:flutter/services.dart';
-import 'package:xterm/core/input/keys.dart';
+import 'package:xterm/src/core/input/keys.dart';
 
 final _idKeyMap = {
   LogicalKeyboardKey.hyper.keyId: TerminalKey.hyper,

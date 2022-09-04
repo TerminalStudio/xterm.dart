@@ -1,8 +1,8 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
-import 'package:xterm/ui/terminal_view.dart';
-import 'package:xterm/ui/gesture/gesture_detector.dart';
-import 'package:xterm/ui/render.dart';
+import 'package:xterm/src/terminal_view.dart';
+import 'package:xterm/src/ui/gesture/gesture_detector.dart';
+import 'package:xterm/src/ui/render.dart';
 
 class TerminalGestureHandler extends StatefulWidget {
   const TerminalGestureHandler({

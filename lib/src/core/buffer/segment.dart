@@ -1,5 +1,5 @@
-import 'package:xterm/core/buffer/position.dart';
-import 'package:xterm/core/buffer/range.dart';
+import 'package:xterm/src/core/buffer/position.dart';
+import 'package:xterm/src/core/buffer/range.dart';
 
 class BufferSegment {
   /// The range that this segment belongs to.

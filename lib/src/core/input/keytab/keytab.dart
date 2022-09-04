@@ -1,8 +1,8 @@
-import 'package:xterm/core/input/keys.dart';
-import 'package:xterm/core/input/keytab/keytab_default.dart';
-import 'package:xterm/core/input/keytab/keytab_parse.dart';
-import 'package:xterm/core/input/keytab/keytab_record.dart';
-import 'package:xterm/core/input/keytab/keytab_token.dart';
+import 'package:xterm/src/core/input/keys.dart';
+import 'package:xterm/src/core/input/keytab/keytab_default.dart';
+import 'package:xterm/src/core/input/keytab/keytab_parse.dart';
+import 'package:xterm/src/core/input/keytab/keytab_record.dart';
+import 'package:xterm/src/core/input/keytab/keytab_token.dart';
 
 class Keytab {
   Keytab({

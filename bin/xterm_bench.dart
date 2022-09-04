@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:xterm/core/terminal.dart';
+import 'package:xterm/src/terminal.dart';
 
 class Test extends StatelessWidget {
   const Test({Key? key}) : super(key: key);
