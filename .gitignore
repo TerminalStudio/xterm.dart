@@ -75,3 +75,5 @@ build/
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 
 example/lib/ssh2.dart
+
+.vscode

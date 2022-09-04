@@ -1,22 +1,57 @@
-// import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:xterm/core/terminal.dart';
 
-// import 'dart:typed_data';
+class Test extends StatelessWidget {
+  const Test({Key? key}) : super(key: key);
 
-// import 'package:xterm/next/terminal_parser.dart';
-
-void main(List<String> args) async {
-  // if (args.isEmpty) {
-  //   print('Usage: xterm_bench <test_fixture>');
-  // }
-
-  // final fixturePath = args[0];
-  // final fixture = await File(fixturePath).readAsBytes();
-
-  // throw 'todo';
+  @override
+  Widget build(BuildContext context) {
+    return TextSelectionToolbar(
+      anchorAbove: Offset(50, 50),
+      anchorBelow: Offset(50, 50),
+      children: [
+        TextSelectionToolbarTextButton(
+          child: Text('Copy'),
+          onPressed: () {},
+          padding: TextSelectionToolbarTextButton.getPadding(0, 1),
+        ),
+        TextSelectionToolbarTextButton(
+          child: Text('Paste'),
+          onPressed: () {},
+          padding: TextSelectionToolbarTextButton.getPadding(1, 1),
+        ),
+      ],
+    );
+  }
 }
 
-// void bench(Uint8List fixture) {
-//   final timer = Stopwatch()..start();
-//   final protocol = TerminalProtocol(handler)
-//   print('${end.difference(start).inMilliseconds}ms');
-// }
+void main(List<String> args) async {
+  final lines = 1000;
+
+  final terminal = Terminal(maxLines: lines);
+
+  bench('write $lines lines', () {
+    for (var i = 0; i < lines; i++) {
+      terminal.write('https://github.com/TerminalStudio/dartssh2\r\n');
+    }
+  });
+
+  final regexp = RegExp(
+    r'[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)',
+  );
+
+  bench('search $lines line', () {
+    var count = 0;
+    for (var line in terminal.lines.toList()) {
+      final matches = regexp.allMatches(line.toString());
+      count += matches.length;
+    }
+    print('count: $count');
+  });
+}
+
+void bench(String description, void Function() f) {
+  final sw = Stopwatch()..start();
+  f();
+  print('$description took ${sw.elapsedMilliseconds}ms');
+}

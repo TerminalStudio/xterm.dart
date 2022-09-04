@@ -1,0 +1,1 @@
+enum HandlePosition { start, end }
