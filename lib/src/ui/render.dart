@@ -74,9 +74,9 @@ class RenderTerminal extends RenderBox {
   ViewportOffset _offset;
   set offset(ViewportOffset value) {
     if (value == _offset) return;
-    if (attached) _offset.removeListener(_hasScrolled);
+    if (attached) _offset.removeListener(_onScroll);
     _offset = value;
-    if (attached) _offset.addListener(_hasScrolled);
+    if (attached) _offset.addListener(_onScroll);
     markNeedsLayout();
   }
 
@@ -165,9 +165,8 @@ class RenderTerminal extends RenderBox {
 
   var _stickToBottom = true;
 
-  void _hasScrolled() {
+  void _onScroll() {
     _stickToBottom = _offset.pixels >= _maxScrollExtent;
-
     markNeedsLayout();
   }
 
@@ -189,7 +188,7 @@ class RenderTerminal extends RenderBox {
   @override
   void attach(PipelineOwner owner) {
     super.attach(owner);
-    _offset.addListener(_hasScrolled);
+    _offset.addListener(_onScroll);
     _terminal.addListener(_onTerminalChange);
     _controller.addListener(_onControllerUpdate);
     _focusNode.addListener(_onFocusChange);
@@ -198,7 +197,7 @@ class RenderTerminal extends RenderBox {
   @override
   void detach() {
     super.detach();
-    _offset.removeListener(_hasScrolled);
+    _offset.removeListener(_onScroll);
     _terminal.removeListener(_onTerminalChange);
     _controller.removeListener(_onControllerUpdate);
     _focusNode.removeListener(_onFocusChange);
