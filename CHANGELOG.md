@@ -1,3 +1,6 @@
+## [3.2.1-alpha] - 2022-9-12
+* Disable optional line scroll mode that is under development.
+
 ## [3.2.0-alpha] - 2022-9-12
 * Enhanced selection handing.
 * More tests.
