@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:example/src/platform_menu.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -40,7 +41,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'xterm.dart demo',
       debugShowCheckedModeBanner: false,
-      home: Home(),
+      home: AppPlatformMenu(child: Home()),
       // shortcuts: ,
     );
   }
