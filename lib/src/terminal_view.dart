@@ -300,8 +300,8 @@ class TerminalViewState extends State<TerminalView> {
       event,
     );
 
-    if (shortcutResult == KeyEventResult.handled) {
-      return KeyEventResult.handled;
+    if (shortcutResult != KeyEventResult.ignored) {
+      return shortcutResult;
     }
 
     if (event is! RawKeyDownEvent) {

@@ -25,7 +25,7 @@ class TerminalActions extends StatelessWidget {
 
     return Actions(
       actions: {
-        PasteTextIntent: CallbackAction(
+        PasteTextIntent: CallbackAction<PasteTextIntent>(
           onInvoke: (intent) async {
             final data = await Clipboard.getData(Clipboard.kTextPlain);
             final text = data?.text;
@@ -36,7 +36,7 @@ class TerminalActions extends StatelessWidget {
             return null;
           },
         ),
-        CopySelectionTextIntent: CallbackAction(
+        CopySelectionTextIntent: CallbackAction<CopySelectionTextIntent>(
           onInvoke: (intent) async {
             final selection = controller.selection;
 
@@ -51,15 +51,17 @@ class TerminalActions extends StatelessWidget {
             return null;
           },
         ),
-        SelectAllTextIntent: CallbackAction(onInvoke: (intent) {
-          controller.setSelection(
-            BufferRange(
-              CellOffset(0, terminal.buffer.height - terminal.viewHeight),
-              CellOffset(terminal.viewWidth, terminal.buffer.height - 1),
-            ),
-          );
-          return null;
-        }),
+        SelectAllTextIntent: CallbackAction<SelectAllTextIntent>(
+          onInvoke: (intent) {
+            controller.setSelection(
+              BufferRange(
+                CellOffset(0, terminal.buffer.height - terminal.viewHeight),
+                CellOffset(terminal.viewWidth, terminal.buffer.height - 1),
+              ),
+            );
+            return null;
+          },
+        ),
       },
       child: child,
     );
