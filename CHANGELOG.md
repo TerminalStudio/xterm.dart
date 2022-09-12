@@ -1,3 +1,7 @@
+## [3.2.0-alpha] - 2022-9-12
+* Enhanced selection handing.
+* More tests.
+
 ## [3.1.0-alpha] - 2022-9-4
 * Update dependencies & merge into master
 
