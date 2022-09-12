@@ -212,8 +212,14 @@ class BufferLine {
   }
 
   int getTrimmedLength([int? cols]) {
-    if (cols == null) {
-      cols = _data.length ~/ _cellSize;
+    final maxCols = _data.length ~/ _cellSize;
+
+    if (cols == null || cols > maxCols) {
+      cols = maxCols;
+    }
+
+    if (cols <= 0) {
+      return 0;
     }
 
     for (var i = cols - 1; i >= 0; i--) {

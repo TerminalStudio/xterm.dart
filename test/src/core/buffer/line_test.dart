@@ -53,5 +53,38 @@ void main() {
 
       expect(line.getTrimmedLength(), equals(text.length));
     });
+
+    test('can get trimmed length with wide characters', () {
+      final terminal = Terminal();
+      final text = '😀😁😂🤣😃';
+
+      terminal.write(text);
+
+      expect(terminal.buffer.lines[0].getTrimmedLength(), equals(text.length));
+    });
+
+    test('can handle length larger than the line', () {
+      final line = BufferLine(10);
+
+      final text = 'ABCDEF';
+
+      for (var i = 0; i < text.length; i++) {
+        line.setCodePoint(i, text.codeUnitAt(i));
+      }
+
+      expect(line.getTrimmedLength(1000), equals(text.length));
+    });
+
+    test('can handle negative start', () {
+      final line = BufferLine(10);
+
+      final text = 'ABCDEF';
+
+      for (var i = 0; i < text.length; i++) {
+        line.setCodePoint(i, text.codeUnitAt(i));
+      }
+
+      expect(line.getTrimmedLength(-1000), equals(0));
+    });
   });
 }
