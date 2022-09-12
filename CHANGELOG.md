@@ -1,3 +1,6 @@
+## [3.2.2-alpha] - 2022-9-12
+* Implement default keyboard shortcuts.
+
 ## [3.2.1-alpha] - 2022-9-12
 * Disable optional line scroll mode that is under development.
 
