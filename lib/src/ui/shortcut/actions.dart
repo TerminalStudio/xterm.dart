@@ -1,7 +1,10 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:xterm/src/core/buffer/cell_offset.dart';
+import 'package:xterm/src/core/buffer/range.dart';
+import 'package:xterm/src/terminal.dart';
+import 'package:xterm/src/ui/controller.dart';
 import 'package:xterm/src/ui/shortcut/intents.dart';
-import 'package:xterm/xterm.dart';
 
 class TerminalActions extends StatelessWidget {
   const TerminalActions({
