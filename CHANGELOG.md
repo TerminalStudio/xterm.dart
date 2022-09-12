@@ -1,3 +1,6 @@
+## [3.2.4-alpha] - 2022-9-12
+* Use flutter native shortcut intents.
+
 ## [3.2.3-alpha] - 2022-9-12
 * Export shortcut related classes.
 
