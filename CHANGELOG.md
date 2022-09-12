@@ -1,3 +1,6 @@
+## [3.2.5-alpha] - 2022-9-12
+* Fix intent related issue.
+
 ## [3.2.4-alpha] - 2022-9-12
 * Use flutter native shortcut intents.
 
