@@ -4,7 +4,6 @@ import 'package:xterm/src/core/buffer/cell_offset.dart';
 import 'package:xterm/src/core/buffer/range.dart';
 import 'package:xterm/src/terminal.dart';
 import 'package:xterm/src/ui/controller.dart';
-import 'package:xterm/src/ui/shortcut/intents.dart';
 
 class TerminalActions extends StatelessWidget {
   const TerminalActions({
@@ -26,8 +25,8 @@ class TerminalActions extends StatelessWidget {
 
     return Actions(
       actions: {
-        TerminalPasteIntent: CallbackAction(
-          onInvoke: (Intent intent) async {
+        PasteTextIntent: CallbackAction(
+          onInvoke: (intent) async {
             final data = await Clipboard.getData(Clipboard.kTextPlain);
             final text = data?.text;
             if (text != null) {
@@ -37,8 +36,8 @@ class TerminalActions extends StatelessWidget {
             return null;
           },
         ),
-        TerminalCopyIntent: CallbackAction(
-          onInvoke: (Intent intent) async {
+        CopySelectionTextIntent: CallbackAction(
+          onInvoke: (intent) async {
             final selection = controller.selection;
 
             if (selection == null) {
@@ -52,7 +51,7 @@ class TerminalActions extends StatelessWidget {
             return null;
           },
         ),
-        TerminalSelectAllIntent: CallbackAction(onInvoke: (Intent intent) {
+        SelectAllTextIntent: CallbackAction(onInvoke: (intent) {
           controller.setSelection(
             BufferRange(
               CellOffset(0, terminal.buffer.height - terminal.viewHeight),
