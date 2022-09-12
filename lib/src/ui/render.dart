@@ -6,11 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:xterm/src/core/buffer/cell_flags.dart';
-import 'package:xterm/src/core/buffer/position.dart';
+import 'package:xterm/src/core/buffer/cell_offset.dart';
 import 'package:xterm/src/core/buffer/range.dart';
 import 'package:xterm/src/core/cell.dart';
 import 'package:xterm/src/core/buffer/line.dart';
 import 'package:xterm/src/terminal.dart';
+import 'package:xterm/src/ui/char_metrics.dart';
 import 'package:xterm/src/ui/controller.dart';
 import 'package:xterm/src/ui/cursor_type.dart';
 import 'package:xterm/src/ui/palette_builder.dart';
@@ -21,14 +22,13 @@ import 'package:xterm/src/ui/terminal_theme.dart';
 
 typedef EditableRectCallback = void Function(Rect rect, Rect caretRect);
 
-class RenderTerminal extends RenderBox {
+class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
   RenderTerminal({
     required Terminal terminal,
     required TerminalController controller,
     required ViewportOffset offset,
     required EdgeInsets padding,
     required bool autoResize,
-    required Size charMetrics,
     required TerminalStyle textStyle,
     required TerminalTheme theme,
     required FocusNode focusNode,
@@ -41,7 +41,6 @@ class RenderTerminal extends RenderBox {
         _offset = offset,
         _padding = padding,
         _autoResize = autoResize,
-        _charMetrics = charMetrics,
         _textStyle = textStyle,
         _theme = theme,
         _focusNode = focusNode,
@@ -50,6 +49,7 @@ class RenderTerminal extends RenderBox {
         _onEditableRect = onEditableRect,
         _composingText = composingText {
     _updateColorPalette();
+    _updateCharSize();
   }
 
   Terminal _terminal;
@@ -94,17 +94,11 @@ class RenderTerminal extends RenderBox {
     markNeedsLayout();
   }
 
-  Size _charMetrics;
-  set charMetrics(Size value) {
-    if (value == _charMetrics) return;
-    _charMetrics = value;
-    markNeedsLayout();
-  }
-
   TerminalStyle _textStyle;
   set textStyle(TerminalStyle value) {
     if (value == _textStyle) return;
     _textStyle = value;
+    _updateCharSize();
     markNeedsLayout();
   }
 
@@ -153,20 +147,32 @@ class RenderTerminal extends RenderBox {
     markNeedsPaint();
   }
 
-  final _paragraphCache = ParagraphCache(10240);
-
+  /// The lookup table for converting terminal colors to Flutter colors. This is
+  /// generated from the [_theme].
   late List<Color> _colorPalette;
+
+  /// The size of a single character in [_textStyle] in pixels. [_textStyle] is
+  /// expected to be monospace.
+  late Size _charSize;
 
   TerminalSize? _viewportSize;
 
+  /// Updates [_colorPalette] based on the current [_theme]. This should be
+  /// called whenever the [_theme] changes.
   void _updateColorPalette() {
     _colorPalette = PaletteBuilder(_theme).build();
+  }
+
+  /// Updates [_charSize] based on the current [_textStyle]. This should be
+  /// called whenever the [_textStyle] changes or the system font changes.
+  void _updateCharSize() {
+    _charSize = calcCharSize(_textStyle);
   }
 
   var _stickToBottom = true;
 
   void _onScroll() {
-    _stickToBottom = _offset.pixels >= _maxScrollExtent;
+    _stickToBottom = _scrollOffset >= _maxScrollExtent;
     markNeedsLayout();
   }
 
@@ -209,6 +215,12 @@ class RenderTerminal extends RenderBox {
   }
 
   @override
+  void systemFontsDidChange() {
+    _updateCharSize();
+    super.systemFontsDidChange();
+  }
+
+  @override
   void performLayout() {
     size = constraints.biggest;
 
@@ -217,56 +229,63 @@ class RenderTerminal extends RenderBox {
     _updateScrollOffset();
 
     if (_stickToBottom) {
-      _offset.correctBy(_maxScrollExtent - _offset.pixels);
+      _offset.correctBy(_maxScrollExtent - _scrollOffset);
     }
 
     SchedulerBinding.instance
         .addPostFrameCallback((_) => _notifyEditableRect());
   }
 
-  double get lineHeight => _charMetrics.height;
+  /// Total height of the terminal in pixels. Includes scrollback buffer.
+  double get _terminalHeight =>
+      _terminal.buffer.lines.length * _charSize.height;
 
-  double get terminalHeight =>
-      _terminal.buffer.lines.length * _charMetrics.height;
+  /// The distance from the top of the terminal to the top of the viewport.
+  // double get _scrollOffset => _offset.pixels;
+  double get _scrollOffset {
+    return _offset.pixels ~/ _charSize.height * _charSize.height;
+  }
 
-  double get scrollOffset => _offset.pixels;
+  /// Get the top-left corner of the cell at [cellOffset] in pixels.
+  Offset getOffset(CellOffset cellOffset) {
+    final row = cellOffset.y;
+    final col = cellOffset.x;
+    final x = col * _charSize.width;
+    final y = row * _charSize.height;
+    return Offset(x + _padding.left, y + _padding.top - _scrollOffset);
+  }
 
-  BufferPosition positionFromOffset(Offset offset) {
+  /// Get the [CellOffset] of the cell that [offset] is in.
+  CellOffset getCellOffset(Offset offset) {
     final x = offset.dx - _padding.left;
-    final y = offset.dy - _padding.top + _offset.pixels;
-    final row = y ~/ _charMetrics.height;
-    final col = x ~/ _charMetrics.width;
-    return BufferPosition(col, row);
+    final y = offset.dy - _padding.top + _scrollOffset;
+    final row = y ~/ _charSize.height;
+    final col = x ~/ _charSize.width;
+    return CellOffset(col, row);
   }
 
-  Offset offsetFromPosition(BufferPosition position) {
-    final row = position.y;
-    final col = position.x;
-    final x = col * _charMetrics.width;
-    final y = row * _charMetrics.height;
-    return Offset(x + _padding.left, y + _padding.top - _offset.pixels);
-  }
-
+  /// Selects entire words in the terminal that contains [from] and [to].
   void selectWord(Offset from, [Offset? to]) {
-    final fromOffset = positionFromOffset(globalToLocal(from));
+    final fromOffset = getCellOffset(from);
     final fromBoundary = _terminal.buffer.getWordBoundary(fromOffset);
     if (fromBoundary == null) return;
     if (to == null) {
       _controller.setSelection(fromBoundary);
     } else {
-      final toOffset = positionFromOffset(globalToLocal(to));
+      final toOffset = getCellOffset(to);
       final toBoundary = _terminal.buffer.getWordBoundary(toOffset);
       if (toBoundary == null) return;
       _controller.setSelection(fromBoundary.merge(toBoundary));
     }
   }
 
-  void selectPosition(Offset from, [Offset? to]) {
-    final fromPosition = positionFromOffset(globalToLocal(from));
+  /// Selects characters in the terminal that starts from [from] to [to].
+  void selectCharacters(Offset from, [Offset? to]) {
+    final fromPosition = getCellOffset(from);
     if (to == null) {
       _controller.setSelection(BufferRange.collapsed(fromPosition));
     } else {
-      final toPosition = positionFromOffset(globalToLocal(to));
+      final toPosition = getCellOffset(to);
       _controller.setSelection(BufferRange(fromPosition, toPosition));
     }
   }
@@ -278,22 +297,24 @@ class RenderTerminal extends RenderBox {
       cursor.dx,
       cursor.dy,
       size.width,
-      cursor.dy + _charMetrics.height,
+      cursor.dy + _charSize.height,
     );
 
-    final caretRect = cursor & _charMetrics;
+    final caretRect = cursor & _charSize;
 
     _onEditableRect?.call(rect, caretRect);
   }
 
+  /// Update the viewport size in cells based on the current widget size in
+  /// pixels.
   void _updateViewportSize() {
-    if (size <= _charMetrics) {
+    if (size <= _charSize) {
       return;
     }
 
     final viewportSize = TerminalSize(
-      size.width ~/ _charMetrics.width,
-      _viewportHeight ~/ _charMetrics.height,
+      size.width ~/ _charSize.width,
+      _viewportHeight ~/ _charSize.height,
     );
 
     if (_viewportSize != viewportSize) {
@@ -302,15 +323,23 @@ class RenderTerminal extends RenderBox {
     }
   }
 
+  /// Notify the underlying terminal that the viewport size has changed.
   void _resizeTerminalIfNeeded() {
     if (_autoResize && _viewportSize != null) {
       _terminal.resize(
         _viewportSize!.width,
         _viewportSize!.height,
-        _charMetrics.width.round(),
-        _charMetrics.height.round(),
+        _charSize.width.round(),
+        _charSize.height.round(),
       );
     }
+  }
+
+  /// Update the scroll offset based on the current terminal state. This should
+  /// be called in [performLayout] after the viewport size has been updated.
+  void _updateScrollOffset() {
+    _offset.applyViewportDimension(_viewportHeight);
+    _offset.applyContentDimensions(0, _maxScrollExtent);
   }
 
   bool get _isComposingText {
@@ -326,24 +355,21 @@ class RenderTerminal extends RenderBox {
   }
 
   double get _maxScrollExtent {
-    return max(terminalHeight - _viewportHeight, 0.0);
+    return max(_terminalHeight - _viewportHeight, 0.0);
   }
 
   double get _lineOffset {
-    return -_offset.pixels + _padding.top;
+    return -_scrollOffset + _padding.top;
   }
 
   Offset get _cursorOffset {
     return Offset(
-      _terminal.buffer.cursorX * _charMetrics.width,
-      _terminal.buffer.absoluteCursorY * _charMetrics.height + _lineOffset,
+      _terminal.buffer.cursorX * _charSize.width,
+      _terminal.buffer.absoluteCursorY * _charSize.height + _lineOffset,
     );
   }
 
-  void _updateScrollOffset() {
-    _offset.applyViewportDimension(_viewportHeight);
-    _offset.applyContentDimensions(0, _maxScrollExtent);
-  }
+  final _paragraphCache = ParagraphCache(10240);
 
   @override
   void paint(PaintingContext context, Offset offset) {
@@ -355,10 +381,10 @@ class RenderTerminal extends RenderBox {
     final canvas = context.canvas;
 
     final lines = _terminal.buffer.lines;
-    final charHeight = _charMetrics.height;
+    final charHeight = _charSize.height;
 
-    final firstLineOffset = _offset.pixels - _padding.top;
-    final lastLineOffset = _offset.pixels + size.height + _padding.bottom;
+    final firstLineOffset = _scrollOffset - _padding.top;
+    final lastLineOffset = _scrollOffset + size.height + _padding.bottom;
 
     final firstLine = firstLineOffset ~/ charHeight;
     final lastLine = lastLineOffset ~/ charHeight;
@@ -397,6 +423,7 @@ class RenderTerminal extends RenderBox {
     }
   }
 
+  /// Paints the cursor based on the current cursor type.
   void _paintCursor(Canvas canvas, Offset offset) {
     final paint = Paint()
       ..color = _theme.cursor
@@ -404,30 +431,32 @@ class RenderTerminal extends RenderBox {
 
     if (!_focusNode.hasFocus) {
       paint.style = PaintingStyle.stroke;
-      canvas.drawRect(offset & _charMetrics, paint);
+      canvas.drawRect(offset & _charSize, paint);
       return;
     }
 
     switch (_cursorType) {
       case TerminalCursorType.block:
         paint.style = PaintingStyle.fill;
-        canvas.drawRect(offset & _charMetrics, paint);
+        canvas.drawRect(offset & _charSize, paint);
         return;
       case TerminalCursorType.underline:
         return canvas.drawLine(
-          Offset(offset.dx, _charMetrics.height - 1),
-          Offset(offset.dx + _charMetrics.width, _charMetrics.height - 1),
+          Offset(offset.dx, _charSize.height - 1),
+          Offset(offset.dx + _charSize.width, _charSize.height - 1),
           paint,
         );
       case TerminalCursorType.verticalBar:
         return canvas.drawLine(
           Offset(offset.dx, 0),
-          Offset(offset.dx, _charMetrics.height),
+          Offset(offset.dx, _charSize.height),
           paint,
         );
     }
   }
 
+  /// Paints the text that is currently being composed in IME to [canvas] at
+  /// [offset]. [offset] is usually the cursor position.
   void _paintComposingText(Canvas canvas, Offset offset) {
     final composingText = _composingText;
 
@@ -444,7 +473,7 @@ class RenderTerminal extends RenderBox {
     final builder = ParagraphBuilder(style.getParagraphStyle());
     builder.addPlaceholder(
       offset.dx,
-      _charMetrics.height,
+      _charSize.height,
       PlaceholderAlignment.middle,
     );
     builder.pushStyle(style.getTextStyle());
@@ -456,19 +485,23 @@ class RenderTerminal extends RenderBox {
     canvas.drawParagraph(paragraph, Offset(0, offset.dy));
   }
 
+  /// Paints [line] to [canvas] at [offset]. The x offset of [offset] is usually
+  /// 0, and the y offset is the top of the line.
   void _paintLine(Canvas canvas, BufferLine line, Offset offset) {
     final cellData = CellData.empty();
-    final cellWidth = _charMetrics.width;
+    final cellWidth = _charSize.width;
 
     final visibleCells = size.width ~/ cellWidth + 1;
     final effectCells = min(visibleCells, line.length);
 
     for (var i = 0; i < effectCells; i++) {
       line.getCellData(i, cellData);
+
       final charWidth = cellData.content >> CellContent.widthShift;
       final cellOffset = offset.translate(i * cellWidth, 0);
+
       _paintCellBackground(canvas, cellOffset, cellData);
-      _paintCellForeground(canvas, cellOffset, line, cellData);
+      _paintCellForeground(canvas, cellOffset, cellData);
 
       if (charWidth == 2) {
         i++;
@@ -499,13 +532,13 @@ class RenderTerminal extends RenderBox {
       final end = segment.end ?? _terminal.viewWidth;
 
       final startOffset = Offset(
-        start * _charMetrics.width,
-        segment.line * _charMetrics.height + _lineOffset,
+        start * _charSize.width,
+        segment.line * _charSize.height + _lineOffset,
       );
 
       final endOffset = Offset(
-        end * _charMetrics.width,
-        (segment.line + 1) * _charMetrics.height + _lineOffset,
+        end * _charSize.width,
+        (segment.line + 1) * _charSize.height + _lineOffset,
       );
 
       final paint = Paint()
@@ -519,18 +552,14 @@ class RenderTerminal extends RenderBox {
     }
   }
 
+  /// Paints the character in the cell represented by [cellData] to [canvas] at
+  /// [offset].
   @pragma('vm:prefer-inline')
-  void _paintCellForeground(
-    Canvas canvas,
-    Offset offset,
-    BufferLine line,
-    CellData cellData,
-  ) {
+  void _paintCellForeground(Canvas canvas, Offset offset, CellData cellData) {
     final charCode = cellData.content & CellContent.codepointMask;
     if (charCode == 0) return;
 
     final hash = cellData.getHash();
-    // final hash = cellData.getHash() + line.hashCode;
     var paragraph = _paragraphCache.getLayoutFromCache(hash);
 
     if (paragraph == null) {
@@ -561,6 +590,8 @@ class RenderTerminal extends RenderBox {
     canvas.drawParagraph(paragraph, offset);
   }
 
+  /// Paints the background of a cell represented by [cellData] to [canvas] at
+  /// [offset].
   @pragma('vm:prefer-inline')
   void _paintCellBackground(Canvas canvas, Offset offset, CellData cellData) {
     late Color color;
@@ -577,10 +608,12 @@ class RenderTerminal extends RenderBox {
     final paint = Paint()..color = color;
     final doubleWidth = cellData.content >> CellContent.widthShift == 2;
     final widthScale = doubleWidth ? 2 : 1;
-    final size = Size(_charMetrics.width * widthScale + 1, _charMetrics.height);
+    final size = Size(_charSize.width * widthScale + 1, _charSize.height);
     canvas.drawRect(offset & size, paint);
   }
 
+  /// Get the effective foreground color for a cell from information encoded in
+  /// [cellColor].
   @pragma('vm:prefer-inline')
   Color _resolveForegroundColor(int cellColor) {
     final colorType = cellColor & CellColor.typeMask;
@@ -598,6 +631,8 @@ class RenderTerminal extends RenderBox {
     }
   }
 
+  /// Get the effective background color for a cell from information encoded in
+  /// [cellColor].
   @pragma('vm:prefer-inline')
   Color _resolveBackgroundColor(int cellColor) {
     final colorType = cellColor & CellColor.typeMask;

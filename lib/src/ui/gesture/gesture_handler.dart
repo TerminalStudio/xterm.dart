@@ -13,6 +13,7 @@ class TerminalGestureHandler extends StatefulWidget {
     this.onSingleTapUp,
     this.onTapDown,
     this.onSecondaryTapDown,
+    this.onSecondaryTapUp,
   });
 
   final TerminalViewState terminalView;
@@ -26,6 +27,8 @@ class TerminalGestureHandler extends StatefulWidget {
   final GestureTapDownCallback? onTapDown;
 
   final GestureTapDownCallback? onSecondaryTapDown;
+
+  final GestureTapUpCallback? onSecondaryTapUp;
 
   @override
   State<TerminalGestureHandler> createState() => _TerminalGestureHandlerState();
@@ -48,6 +51,7 @@ class _TerminalGestureHandlerState extends State<TerminalGestureHandler> {
       onSingleTapUp: widget.onSingleTapUp,
       onTapDown: widget.onTapDown,
       onSecondaryTapDown: widget.onSecondaryTapDown,
+      onSecondaryTapUp: widget.onSecondaryTapUp,
       onLongPressStart: onLongPressStart,
       onLongPressMoveUpdate: onLongPressMoveUpdate,
       // onLongPressUp: onLongPressUp,
@@ -58,20 +62,18 @@ class _TerminalGestureHandlerState extends State<TerminalGestureHandler> {
   }
 
   void onDoubleTapDown(TapDownDetails details) {
-    renderTerminal.selectWord(
-      details.globalPosition,
-    );
+    renderTerminal.selectWord(details.localPosition);
   }
 
   void onLongPressStart(LongPressStartDetails details) {
     _lastLongPressStartDetails = details;
-    renderTerminal.selectWord(details.globalPosition);
+    renderTerminal.selectWord(details.localPosition);
   }
 
   void onLongPressMoveUpdate(LongPressMoveUpdateDetails details) {
     renderTerminal.selectWord(
-      _lastLongPressStartDetails!.globalPosition,
-      details.globalPosition,
+      _lastLongPressStartDetails!.localPosition,
+      details.localPosition,
     );
   }
 
@@ -81,14 +83,14 @@ class _TerminalGestureHandlerState extends State<TerminalGestureHandler> {
     _lastDragStartDetails = details;
 
     details.kind == PointerDeviceKind.mouse
-        ? renderTerminal.selectPosition(details.globalPosition)
-        : renderTerminal.selectWord(details.globalPosition);
+        ? renderTerminal.selectCharacters(details.localPosition)
+        : renderTerminal.selectWord(details.localPosition);
   }
 
   void onDragUpdate(DragUpdateDetails details) {
-    renderTerminal.selectPosition(
-      _lastDragStartDetails!.globalPosition,
-      details.globalPosition,
+    renderTerminal.selectCharacters(
+      _lastDragStartDetails!.localPosition,
+      details.localPosition,
     );
   }
 }

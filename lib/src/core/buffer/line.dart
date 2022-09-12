@@ -268,11 +268,11 @@ class BufferLine {
   }
 
   String getText([int? from, int? to]) {
-    if (from == null) {
+    if (from == null || from < 0) {
       from = 0;
     }
 
-    if (to == null) {
+    if (to == null || to > _length) {
       to = _length;
     }
 

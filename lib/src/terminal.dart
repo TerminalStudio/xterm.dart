@@ -263,6 +263,11 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
     _mainBuffer.resetVerticalMargins();
   }
 
+  @override
+  String toString() {
+    return 'Terminal(#$hashCode, $_viewWidth x $_viewHeight, ${_buffer.height} lines)';
+  }
+
   /* Handlers */
 
   @override

@@ -1,37 +1,37 @@
 import 'package:xterm/src/core/buffer/range.dart';
 
-class BufferPosition {
+class CellOffset {
   final int x;
 
   final int y;
 
-  const BufferPosition(this.x, this.y);
+  const CellOffset(this.x, this.y);
 
-  bool isEqual(BufferPosition other) {
+  bool isEqual(CellOffset other) {
     return other.x == x && other.y == y;
   }
 
-  bool isBefore(BufferPosition other) {
+  bool isBefore(CellOffset other) {
     return y < other.y || (y == other.y && x < other.x);
   }
 
-  bool isAfter(BufferPosition other) {
+  bool isAfter(CellOffset other) {
     return y > other.y || (y == other.y && x > other.x);
   }
 
-  bool isBeforeOrSame(BufferPosition other) {
+  bool isBeforeOrSame(CellOffset other) {
     return y < other.y || (y == other.y && x <= other.x);
   }
 
-  bool isAfterOrSame(BufferPosition other) {
+  bool isAfterOrSame(CellOffset other) {
     return y > other.y || (y == other.y && x >= other.x);
   }
 
-  bool isAtSameRow(BufferPosition other) {
+  bool isAtSameRow(CellOffset other) {
     return y == other.y;
   }
 
-  bool isAtSameColumn(BufferPosition other) {
+  bool isAtSameColumn(CellOffset other) {
     return x == other.x;
   }
 
@@ -40,7 +40,7 @@ class BufferPosition {
   }
 
   @override
-  String toString() => 'Position($x, $y)';
+  String toString() => 'CellOffset($x, $y)';
 
   @override
   int get hashCode => x.hashCode ^ y.hashCode;
@@ -48,7 +48,7 @@ class BufferPosition {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is BufferPosition &&
+      other is CellOffset &&
           runtimeType == other.runtimeType &&
           x == other.x &&
           y == other.y;

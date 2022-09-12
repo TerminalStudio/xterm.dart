@@ -1,12 +1,13 @@
 import 'dart:math' show max, min;
 
-import 'package:xterm/src/core/buffer/position.dart';
-import 'package:xterm/src/core/buffer/range.dart';
-import 'package:xterm/src/core/cursor.dart';
+import 'package:flutter/material.dart';
+import 'package:xterm/src/core/buffer/cell_offset.dart';
 import 'package:xterm/src/core/buffer/line.dart';
+import 'package:xterm/src/core/buffer/range.dart';
+import 'package:xterm/src/core/charset.dart';
+import 'package:xterm/src/core/cursor.dart';
 import 'package:xterm/src/core/reflow.dart';
 import 'package:xterm/src/core/state.dart';
-import 'package:xterm/src/core/charset.dart';
 import 'package:xterm/src/utils/circular_list.dart';
 import 'package:xterm/src/utils/unicode_v11.dart';
 
@@ -464,7 +465,7 @@ class Buffer {
     r'\'.codeUnitAt(0),
   };
 
-  BufferRange? getWordBoundary(BufferPosition position) {
+  BufferRange? getWordBoundary(CellOffset position) {
     if (position.y >= lines.length) {
       return null;
     }
@@ -495,24 +496,41 @@ class Buffer {
       end++;
     } while (true);
 
+    if (start == end) {
+      return null;
+    }
+
     return BufferRange(
-      BufferPosition(start, position.y),
-      BufferPosition(end, position.y),
+      CellOffset(start, position.y),
+      CellOffset(end, position.y),
     );
   }
 
-  String getText(BufferRange range) {
+  /// Get the plain text content of the buffer including the scrollback.
+  /// Accepts an optional [range] to get a specific part of the buffer.
+  String getText([BufferRange? range]) {
+    range ??= BufferRange(
+      CellOffset(0, 0),
+      CellOffset(viewWidth - 1, height - 1),
+    );
+
+    range = range.normalized;
+
     final builder = StringBuffer();
-    for (var i = range.begin.y; i <= range.end.y; i++) {
+
+    final firstLine = range.begin.y.clamp(0, height - 1);
+    final lastLine = range.end.y.clamp(firstLine, height - 1);
+
+    for (var i = firstLine; i <= lastLine; i++) {
       if (i < 0 || i >= lines.length) {
-        break;
+        continue;
       }
 
       final line = lines[i];
-      final start = i == range.begin.y ? range.begin.x : 0;
-      final end = i == range.end.y ? range.end.x : line.length;
+      final start = i == firstLine ? range.begin.x : 0;
+      final end = i == lastLine ? range.end.x : line.length;
 
-      if (i != range.begin.y && line.isWrapped) {
+      if (!(i == firstLine || line.isWrapped)) {
         builder.write('\n');
       }
 
@@ -522,13 +540,26 @@ class Buffer {
     return builder.toString();
   }
 
+  /// Returns a debug representation of the buffer.
   @override
   String toString() {
     final builder = StringBuffer();
     final lineNumberLength = lines.length.toString().length;
+
     for (var i = 0; i < lines.length; i++) {
-      builder.writeln('${i.toString().padLeft(lineNumberLength)}: ${lines[i]}');
+      final line = lines[i];
+
+      builder.write('${i.toString().padLeft(lineNumberLength)}: |${lines[i]}|');
+
+      TextEditingValue;
+
+      if (line.isWrapped) {
+        builder.write(' (⏎)');
+      }
+
+      builder.write('\n');
     }
+
     return builder.toString();
   }
 }

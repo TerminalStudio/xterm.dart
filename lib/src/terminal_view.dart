@@ -2,10 +2,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:xterm/src/core/buffer/cell_offset.dart';
 
 import 'package:xterm/src/core/input/keys.dart';
 import 'package:xterm/src/terminal.dart';
-import 'package:xterm/src/ui/char_metrics.dart';
 import 'package:xterm/src/ui/controller.dart';
 import 'package:xterm/src/ui/cursor_type.dart';
 import 'package:xterm/src/ui/custom_text_edit.dart';
@@ -13,6 +13,7 @@ import 'package:xterm/src/ui/gesture/gesture_handler.dart';
 import 'package:xterm/src/ui/input_map.dart';
 import 'package:xterm/src/ui/keyboard_visibility.dart';
 import 'package:xterm/src/ui/render.dart';
+import 'package:xterm/src/ui/shortcut/shortcuts.dart';
 import 'package:xterm/src/ui/terminal_text_style.dart';
 import 'package:xterm/src/ui/terminal_theme.dart';
 import 'package:xterm/src/ui/themes.dart';
@@ -30,13 +31,16 @@ class TerminalView extends StatefulWidget {
     this.backgroundOpacity = 1,
     this.focusNode,
     this.autofocus = false,
-    this.onTap,
+    this.onTapUp,
+    this.onSecondaryTapDown,
+    this.onSecondaryTapUp,
     this.mouseCursor = SystemMouseCursors.text,
     this.keyboardType = TextInputType.emailAddress,
     this.keyboardAppearance = Brightness.dark,
     this.cursorType = TerminalCursorType.block,
     this.alwaysShowCursor = false,
     this.deleteDetection = false,
+    this.shortcuts,
   }) : super(key: key);
 
   /// The underlying terminal that this widget renders.
@@ -72,12 +76,14 @@ class TerminalView extends StatefulWidget {
   final bool autofocus;
 
   /// Callback for when the user taps on the terminal.
-  ///
-  /// This exists because [TerminalView] builds a [GestureDetector] internally
-  /// to to trigger focus requests, adjust the selection, etc. Handling some of
-  /// those events by wrapping [TerminalView] with a competingGestureDetector is
-  /// problematic.
-  final VoidCallback? onTap;
+  final void Function(TapUpDetails, CellOffset)? onTapUp;
+
+  /// Function called when the user taps on the terminal with a secondary
+  /// button.
+  final void Function(TapDownDetails, CellOffset)? onSecondaryTapDown;
+
+  /// Function called when the user stops holding down a secondary button.
+  final void Function(TapUpDetails, CellOffset)? onSecondaryTapUp;
 
   /// The mouse cursor for mouse pointers that are hovering over the terminal.
   /// [SystemMouseCursors.text] by default.
@@ -103,6 +109,10 @@ class TerminalView extends StatefulWidget {
   /// emit hardware delete event. Prefered on mobile platforms. [false] by
   /// default.
   final bool deleteDetection;
+
+  /// Shortcuts for this terminal. This has higher priority than the input
+  /// handler. If not provided, [defaultTerminalShortcuts] will be used.
+  final Map<ShortcutActivator, Intent>? shortcuts;
 
   @override
   State<TerminalView> createState() => TerminalViewState();
@@ -139,6 +149,12 @@ class TerminalViewState extends State<TerminalView> {
     if (oldWidget.focusNode != widget.focusNode) {
       _focusNode = widget.focusNode ?? FocusNode();
     }
+    if (oldWidget.controller != widget.controller) {
+      _controller = widget.controller ?? TerminalController();
+    }
+    if (oldWidget.scrollController != widget.scrollController) {
+      _scrollController = widget.scrollController ?? ScrollController();
+    }
     super.didUpdateWidget(oldWidget);
   }
 
@@ -148,12 +164,121 @@ class TerminalViewState extends State<TerminalView> {
     super.dispose();
   }
 
+  @override
+  Widget build(BuildContext context) {
+    Widget child = Scrollable(
+      key: _scrollableKey,
+      controller: _scrollController,
+      viewportBuilder: (context, offset) {
+        return _TerminalView(
+          key: _viewportKey,
+          terminal: widget.terminal,
+          controller: _controller,
+          offset: offset,
+          padding: MediaQuery.of(context).padding,
+          autoResize: widget.autoResize,
+          textStyle: widget.textStyle,
+          theme: widget.theme,
+          focusNode: _focusNode,
+          cursorType: widget.cursorType,
+          alwaysShowCursor: widget.alwaysShowCursor,
+          onEditableRect: _onEditableRect,
+          composingText: _composingText,
+        );
+      },
+    );
+
+    child = Shortcuts(
+      shortcuts: widget.shortcuts ?? defaultTerminalShortcuts,
+      child: child,
+    );
+
+    child = Container(
+      color: widget.theme.background.withOpacity(widget.backgroundOpacity),
+      padding: widget.padding,
+      child: child,
+    );
+
+    child = CustomTextEdit(
+      key: _customTextEditKey,
+      focusNode: _focusNode,
+      inputType: widget.keyboardType,
+      keyboardAppearance: widget.keyboardAppearance,
+      deleteDetection: widget.deleteDetection,
+      onInsert: (text) {
+        _scrollToBottom();
+        widget.terminal.textInput(text);
+      },
+      onDelete: () {
+        _scrollToBottom();
+        widget.terminal.keyInput(TerminalKey.backspace);
+      },
+      onComposing: (text) {
+        setState(() => _composingText = text);
+      },
+      onAction: (action) {
+        _scrollToBottom();
+        if (action == TextInputAction.done) {
+          widget.terminal.keyInput(TerminalKey.enter);
+        }
+      },
+      onKey: _onKeyEvent,
+      child: child,
+    );
+
+    child = KeyboardVisibilty(
+      onKeyboardShow: _onKeyboardShow,
+      child: child,
+    );
+
+    child = TerminalGestureHandler(
+      terminalView: this,
+      onTapUp: _onTapUp,
+      onTapDown: _onTapDown,
+      onSecondaryTapDown:
+          widget.onSecondaryTapDown != null ? _onSecondaryTapDown : null,
+      onSecondaryTapUp:
+          widget.onSecondaryTapUp != null ? _onSecondaryTapUp : null,
+      child: child,
+    );
+
+    child = MouseRegion(
+      cursor: widget.mouseCursor,
+      child: child,
+    );
+
+    return child;
+  }
+
   void requestKeyboard() {
     _customTextEditKey.currentState?.requestKeyboard();
   }
 
   void closeKeyboard() {
     _customTextEditKey.currentState?.closeKeyboard();
+  }
+
+  void _onTapUp(TapUpDetails details) {
+    final offset = renderTerminal.getCellOffset(details.localPosition);
+    widget.onTapUp?.call(details, offset);
+  }
+
+  void _onTapDown(_) {
+    if (_controller.selection != null) {
+      _controller.clearSelection();
+    } else {
+      _customTextEditKey.currentState?.requestKeyboard();
+    }
+  }
+
+  void _onSecondaryTapDown(TapDownDetails details) {
+    final offset = renderTerminal.getCellOffset(details.localPosition);
+    widget.onSecondaryTapDown?.call(details, offset);
+  }
+
+  void _onSecondaryTapUp(TapUpDetails details) {
+    final offset = renderTerminal.getCellOffset(details.localPosition);
+    widget.onSecondaryTapUp?.call(details, offset);
   }
 
   bool get hasInputConnection {
@@ -203,114 +328,6 @@ class TerminalViewState extends State<TerminalView> {
       position.jumpTo(position.maxScrollExtent);
     }
   }
-
-  @override
-  Widget build(BuildContext context) {
-    // Calculate everytime build happens, because some fonts library
-    // lazily load fonts (such as google_fonts) and this can change the
-    // font metrics while textStyle is still the same.
-    final charMetrics = calcCharMetrics(widget.textStyle);
-
-    Widget child = Scrollable(
-      key: _scrollableKey,
-      controller: _scrollController,
-      viewportBuilder: (context, offset) {
-        return _TerminalView(
-          key: _viewportKey,
-          terminal: widget.terminal,
-          controller: _controller,
-          offset: offset,
-          padding: MediaQuery.of(context).padding,
-          autoResize: widget.autoResize,
-          charMetrics: charMetrics,
-          textStyle: widget.textStyle,
-          theme: widget.theme,
-          focusNode: _focusNode,
-          cursorType: widget.cursorType,
-          alwaysShowCursor: widget.alwaysShowCursor,
-          onEditableRect: _onEditableRect,
-          composingText: _composingText,
-        );
-      },
-    );
-
-    child = Container(
-      color: widget.theme.background.withOpacity(widget.backgroundOpacity),
-      padding: widget.padding,
-      child: child,
-    );
-
-    child = CustomTextEdit(
-      key: _customTextEditKey,
-      focusNode: _focusNode,
-      inputType: widget.keyboardType,
-      keyboardAppearance: widget.keyboardAppearance,
-      deleteDetection: widget.deleteDetection,
-      onInsert: (text) {
-        _scrollToBottom();
-        widget.terminal.textInput(text);
-      },
-      onDelete: () {
-        _scrollToBottom();
-        widget.terminal.keyInput(TerminalKey.backspace);
-      },
-      onComposing: (text) {
-        setState(() => _composingText = text);
-      },
-      onAction: (action) {
-        _scrollToBottom();
-        if (action == TextInputAction.done) {
-          widget.terminal.keyInput(TerminalKey.enter);
-        }
-      },
-      onKey: _onKeyEvent,
-      child: child,
-    );
-
-    child = KeyboardVisibilty(
-      onKeyboardShow: _onKeyboardShow,
-      child: child,
-    );
-
-    child = TerminalGestureHandler(
-      terminalView: this,
-      onTapUp: _onTapUp,
-      onTapDown: _onTapDown,
-      onSecondaryTapDown: _onSecondaryTapDown,
-      child: child,
-    );
-
-    child = MouseRegion(
-      cursor: widget.mouseCursor,
-      child: child,
-    );
-
-    return child;
-  }
-
-  void _onTapUp(_) {
-    widget.onTap?.call();
-  }
-
-  void _onTapDown(_) {
-    if (_controller.hasSelection) {
-      _controller.clearSelection();
-    } else {
-      _customTextEditKey.currentState?.requestKeyboard();
-    }
-  }
-
-  void _onSecondaryTapDown(TapDownDetails details) {
-    final position = renderTerminal.positionFromOffset(
-      renderTerminal.globalToLocal(details.globalPosition),
-    );
-
-    final selection = _controller.selection;
-
-    if (selection == null || !selection.isWithin(position)) {
-      renderTerminal.selectWord(details.globalPosition);
-    }
-  }
 }
 
 class _TerminalView extends LeafRenderObjectWidget {
@@ -321,7 +338,6 @@ class _TerminalView extends LeafRenderObjectWidget {
     required this.offset,
     required this.padding,
     required this.autoResize,
-    required this.charMetrics,
     required this.textStyle,
     required this.theme,
     required this.focusNode,
@@ -340,8 +356,6 @@ class _TerminalView extends LeafRenderObjectWidget {
   final EdgeInsets padding;
 
   final bool autoResize;
-
-  final Size charMetrics;
 
   final TerminalStyle textStyle;
 
@@ -365,7 +379,6 @@ class _TerminalView extends LeafRenderObjectWidget {
       offset: offset,
       padding: padding,
       autoResize: autoResize,
-      charMetrics: charMetrics,
       textStyle: textStyle,
       theme: theme,
       focusNode: focusNode,
@@ -384,7 +397,6 @@ class _TerminalView extends LeafRenderObjectWidget {
       ..offset = offset
       ..padding = padding
       ..autoResize = autoResize
-      ..charMetrics = charMetrics
       ..textStyle = textStyle
       ..theme = theme
       ..focusNode = focusNode

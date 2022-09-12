@@ -68,8 +68,6 @@ void main() {
     expect(terminal.buffer.lines[1].toString(), '光疑是地');
     expect(terminal.buffer.lines[2].toString(), '上霜');
 
-    print('-----------');
-
     terminal.resize(11, 10);
 
     expect(terminal.buffer.lines[0].toString(), '床前明月光');

@@ -6,9 +6,9 @@ class TerminalController with ChangeNotifier {
 
   BufferRange? get selection => _selection;
 
-  bool get hasSelection => _selection != null;
-
   void setSelection(BufferRange? range) {
+    range = range?.normalized;
+
     if (_selection != range) {
       _selection = range;
       notifyListeners();

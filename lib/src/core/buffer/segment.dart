@@ -1,4 +1,4 @@
-import 'package:xterm/src/core/buffer/position.dart';
+import 'package:xterm/src/core/buffer/cell_offset.dart';
 import 'package:xterm/src/core/buffer/range.dart';
 
 class BufferSegment {
@@ -16,7 +16,7 @@ class BufferSegment {
 
   const BufferSegment(this.range, this.line, this.start, this.end);
 
-  bool isWithin(BufferPosition position) {
+  bool isWithin(CellOffset position) {
     if (position.y != line) {
       return false;
     }

@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:xterm/src/ui/terminal_text_style.dart';
 
-Size calcCharMetrics(TerminalStyle style) {
+Size calcCharSize(TerminalStyle style) {
   const test = 'mmmmmmmmmm';
 
   final textStyle = style.toTextStyle();

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_pty/flutter_pty.dart';
 import 'package:xterm/xterm.dart';
@@ -29,7 +30,7 @@ bool get isDesktop {
 Future<void> setupAcrylic() async {
   await Window.initialize();
   await Window.makeTitlebarTransparent();
-  await Window.setEffect(effect: WindowEffect.aero);
+  await Window.setEffect(effect: WindowEffect.aero, color: Color(0xFFFFFFFF));
   await Window.setBlurViewState(MacOSBlurViewState.active);
 }
 
@@ -39,23 +40,26 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'xterm.dart demo',
       debugShowCheckedModeBanner: false,
-      home: MyHomePage(),
+      home: Home(),
+      // shortcuts: ,
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key? key}) : super(key: key);
+class Home extends StatefulWidget {
+  Home({Key? key}) : super(key: key);
 
   @override
   // ignore: library_private_types_in_public_api
-  _MyHomePageState createState() => _MyHomePageState();
+  _HomeState createState() => _HomeState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _HomeState extends State<Home> {
   final terminal = Terminal(
     maxLines: 10000,
   );
+
+  final terminalController = TerminalController();
 
   late final Pty pty;
 
@@ -102,7 +106,23 @@ class _MyHomePageState extends State<MyHomePage> {
       body: SafeArea(
         child: TerminalView(
           terminal,
-          backgroundOpacity: 0.8,
+          controller: terminalController,
+          autofocus: true,
+          backgroundOpacity: 0.7,
+          onSecondaryTapDown: (details, offset) async {
+            final selection = terminalController.selection;
+            if (selection != null) {
+              final text = terminal.buffer.getText(selection);
+              terminalController.clearSelection();
+              await Clipboard.setData(ClipboardData(text: text));
+            } else {
+              final data = await Clipboard.getData('text/plain');
+              final text = data?.text;
+              if (text != null) {
+                terminal.paste(text);
+              }
+            }
+          },
         ),
       ),
     );

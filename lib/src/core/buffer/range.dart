@@ -1,10 +1,10 @@
-import 'package:xterm/src/core/buffer/position.dart';
+import 'package:xterm/src/core/buffer/cell_offset.dart';
 import 'package:xterm/src/core/buffer/segment.dart';
 
 class BufferRange {
-  final BufferPosition begin;
+  final CellOffset begin;
 
-  final BufferPosition end;
+  final CellOffset end;
 
   BufferRange(this.begin, this.end);
 
@@ -16,6 +16,14 @@ class BufferRange {
 
   bool get isCollapsed {
     return begin.isEqual(end);
+  }
+
+  BufferRange get normalized {
+    if (isNormalized) {
+      return this;
+    } else {
+      return BufferRange(end, begin);
+    }
   }
 
   Iterable<BufferSegment> toSegments() sync* {
@@ -34,7 +42,7 @@ class BufferRange {
     }
   }
 
-  bool isWithin(BufferPosition position) {
+  bool contains(CellOffset position) {
     return begin.isBeforeOrSame(position) && end.isAfterOrSame(position);
   }
 
@@ -44,7 +52,7 @@ class BufferRange {
     return BufferRange(begin, end);
   }
 
-  BufferRange extend(BufferPosition position) {
+  BufferRange extend(CellOffset position) {
     final begin = this.begin.isBefore(position) ? position : this.begin;
     final end = this.end.isAfter(position) ? position : this.end;
     return BufferRange(begin, end);
