@@ -1,3 +1,6 @@
+## [3.2.3-alpha] - 2022-9-12
+* Export shortcut related classes.
+
 ## [3.2.2-alpha] - 2022-9-12
 * Implement default keyboard shortcuts.
 
