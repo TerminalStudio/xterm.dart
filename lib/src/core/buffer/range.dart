@@ -27,16 +27,16 @@ class BufferRange {
   }
 
   Iterable<BufferSegment> toSegments() sync* {
-    var start = this.begin;
+    var begin = this.begin;
     var end = this.end;
 
     if (!isNormalized) {
       end = this.begin;
-      start = this.end;
+      begin = this.end;
     }
 
-    for (var i = start.y; i <= end.y; i++) {
-      var startX = i == start.y ? start.x : null;
+    for (var i = begin.y; i <= end.y; i++) {
+      var startX = i == begin.y ? begin.x : null;
       var endX = i == end.y ? end.x : null;
       yield BufferSegment(this, i, startX, endX);
     }

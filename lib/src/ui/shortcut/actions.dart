@@ -1,16 +1,19 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:xterm/core.dart';
 import 'package:xterm/src/ui/shortcut/intents.dart';
+import 'package:xterm/xterm.dart';
 
 class TerminalActions extends StatelessWidget {
   const TerminalActions({
     super.key,
     required this.terminal,
+    required this.controller,
     required this.child,
   });
 
   final Terminal terminal;
+
+  final TerminalController controller;
 
   final Widget child;
 
@@ -26,54 +29,37 @@ class TerminalActions extends StatelessWidget {
             final text = data?.text;
             if (text != null) {
               terminal.paste(text);
+              controller.clearSelection();
             }
+            return null;
           },
         ),
-        // TerminalCopyIntent: CallbackAction(
-        //   onInvoke: (Intent intent) => terminal.copy(),
-        // ),
-        // TerminalSelectAllIntent: CallbackAction(
-        //   onInvoke: (Intent intent) => terminal.selectAll(),
-        // ),
+        TerminalCopyIntent: CallbackAction(
+          onInvoke: (Intent intent) async {
+            final selection = controller.selection;
+
+            if (selection == null) {
+              return;
+            }
+
+            final text = terminal.buffer.getText(selection);
+
+            await Clipboard.setData(ClipboardData(text: text));
+
+            return null;
+          },
+        ),
+        TerminalSelectAllIntent: CallbackAction(onInvoke: (Intent intent) {
+          controller.setSelection(
+            BufferRange(
+              CellOffset(0, terminal.buffer.height - terminal.viewHeight),
+              CellOffset(terminal.viewWidth, terminal.buffer.height - 1),
+            ),
+          );
+          return null;
+        }),
       },
       child: child,
     );
-  }
-}
-
-class TerminalPasteAction extends Action<TerminalPasteIntent> {
-  TerminalPasteAction(this.terminal);
-
-  final Terminal terminal;
-
-  @override
-  void invoke(TerminalPasteIntent intent) async {
-    final data = await Clipboard.getData(Clipboard.kTextPlain);
-    final text = data?.text;
-    if (text != null) {
-      terminal.paste(text);
-    }
-  }
-}
-
-class TerminalCopyAction extends Action<TerminalCopyIntent> {
-  TerminalCopyAction(this.terminal);
-
-  final Terminal terminal;
-
-  @override
-  void invoke(TerminalCopyIntent intent) {
-    // terminal
-  }
-}
-
-class TerminalSelectAllAction extends Action<TerminalSelectAllIntent> {
-  TerminalSelectAllAction(this.terminal);
-
-  final Terminal terminal;
-
-  @override
-  void invoke(TerminalSelectAllIntent intent) {
-    // terminal.selectAll();
   }
 }

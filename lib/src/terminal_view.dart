@@ -13,6 +13,7 @@ import 'package:xterm/src/ui/gesture/gesture_handler.dart';
 import 'package:xterm/src/ui/input_map.dart';
 import 'package:xterm/src/ui/keyboard_visibility.dart';
 import 'package:xterm/src/ui/render.dart';
+import 'package:xterm/src/ui/shortcut/actions.dart';
 import 'package:xterm/src/ui/shortcut/shortcuts.dart';
 import 'package:xterm/src/ui/terminal_text_style.dart';
 import 'package:xterm/src/ui/terminal_theme.dart';
@@ -110,8 +111,8 @@ class TerminalView extends StatefulWidget {
   /// default.
   final bool deleteDetection;
 
-  /// Shortcuts for this terminal. This has higher priority than the input
-  /// handler. If not provided, [defaultTerminalShortcuts] will be used.
+  /// Shortcuts for this terminal. This has higher priority than input handler
+  /// of the terminal If not provided, [defaultTerminalShortcuts] will be used.
   final Map<ShortcutActivator, Intent>? shortcuts;
 
   @override
@@ -120,6 +121,8 @@ class TerminalView extends StatefulWidget {
 
 class TerminalViewState extends State<TerminalView> {
   late final FocusNode _focusNode;
+
+  late final ShortcutManager _shortcutManager;
 
   final _customTextEditKey = GlobalKey<CustomTextEditState>();
 
@@ -141,6 +144,9 @@ class TerminalViewState extends State<TerminalView> {
     _focusNode = widget.focusNode ?? FocusNode();
     _controller = widget.controller ?? TerminalController();
     _scrollController = widget.scrollController ?? ScrollController();
+    _shortcutManager = ShortcutManager(
+      shortcuts: widget.shortcuts ?? defaultTerminalShortcuts,
+    );
     super.initState();
   }
 
@@ -161,6 +167,7 @@ class TerminalViewState extends State<TerminalView> {
   @override
   void dispose() {
     _focusNode.dispose();
+    _shortcutManager.dispose();
     super.dispose();
   }
 
@@ -186,17 +193,6 @@ class TerminalViewState extends State<TerminalView> {
           composingText: _composingText,
         );
       },
-    );
-
-    child = Shortcuts(
-      shortcuts: widget.shortcuts ?? defaultTerminalShortcuts,
-      child: child,
-    );
-
-    child = Container(
-      color: widget.theme.background.withOpacity(widget.backgroundOpacity),
-      padding: widget.padding,
-      child: child,
     );
 
     child = CustomTextEdit(
@@ -226,6 +222,12 @@ class TerminalViewState extends State<TerminalView> {
       child: child,
     );
 
+    child = TerminalActions(
+      terminal: widget.terminal,
+      controller: _controller,
+      child: child,
+    );
+
     child = KeyboardVisibilty(
       onKeyboardShow: _onKeyboardShow,
       child: child,
@@ -244,6 +246,12 @@ class TerminalViewState extends State<TerminalView> {
 
     child = MouseRegion(
       cursor: widget.mouseCursor,
+      child: child,
+    );
+
+    child = Container(
+      color: widget.theme.background.withOpacity(widget.backgroundOpacity),
+      padding: widget.padding,
       child: child,
     );
 
@@ -285,7 +293,17 @@ class TerminalViewState extends State<TerminalView> {
     return _customTextEditKey.currentState?.hasInputConnection == true;
   }
 
-  KeyEventResult _onKeyEvent(RawKeyEvent event) {
+  KeyEventResult _onKeyEvent(FocusNode focusNode, RawKeyEvent event) {
+    // ignore: invalid_use_of_protected_member
+    final shortcutResult = _shortcutManager.handleKeypress(
+      focusNode.context!,
+      event,
+    );
+
+    if (shortcutResult == KeyEventResult.handled) {
+      return KeyEventResult.handled;
+    }
+
     if (event is! RawKeyDownEvent) {
       return KeyEventResult.ignored;
     }

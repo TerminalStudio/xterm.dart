@@ -31,7 +31,7 @@ class CustomTextEdit extends StatefulWidget {
 
   final void Function(TextInputAction) onAction;
 
-  final KeyEventResult Function(RawKeyEvent) onKey;
+  final KeyEventResult Function(FocusNode, RawKeyEvent) onKey;
 
   final FocusNode focusNode;
 
@@ -129,7 +129,7 @@ class CustomTextEditState extends State<CustomTextEdit>
 
   KeyEventResult _onKey(FocusNode focusNode, RawKeyEvent event) {
     if (_currentEditingState.composing.isCollapsed) {
-      return widget.onKey(event);
+      return widget.onKey(focusNode, event);
     }
 
     return KeyEventResult.skipRemainingHandlers;
