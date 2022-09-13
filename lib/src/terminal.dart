@@ -33,8 +33,6 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
   /// Flag to toggle os specific behaviors.
   final TerminalTargetPlatform platform;
 
-  final TerminalInputHandler inputHandler;
-
   Terminal({
     this.maxLines = 1000,
     this.onBell,
@@ -43,8 +41,10 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
     this.onOutput,
     this.onResize,
     this.platform = TerminalTargetPlatform.unknown,
-    this.inputHandler = defaultInputHandler,
-  });
+    TerminalInputHandler inputHandler = defaultInputHandler,
+  }) : _inputHandler = inputHandler;
+
+  TerminalInputHandler _inputHandler;
 
   late final _parser = EscapeParser(this);
 
@@ -158,6 +158,10 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
 
   CircularList<BufferLine> get lines => _buffer.lines;
 
+  void setInputHandler(TerminalInputHandler inputHandler) {
+    _inputHandler = inputHandler;
+  }
+
   void write(String data) {
     _parser.write(data);
     notifyListeners();
@@ -169,7 +173,7 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
     bool alt = false,
     bool ctrl = false,
   }) {
-    final output = inputHandler(
+    final output = _inputHandler(
       TerminalInputEvent(
         key: key,
         shift: shift,
