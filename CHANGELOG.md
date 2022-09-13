@@ -1,3 +1,6 @@
+## [3.2.6] - 2022-9-13
+* First stable release of xterm.dart v3.
+
 ## [3.2.6-alpha] - 2022-9-13
 * Fix new line width in reflow.
 
