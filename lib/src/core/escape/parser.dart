@@ -655,7 +655,56 @@ class EscapeParser {
   ///
   /// https://terminalguide.namepad.de/seq/csi_st/
   void _csiWindowManipulation() {
-    // Not supported.
+    // The sequence needs at least one parameter.
+    if (_csi.params.isEmpty) {
+      return;
+    }
+    // Most the commands in this group are either of the scope of this package,
+    // or should be disabled for security risks.
+    switch (_csi.params.first) {
+      // Window handling is currently not in the scope of the package.
+      case 1: // Restore Terminal Window (show window if minimized)
+      case 2: // Minimize Terminal Window
+      case 3: // Set Terminal Window Position
+      case 4: // Set Terminal Window Size in Pixels
+      case 5: // Raise Terminal Window
+      case 6: // Lower Terminal Window
+      case 7: // Refresh/Redraw Terminal Window
+        return;
+      case 8: // Set Terminal Window Size (in characters)
+        // This CSI contains 2 more parameters: width and height.
+        if (_csi.params.length != 3) {
+          return;
+        }
+        final rows = _csi.params[1];
+        final cols = _csi.params[2];
+        handler.resize(cols, rows);
+        return;
+      // Window handling is currently no in the scope of the package.
+      case 9: // Maximize Terminal Window
+      case 10: // Alias: Maximize Terminal Window
+      case 11: // Report Terminal Window State
+      case 13: // Report Terminal Window Position
+      case 14: // Report Terminal Window Size in Pixels
+      case 15: // Report Screen Size in Pixels
+      case 16: // Report Cell Size in Pixels
+        return;
+      case 18: // Report Terminal Size (in characters)
+        handler.sendSize();
+        return;
+      // Screen handling is currently no in the scope of the package.
+      case 19: // Report Screen Size (in characters)
+      // Disabled as these can a security risk.
+      case 20: // Get Icon Title
+      case 21: // Get Terminal Title
+      // Not implemented.
+      case 22: // Push Terminal Title
+      case 23: // Pop Terminal Title
+        return;
+      // Unknown CSI.
+      default:
+        return;
+    }
   }
 
   /// `ESC [ Ps A` Cursor Up (CUU)
