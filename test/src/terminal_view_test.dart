@@ -71,4 +71,78 @@ void main() {
       expect(terminalOutput.join(), 'ls -al');
     });
   });
+
+  group('TerminalView.focusNode', () {
+    testWidgets(
+      'is not listened when terminal is disposed',
+      (WidgetTester tester) async {
+        final terminal = Terminal();
+
+        final focusNode = FocusNode();
+
+        final isActive = ValueNotifier(true);
+
+        await tester.pumpWidget(MaterialApp(
+          home: Scaffold(
+            body: ValueListenableBuilder<bool>(
+              valueListenable: isActive,
+              builder: (context, isActive, child) {
+                if (!isActive) {
+                  return Container();
+                }
+                return TerminalView(
+                  terminal,
+                  focusNode: focusNode,
+                  autofocus: true,
+                );
+              },
+            ),
+          ),
+        ));
+
+        // ignore: invalid_use_of_protected_member
+        expect(focusNode.hasListeners, isTrue);
+
+        isActive.value = false;
+        await tester.pumpAndSettle();
+
+        // ignore: invalid_use_of_protected_member
+        expect(focusNode.hasListeners, isFalse);
+      },
+    );
+
+    testWidgets(
+      'does not dispose external focus node',
+      (WidgetTester tester) async {
+        final terminal = Terminal();
+
+        final focusNode = FocusNode();
+
+        final isActive = ValueNotifier(true);
+
+        await tester.pumpWidget(MaterialApp(
+          home: Scaffold(
+            body: ValueListenableBuilder<bool>(
+              valueListenable: isActive,
+              builder: (context, isActive, child) {
+                if (!isActive) {
+                  return Container();
+                }
+                return TerminalView(
+                  terminal,
+                  focusNode: focusNode,
+                  autofocus: true,
+                );
+              },
+            ),
+          ),
+        ));
+
+        isActive.value = false;
+        await tester.pumpAndSettle();
+
+        expect(() => focusNode.addListener(() {}), returnsNormally);
+      },
+    );
+  });
 }

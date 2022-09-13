@@ -80,6 +80,13 @@ class CustomTextEditState extends State<CustomTextEdit>
   }
 
   @override
+  void dispose() {
+    widget.focusNode.removeListener(_onFocusChange);
+    _closeInputConnectionIfNeeded();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Focus(
       focusNode: widget.focusNode,
