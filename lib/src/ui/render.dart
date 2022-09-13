@@ -276,7 +276,8 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
       final toOffset = getCellOffset(to);
       final toBoundary = _terminal.buffer.getWordBoundary(toOffset);
       if (toBoundary == null) return;
-      _controller.setSelection(fromBoundary.merge(toBoundary));
+      final range = fromBoundary.merge(toBoundary);
+      _controller.setSelectionRange(range.begin, range.end);
     }
   }
 
@@ -284,10 +285,10 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
   void selectCharacters(Offset from, [Offset? to]) {
     final fromPosition = getCellOffset(from);
     if (to == null) {
-      _controller.setSelection(BufferRange.collapsed(fromPosition));
+      _controller.setSelectionRange(fromPosition, fromPosition);
     } else {
       final toPosition = getCellOffset(to);
-      _controller.setSelection(BufferRange(fromPosition, toPosition));
+      _controller.setSelectionRange(fromPosition, toPosition);
     }
   }
 
