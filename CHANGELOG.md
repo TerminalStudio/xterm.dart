@@ -1,3 +1,6 @@
+## [3.2.6-alpha] - 2022-9-13
+* Fix new line width in reflow.
+
 ## [3.2.5-alpha] - 2022-9-12
 * Fix intent related issue.
 
