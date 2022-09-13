@@ -36,7 +36,7 @@ class CellOffset {
   }
 
   bool isWithin(BufferRange range) {
-    return range.begin.isBeforeOrSame(this) && range.end.isAfterOrSame(this);
+    return range.contains(this);
   }
 
   @override

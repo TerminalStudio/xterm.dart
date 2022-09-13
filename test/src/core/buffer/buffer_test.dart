@@ -37,7 +37,7 @@ void main() {
 
       expect(
         terminal.buffer.getText(
-          BufferRange(CellOffset(-100, -100), CellOffset(100, 100)),
+          BufferRangeLine(CellOffset(-100, -100), CellOffset(100, 100)),
         ),
         startsWith('Hello World'),
       );
@@ -50,7 +50,7 @@ void main() {
 
       expect(
         terminal.buffer.getText(
-          BufferRange(CellOffset(0, 0), CellOffset(100, 100)),
+          BufferRangeLine(CellOffset(0, 0), CellOffset(100, 100)),
         ),
         startsWith('Hello World'),
       );
@@ -63,9 +63,23 @@ void main() {
 
       expect(
         terminal.buffer.getText(
-          BufferRange(CellOffset(5, 5), CellOffset(0, 0)),
+          BufferRangeLine(CellOffset(5, 5), CellOffset(0, 0)),
         ),
         startsWith('Hello World'),
+      );
+    });
+
+    test('can handle block range', () {
+      final terminal = Terminal();
+
+      terminal.write('Hello World\r\n');
+      terminal.write('Nice to meet you\r\n');
+
+      expect(
+        terminal.buffer.getText(
+          BufferRangeBlock(CellOffset(2, 0), CellOffset(5, 1)),
+        ),
+        startsWith('llo\nce '),
       );
     });
   });
