@@ -21,8 +21,6 @@ class TerminalActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    TextEditingController;
-
     return Actions(
       actions: {
         PasteTextIntent: CallbackAction<PasteTextIntent>(

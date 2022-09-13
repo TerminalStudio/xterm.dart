@@ -551,8 +551,6 @@ class Buffer {
 
       builder.write('${i.toString().padLeft(lineNumberLength)}: |${lines[i]}|');
 
-      TextEditingValue;
-
       if (line.isWrapped) {
         builder.write(' (⏎)');
       }
