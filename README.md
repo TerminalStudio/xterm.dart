@@ -79,7 +79,7 @@ Listen to user interaction with the terminal by simply adding a `onOutput` callb
 terminal = Terminal();
 
 terminal.onOutput = (output) {
- print('output: $output');
+  print('output: $output');
 }
 ```
 
@@ -88,7 +88,7 @@ terminal.onOutput = (output) {
 ```dart
 import 'package:xterm/flutter.dart';
 ...
-child: TerminalView(terminal: terminal),
+child: TerminalView(terminal),
 ```
 
 **4.** Write something to the terminal:
