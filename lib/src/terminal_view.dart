@@ -153,6 +153,9 @@ class TerminalViewState extends State<TerminalView> {
   @override
   void didUpdateWidget(TerminalView oldWidget) {
     if (oldWidget.focusNode != widget.focusNode) {
+      if (oldWidget.focusNode == null) {
+        _focusNode.dispose();
+      }
       _focusNode = widget.focusNode ?? FocusNode();
     }
     if (oldWidget.controller != widget.controller) {
@@ -166,7 +169,9 @@ class TerminalViewState extends State<TerminalView> {
 
   @override
   void dispose() {
-    _focusNode.dispose();
+    if (widget.focusNode == null) {
+      _focusNode.dispose();
+    }
     _shortcutManager.dispose();
     super.dispose();
   }
