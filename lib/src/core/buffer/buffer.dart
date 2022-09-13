@@ -407,15 +407,13 @@ class Buffer {
   }
 
   void resize(int oldWidth, int oldHeight, int newWidth, int newHeight) {
-    if (newWidth > oldWidth) {
-      lines.forEach((item) => item.resize(newWidth));
-    }
+    lines.forEach((item) => item.resize(newWidth));
 
     if (newHeight > oldHeight) {
       // Grow larger
       for (var i = 0; i < newHeight - oldHeight; i++) {
         if (newHeight > lines.length) {
-          lines.push(_newEmptyLine());
+          lines.push(_newEmptyLine(newWidth));
         } else {
           _cursorY++;
         }
@@ -439,15 +437,17 @@ class Buffer {
       final reflowResult = reflow(lines, oldWidth, newWidth);
 
       while (reflowResult.length < newHeight) {
-        reflowResult.add(_newEmptyLine());
+        reflowResult.add(_newEmptyLine(newWidth));
       }
 
       lines.replaceWith(reflowResult);
     }
   }
 
-  BufferLine _newEmptyLine() {
-    final line = BufferLine(viewWidth);
+  /// Create a new empty [BufferLine] with the current [viewWidth] if [width]
+  /// is not specified.
+  BufferLine _newEmptyLine([int? width]) {
+    final line = BufferLine(width ?? viewWidth);
     return line;
   }
 

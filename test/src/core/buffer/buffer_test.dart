@@ -69,4 +69,29 @@ void main() {
       );
     });
   });
+
+  group('Buffer.resize()', () {
+    test('should resize the buffer', () {
+      final terminal = Terminal();
+      terminal.resize(10, 10);
+
+      expect(terminal.viewWidth, 10);
+      expect(terminal.viewHeight, 10);
+
+      for (var i = 0; i < terminal.lines.length; i++) {
+        final line = terminal.lines[i];
+        expect(line.length, 10);
+      }
+
+      terminal.resize(20, 20);
+
+      expect(terminal.viewWidth, 20);
+      expect(terminal.viewHeight, 20);
+
+      for (var i = 0; i < terminal.lines.length; i++) {
+        final line = terminal.lines[i];
+        expect(line.length, 20);
+      }
+    });
+  });
 }

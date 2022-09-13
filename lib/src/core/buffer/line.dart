@@ -200,12 +200,14 @@ class BufferLine {
       return;
     }
 
-    final newBufferSize = _calcCapacity(length) * _cellSize;
+    if (length > _length) {
+      final newBufferSize = _calcCapacity(length) * _cellSize;
 
-    if (newBufferSize > _data.length) {
-      final newBuffer = Uint32List(newBufferSize);
-      newBuffer.setRange(0, _data.length, _data);
-      _data = newBuffer;
+      if (newBufferSize > _data.length) {
+        final newBuffer = Uint32List(newBufferSize);
+        newBuffer.setRange(0, _data.length, _data);
+        _data = newBuffer;
+      }
     }
 
     _length = length;
