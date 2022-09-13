@@ -1,3 +1,6 @@
+## [3.2.7] - 2022-9-13
+* Fix lint issues.
+
 ## [3.2.6] - 2022-9-13
 * First stable release of xterm.dart v3.
 
