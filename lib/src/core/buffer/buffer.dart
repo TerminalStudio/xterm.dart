@@ -1,6 +1,5 @@
 import 'dart:math' show max, min;
 
-import 'package:flutter/material.dart';
 import 'package:xterm/src/core/buffer/cell_offset.dart';
 import 'package:xterm/src/core/buffer/line.dart';
 import 'package:xterm/src/core/buffer/range.dart';
