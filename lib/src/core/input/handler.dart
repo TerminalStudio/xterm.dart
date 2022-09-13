@@ -88,7 +88,7 @@ class CtrlInputHandler implements TerminalInputHandler {
 
   @override
   String? call(TerminalInputEvent event) {
-    if (!event.ctrl) {
+    if (!event.ctrl || event.shift || event.alt) {
       return null;
     }
 
@@ -109,7 +109,7 @@ class AltInputHandler implements TerminalInputHandler {
 
   @override
   String? call(TerminalInputEvent event) {
-    if (!event.alt) {
+    if (!event.alt || event.ctrl || event.shift) {
       return null;
     }
 
