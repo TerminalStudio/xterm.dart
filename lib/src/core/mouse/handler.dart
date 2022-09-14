@@ -1,4 +1,5 @@
 import 'package:xterm/src/core/buffer/cell_offset.dart';
+import 'package:xterm/src/core/mouse/button_state.dart';
 import 'package:xterm/src/core/mouse/mode.dart';
 import 'package:xterm/src/core/mouse/button.dart';
 import 'package:xterm/src/core/mouse/reporter.dart';
@@ -99,6 +100,11 @@ class UpDownMouseHandler implements TerminalMouseHandler {
       case MouseMode.upDownScroll:
       case MouseMode.upDownScrollDrag:
       case MouseMode.upDownScrollMove:
+        // Up events are never reported for mouse wheel buttons.
+        if (event.button.isWheel &&
+            event.buttonState == TerminalMouseButtonState.up) {
+          return null;
+        }
         return MouseReporter.report(
           event.button,
           event.buttonState,
