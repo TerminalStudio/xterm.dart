@@ -1,5 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
+import 'package:xterm/src/core/mouse/button.dart';
+import 'package:xterm/src/core/mouse/button_state.dart';
 import 'package:xterm/src/terminal_view.dart';
 import 'package:xterm/src/ui/gesture/gesture_detector.dart';
 import 'package:xterm/src/ui/render.dart';
@@ -48,8 +50,8 @@ class _TerminalGestureHandlerState extends State<TerminalGestureHandler> {
     return TerminalGestureDetector(
       child: widget.child,
       onTapUp: widget.onTapUp,
-      onSingleTapUp: widget.onSingleTapUp,
-      onTapDown: widget.onTapDown,
+      onSingleTapUp: onSingleTapUp,
+      onTapDown: onTapDown,
       onSecondaryTapDown: widget.onSecondaryTapDown,
       onSecondaryTapUp: widget.onSecondaryTapUp,
       onLongPressStart: onLongPressStart,
@@ -58,6 +60,24 @@ class _TerminalGestureHandlerState extends State<TerminalGestureHandler> {
       onDragStart: onDragStart,
       onDragUpdate: onDragUpdate,
       onDoubleTapDown: onDoubleTapDown,
+    );
+  }
+
+  void onTapDown(TapDownDetails details) {
+    widget.onTapDown?.call(details);
+    renderTerminal.mouseEvent(
+      TerminalMouseButton.left,
+      TerminalMouseButtonState.down,
+      details.localPosition,
+    );
+  }
+
+  void onSingleTapUp(TapUpDetails details) {
+    widget.onSingleTapUp?.call(details);
+    renderTerminal.mouseEvent(
+      TerminalMouseButton.left,
+      TerminalMouseButtonState.up,
+      details.localPosition,
     );
   }
 
