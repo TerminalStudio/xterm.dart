@@ -52,7 +52,7 @@ class CircularList<T> {
   void forEach(void Function(T item) callback) {
     final length = _length;
     for (int i = 0; i < length; i++) {
-      callback(_array[_getCyclicIndex(i)]!);
+      callback(_array[_getCyclicIndex(i)] as T);
     }
   }
 
