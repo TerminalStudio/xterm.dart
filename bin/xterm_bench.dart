@@ -1,29 +1,4 @@
-import 'package:flutter/material.dart';
 import 'package:xterm/src/terminal.dart';
-
-class Test extends StatelessWidget {
-  const Test({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return TextSelectionToolbar(
-      anchorAbove: Offset(50, 50),
-      anchorBelow: Offset(50, 50),
-      children: [
-        TextSelectionToolbarTextButton(
-          child: Text('Copy'),
-          onPressed: () {},
-          padding: TextSelectionToolbarTextButton.getPadding(0, 1),
-        ),
-        TextSelectionToolbarTextButton(
-          child: Text('Paste'),
-          onPressed: () {},
-          padding: TextSelectionToolbarTextButton.getPadding(1, 1),
-        ),
-      ],
-    );
-  }
-}
 
 void main(List<String> args) async {
   final lines = 1000;
