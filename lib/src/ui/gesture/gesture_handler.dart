@@ -16,6 +16,8 @@ class TerminalGestureHandler extends StatefulWidget {
     this.onTapDown,
     this.onSecondaryTapDown,
     this.onSecondaryTapUp,
+    this.onTertiaryTapDown,
+    this.onTertiaryTapUp,
   });
 
   final TerminalViewState terminalView;
@@ -31,6 +33,10 @@ class TerminalGestureHandler extends StatefulWidget {
   final GestureTapDownCallback? onSecondaryTapDown;
 
   final GestureTapUpCallback? onSecondaryTapUp;
+
+  final GestureTapDownCallback? onTertiaryTapDown;
+
+  final GestureTapUpCallback? onTertiaryTapUp;
 
   @override
   State<TerminalGestureHandler> createState() => _TerminalGestureHandlerState();
@@ -52,8 +58,10 @@ class _TerminalGestureHandlerState extends State<TerminalGestureHandler> {
       onTapUp: widget.onTapUp,
       onSingleTapUp: onSingleTapUp,
       onTapDown: onTapDown,
-      onSecondaryTapDown: widget.onSecondaryTapDown,
-      onSecondaryTapUp: widget.onSecondaryTapUp,
+      onSecondaryTapDown: onSecondaryTapDown,
+      onSecondaryTapUp: onSecondaryTapUp,
+      onTertiaryTapDown: onSecondaryTapDown,
+      onTertiaryTapUp: onSecondaryTapUp,
       onLongPressStart: onLongPressStart,
       onLongPressMoveUpdate: onLongPressMoveUpdate,
       // onLongPressUp: onLongPressUp,
@@ -76,6 +84,42 @@ class _TerminalGestureHandlerState extends State<TerminalGestureHandler> {
     widget.onSingleTapUp?.call(details);
     renderTerminal.mouseEvent(
       TerminalMouseButton.left,
+      TerminalMouseButtonState.up,
+      details.localPosition,
+    );
+  }
+
+  void onSecondaryTapDown(TapDownDetails details) {
+    widget.onSecondaryTapDown?.call(details);
+    renderTerminal.mouseEvent(
+      TerminalMouseButton.right,
+      TerminalMouseButtonState.down,
+      details.localPosition,
+    );
+  }
+
+  void onSecondaryTapUp(TapUpDetails details) {
+    widget.onSecondaryTapUp?.call(details);
+    renderTerminal.mouseEvent(
+      TerminalMouseButton.right,
+      TerminalMouseButtonState.up,
+      details.localPosition,
+    );
+  }
+
+  void onTertiaryTapDown(TapDownDetails details) {
+    widget.onTertiaryTapDown?.call(details);
+    renderTerminal.mouseEvent(
+      TerminalMouseButton.middle,
+      TerminalMouseButtonState.down,
+      details.localPosition,
+    );
+  }
+
+  void onTertiaryTapUp(TapUpDetails details) {
+    widget.onTertiaryTapUp?.call(details);
+    renderTerminal.mouseEvent(
+      TerminalMouseButton.middle,
       TerminalMouseButtonState.up,
       details.localPosition,
     );
