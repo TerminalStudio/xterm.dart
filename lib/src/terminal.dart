@@ -241,7 +241,8 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
     }
   }
 
-  void mouseInput(
+  // Handle a mouse event and return true if it was handled.
+  bool mouseInput(
     TerminalMouseButton button,
     TerminalMouseButtonState buttonState,
     CellOffset position,
@@ -255,7 +256,9 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
     ));
     if (output != null) {
       onOutput?.call(output);
+      return true;
     }
+    return false;
   }
 
   /// Resize the terminal screen. [newWidth] and [newHeight] should be greater

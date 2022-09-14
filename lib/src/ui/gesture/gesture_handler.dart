@@ -79,70 +79,77 @@ class _TerminalGestureHandlerState extends State<TerminalGestureHandler> {
   bool get _shouldSendTapEvent =>
       widget.terminalController.shouldSendPointerInput(PointerInput.tap);
 
-  void onTapDown(TapDownDetails details) {
-    widget.onTapDown?.call(details);
+  void _tapDown(
+    GestureTapDownCallback? callback,
+    TapDownDetails details,
+    TerminalMouseButton button, {
+    bool forceCallback = false,
+  }) {
+    // Check if the terminal should and can handle the tap down event.
+    var handled = false;
     if (_shouldSendTapEvent) {
-      renderTerminal.mouseEvent(
-        TerminalMouseButton.left,
+      handled = renderTerminal.mouseEvent(
+        button,
         TerminalMouseButtonState.down,
         details.localPosition,
       );
     }
+    // If the event was not handled by the terminal, use the supplied callback.
+    if (!handled || forceCallback) {
+      callback?.call(details);
+    }
+  }
+
+  void _tapUp(
+    GestureTapUpCallback? callback,
+    TapUpDetails details,
+    TerminalMouseButton button, {
+    bool forceCallback = false,
+  }) {
+    // Check if the terminal should and can handle the tap up event.
+    var handled = false;
+    if (_shouldSendTapEvent) {
+      handled = renderTerminal.mouseEvent(
+        button,
+        TerminalMouseButtonState.up,
+        details.localPosition,
+      );
+    }
+    // If the event was not handled by the terminal, use the supplied callback.
+    if (!handled && forceCallback) {
+      callback?.call(details);
+    }
+  }
+
+  void onTapDown(TapDownDetails details) {
+    // onTapDown is special, as it will always call the supplied callback.
+    // The TerminalView depends on it to bring the terminal into focus.
+    _tapDown(
+      widget.onTapDown,
+      details,
+      TerminalMouseButton.left,
+      forceCallback: true,
+    );
   }
 
   void onSingleTapUp(TapUpDetails details) {
-    widget.onSingleTapUp?.call(details);
-    if (_shouldSendTapEvent) {
-      renderTerminal.mouseEvent(
-        TerminalMouseButton.left,
-        TerminalMouseButtonState.up,
-        details.localPosition,
-      );
-    }
+    _tapUp(widget.onSingleTapUp, details, TerminalMouseButton.left);
   }
 
   void onSecondaryTapDown(TapDownDetails details) {
-    widget.onSecondaryTapDown?.call(details);
-    if (_shouldSendTapEvent) {
-      renderTerminal.mouseEvent(
-        TerminalMouseButton.right,
-        TerminalMouseButtonState.down,
-        details.localPosition,
-      );
-    }
+    _tapDown(widget.onSecondaryTapDown, details, TerminalMouseButton.right);
   }
 
   void onSecondaryTapUp(TapUpDetails details) {
-    widget.onSecondaryTapUp?.call(details);
-    if (_shouldSendTapEvent) {
-      renderTerminal.mouseEvent(
-        TerminalMouseButton.right,
-        TerminalMouseButtonState.up,
-        details.localPosition,
-      );
-    }
+    _tapUp(widget.onSecondaryTapUp, details, TerminalMouseButton.right);
   }
 
   void onTertiaryTapDown(TapDownDetails details) {
-    widget.onTertiaryTapDown?.call(details);
-    if (_shouldSendTapEvent) {
-      renderTerminal.mouseEvent(
-        TerminalMouseButton.middle,
-        TerminalMouseButtonState.down,
-        details.localPosition,
-      );
-    }
+    _tapDown(widget.onTertiaryTapDown, details, TerminalMouseButton.middle);
   }
 
   void onTertiaryTapUp(TapUpDetails details) {
-    widget.onTertiaryTapUp?.call(details);
-    if (_shouldSendTapEvent) {
-      renderTerminal.mouseEvent(
-        TerminalMouseButton.middle,
-        TerminalMouseButtonState.up,
-        details.localPosition,
-      );
-    }
+    _tapUp(widget.onTertiaryTapUp, details, TerminalMouseButton.right);
   }
 
   void onDoubleTapDown(TapDownDetails details) {
