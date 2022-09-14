@@ -581,8 +581,19 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
         underline: cellFlags & CellFlags.underline != 0,
       );
 
+      // Flutter does not draw an underline below a space which is not between
+      // other regular characters. As only single characters are drawn, this
+      // will never produce an underline below a space in the terminal. As a
+      // workaround the regular space CodePoint 0x20 is replaced with
+      // the CodePoint 0xA0. This is a non breaking space and a underline can be
+      // drawn below it.
+      var char = String.fromCharCode(charCode);
+      if (cellFlags & CellFlags.underline != 0 && charCode == 0x20) {
+        char = String.fromCharCode(0xA0);
+      }
+
       paragraph = _paragraphCache.performAndCacheLayout(
-        String.fromCharCode(charCode),
+        char,
         style,
         hash,
       );
