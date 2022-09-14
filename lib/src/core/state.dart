@@ -26,6 +26,8 @@ abstract class TerminalState {
 
   MouseMode get mouseMode;
 
+  MouseReportMode get mouseReportMode;
+
   bool get cursorBlinkMode;
 
   bool get cursorVisibleMode;
