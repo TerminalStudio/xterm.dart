@@ -10,8 +10,8 @@ void main() {
   final binding = TestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets(
-    'Golden test',
-    (WidgetTester tester) async {
+    'htop golden test',
+    (tester) async {
       final terminal = Terminal();
       await tester.pumpWidget(MaterialApp(
         home: Scaffold(
@@ -25,6 +25,33 @@ void main() {
       await expectLater(
         find.byType(TerminalView),
         matchesGoldenFile('_goldens/htop_80x25_3s.png'),
+      );
+    },
+    skip: !Platform.isMacOS,
+  );
+
+  testWidgets(
+    'color golden test',
+    (tester) async {
+      final terminal = Terminal();
+
+      // terminal.lineFeedMode = true;
+
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: TerminalView(
+            terminal,
+            textStyle: TerminalStyle(fontSize: 8),
+          ),
+        ),
+      ));
+
+      terminal.write(TestFixtures.colors().replaceAll('\n', '\r\n'));
+      await tester.pump();
+
+      await expectLater(
+        find.byType(TerminalView),
+        matchesGoldenFile('_goldens/colors.png'),
       );
     },
     skip: !Platform.isMacOS,
