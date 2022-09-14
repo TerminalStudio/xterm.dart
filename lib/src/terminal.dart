@@ -30,10 +30,10 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
   void Function(int width, int height, int pixelWidth, int pixelHeight)?
       onResize;
 
+  TerminalInputHandler? inputHandler;
+
   /// Flag to toggle os specific behaviors.
   final TerminalTargetPlatform platform;
-
-  final TerminalInputHandler inputHandler;
 
   Terminal({
     this.maxLines = 1000,
@@ -169,7 +169,7 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
     bool alt = false,
     bool ctrl = false,
   }) {
-    final output = inputHandler(
+    final output = inputHandler?.call(
       TerminalInputEvent(
         key: key,
         shift: shift,
