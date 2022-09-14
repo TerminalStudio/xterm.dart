@@ -11,7 +11,7 @@ export 'src/core/escape/handler.dart';
 export 'src/core/escape/parser.dart';
 export 'src/core/input/handler.dart';
 export 'src/core/input/keys.dart';
-export 'src/core/mouse.dart';
+export 'src/core/mouse/mode.dart';
 export 'src/core/state.dart';
 export 'src/terminal.dart';
 export 'src/utils/platform.dart';

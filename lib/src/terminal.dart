@@ -8,7 +8,7 @@ import 'package:xterm/src/core/escape/handler.dart';
 import 'package:xterm/src/core/escape/parser.dart';
 import 'package:xterm/src/core/input/handler.dart';
 import 'package:xterm/src/core/input/keys.dart';
-import 'package:xterm/src/core/mouse.dart';
+import 'package:xterm/src/core/mouse/mode.dart';
 import 'package:xterm/src/core/state.dart';
 import 'package:xterm/src/core/tabs.dart';
 import 'package:xterm/src/utils/ascii.dart';

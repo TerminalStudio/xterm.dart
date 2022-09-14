@@ -1,5 +1,5 @@
 import 'package:xterm/src/core/color.dart';
-import 'package:xterm/src/core/mouse.dart';
+import 'package:xterm/src/core/mouse/mode.dart';
 import 'package:xterm/src/core/escape/handler.dart';
 import 'package:xterm/src/utils/ascii.dart';
 import 'package:xterm/src/utils/byte_consumer.dart';
