@@ -21,6 +21,7 @@ class TerminalGestureHandler extends StatefulWidget {
     this.onSecondaryTapUp,
     this.onTertiaryTapDown,
     this.onTertiaryTapUp,
+    this.readOnly = false,
   });
 
   final TerminalViewState terminalView;
@@ -42,6 +43,8 @@ class TerminalGestureHandler extends StatefulWidget {
   final GestureTapDownCallback? onTertiaryTapDown;
 
   final GestureTapUpCallback? onTertiaryTapUp;
+
+  final bool readOnly;
 
   @override
   State<TerminalGestureHandler> createState() => _TerminalGestureHandlerState();
@@ -77,6 +80,7 @@ class _TerminalGestureHandlerState extends State<TerminalGestureHandler> {
   }
 
   bool get _shouldSendTapEvent =>
+      !widget.readOnly &&
       widget.terminalController.shouldSendPointerInput(PointerInput.tap);
 
   void _tapDown(
