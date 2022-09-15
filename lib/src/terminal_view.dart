@@ -124,7 +124,7 @@ class TerminalView extends StatefulWidget {
 }
 
 class TerminalViewState extends State<TerminalView> {
-  late final FocusNode _focusNode;
+  late FocusNode _focusNode;
 
   late final ShortcutManager _shortcutManager;
 
