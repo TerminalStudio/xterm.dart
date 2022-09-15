@@ -11,6 +11,7 @@ import 'package:xterm/src/ui/cursor_type.dart';
 import 'package:xterm/src/ui/custom_text_edit.dart';
 import 'package:xterm/src/ui/gesture/gesture_handler.dart';
 import 'package:xterm/src/ui/input_map.dart';
+import 'package:xterm/src/ui/keyboard_listener.dart';
 import 'package:xterm/src/ui/keyboard_visibility.dart';
 import 'package:xterm/src/ui/render.dart';
 import 'package:xterm/src/ui/shortcut/actions.dart';
@@ -43,6 +44,7 @@ class TerminalView extends StatefulWidget {
     this.deleteDetection = false,
     this.shortcuts,
     this.readOnly = false,
+    this.hardwareKeyboardOnly = false,
   }) : super(key: key);
 
   /// The underlying terminal that this widget renders.
@@ -118,6 +120,10 @@ class TerminalView extends StatefulWidget {
 
   /// True if no input should send to the terminal.
   final bool readOnly;
+
+  /// True if only hardware keyboard events should be used as input. This will
+  /// also prevent any on-screen keyboard to be shown.
+  final bool hardwareKeyboardOnly;
 
   @override
   State<TerminalView> createState() => TerminalViewState();
@@ -204,33 +210,39 @@ class TerminalViewState extends State<TerminalView> {
       },
     );
 
-    child = CustomTextEdit(
-      key: _customTextEditKey,
-      focusNode: _focusNode,
-      inputType: widget.keyboardType,
-      keyboardAppearance: widget.keyboardAppearance,
-      deleteDetection: widget.deleteDetection,
-      onInsert: (text) {
-        _scrollToBottom();
-        widget.terminal.textInput(text);
-      },
-      onDelete: () {
-        _scrollToBottom();
-        widget.terminal.keyInput(TerminalKey.backspace);
-      },
-      onComposing: (text) {
-        setState(() => _composingText = text);
-      },
-      onAction: (action) {
-        _scrollToBottom();
-        if (action == TextInputAction.done) {
-          widget.terminal.keyInput(TerminalKey.enter);
-        }
-      },
-      onKey: _onKeyEvent,
-      readOnly: widget.readOnly,
-      child: child,
-    );
+    if (!widget.hardwareKeyboardOnly) {
+      child = CustomTextEdit(
+        key: _customTextEditKey,
+        focusNode: _focusNode,
+        inputType: widget.keyboardType,
+        keyboardAppearance: widget.keyboardAppearance,
+        deleteDetection: widget.deleteDetection,
+        onInsert: _onInsert,
+        onDelete: () {
+          _scrollToBottom();
+          widget.terminal.keyInput(TerminalKey.backspace);
+        },
+        onComposing: _onComposing,
+        onAction: (action) {
+          _scrollToBottom();
+          if (action == TextInputAction.done) {
+            widget.terminal.keyInput(TerminalKey.enter);
+          }
+        },
+        onKey: _onKeyEvent,
+        readOnly: widget.readOnly,
+        child: child,
+      );
+    } else if (!widget.readOnly) {
+      // Only listen for key input from a hardware keyboard.
+      child = CustomKeyboardListener(
+        child: child,
+        focusNode: _focusNode,
+        onInsert: _onInsert,
+        onComposing: _onComposing,
+        onKey: _onKeyEvent,
+      );
+    }
 
     child = TerminalActions(
       terminal: widget.terminal,
@@ -285,7 +297,11 @@ class TerminalViewState extends State<TerminalView> {
     if (_controller.selection != null) {
       _controller.clearSelection();
     } else {
-      _customTextEditKey.currentState?.requestKeyboard();
+      if (!widget.hardwareKeyboardOnly) {
+        _customTextEditKey.currentState?.requestKeyboard();
+      } else {
+        _focusNode.requestFocus();
+      }
     }
   }
 
@@ -301,6 +317,15 @@ class TerminalViewState extends State<TerminalView> {
 
   bool get hasInputConnection {
     return _customTextEditKey.currentState?.hasInputConnection == true;
+  }
+
+  void _onInsert(String text) {
+    _scrollToBottom();
+    widget.terminal.textInput(text);
+  }
+
+  void _onComposing(String? text) {
+    setState(() => _composingText = text);
   }
 
   KeyEventResult _onKeyEvent(FocusNode focusNode, RawKeyEvent event) {
