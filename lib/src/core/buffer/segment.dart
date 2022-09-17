@@ -8,13 +8,15 @@ class BufferSegment {
   /// The line that this segment resides on.
   final int line;
 
-  /// The start position of this segment.
+  /// The start position of this segment. [null] means the start of the line.
   final int? start;
 
-  /// The end position of this segment. [null] if this segment is not closed.
+  /// The end position of this segment. [null] means the end of the line.
+  /// Should be greater than or equal to [start].
   final int? end;
 
-  const BufferSegment(this.range, this.line, this.start, this.end);
+  const BufferSegment(this.range, this.line, this.start, this.end)
+      : assert((start != null && end != null) ? start <= end : true);
 
   bool isWithin(CellOffset position) {
     if (position.y != line) {
@@ -33,7 +35,11 @@ class BufferSegment {
   }
 
   @override
-  String toString() => 'Segment($line, $start, $end)';
+  String toString() {
+    final start = this.start != null ? this.start.toString() : 'start';
+    final end = this.end != null ? this.end.toString() : 'end';
+    return 'Segment($line, $start -> $end)';
+  }
 
   @override
   int get hashCode =>

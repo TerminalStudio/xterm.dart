@@ -2,6 +2,7 @@ import 'dart:math' show max, min;
 
 import 'package:xterm/src/core/buffer/cell_offset.dart';
 import 'package:xterm/src/core/buffer/line.dart';
+import 'package:xterm/src/core/buffer/range_line.dart';
 import 'package:xterm/src/core/buffer/range.dart';
 import 'package:xterm/src/core/charset.dart';
 import 'package:xterm/src/core/cursor.dart';
@@ -464,7 +465,7 @@ class Buffer {
     r'\'.codeUnitAt(0),
   };
 
-  BufferRange? getWordBoundary(CellOffset position) {
+  BufferRangeLine? getWordBoundary(CellOffset position) {
     if (position.y >= lines.length) {
       return null;
     }
@@ -499,7 +500,7 @@ class Buffer {
       return null;
     }
 
-    return BufferRange(
+    return BufferRangeLine(
       CellOffset(start, position.y),
       CellOffset(end, position.y),
     );
@@ -508,7 +509,7 @@ class Buffer {
   /// Get the plain text content of the buffer including the scrollback.
   /// Accepts an optional [range] to get a specific part of the buffer.
   String getText([BufferRange? range]) {
-    range ??= BufferRange(
+    range ??= BufferRangeLine(
       CellOffset(0, 0),
       CellOffset(viewWidth - 1, height - 1),
     );
@@ -517,23 +518,17 @@ class Buffer {
 
     final builder = StringBuffer();
 
-    final firstLine = range.begin.y.clamp(0, height - 1);
-    final lastLine = range.end.y.clamp(firstLine, height - 1);
-
-    for (var i = firstLine; i <= lastLine; i++) {
-      if (i < 0 || i >= lines.length) {
+    for (var segment in range.toSegments()) {
+      if (segment.line < 0 || segment.line >= height) {
         continue;
       }
-
-      final line = lines[i];
-      final start = i == firstLine ? range.begin.x : 0;
-      final end = i == lastLine ? range.end.x : line.length;
-
-      if (!(i == firstLine || line.isWrapped)) {
-        builder.write('\n');
+      final line = lines[segment.line];
+      if (!(segment.line == range.begin.y ||
+          segment.line == 0 ||
+          line.isWrapped)) {
+        builder.write("\n");
       }
-
-      builder.write(line.getText(start, end));
+      builder.write(line.getText(segment.start, segment.end));
     }
 
     return builder.toString();

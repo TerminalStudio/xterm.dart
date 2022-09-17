@@ -1,7 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:xterm/src/core/buffer/cell_offset.dart';
-import 'package:xterm/src/core/buffer/range.dart';
+import 'package:xterm/src/core/buffer/range_line.dart';
 import 'package:xterm/src/terminal.dart';
 import 'package:xterm/src/ui/controller.dart';
 
@@ -52,7 +52,7 @@ class TerminalActions extends StatelessWidget {
         SelectAllTextIntent: CallbackAction<SelectAllTextIntent>(
           onInvoke: (intent) {
             controller.setSelection(
-              BufferRange(
+              BufferRangeLine(
                 CellOffset(0, terminal.buffer.height - terminal.viewHeight),
                 CellOffset(terminal.viewWidth, terminal.buffer.height - 1),
               ),
