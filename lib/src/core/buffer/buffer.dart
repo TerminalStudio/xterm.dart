@@ -466,7 +466,7 @@ class Buffer {
     r'\'.codeUnitAt(0),
   };
 
-  BufferRange? getWordBoundary(CellOffset position) {
+  BufferRangeLine? getWordBoundary(CellOffset position) {
     if (position.y >= lines.length) {
       return null;
     }
