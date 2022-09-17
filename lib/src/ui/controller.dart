@@ -29,6 +29,8 @@ class TerminalController with ChangeNotifier {
     }
   }
 
+  /// Set selection on the terminal to the minimum range that contains both
+  /// [begin] and [end]. The type of range is determined by [selectionMode].
   void setSelectionRange(CellOffset begin, CellOffset end) {
     final range = _modeRange(begin, end);
     setSelection(range);
