@@ -14,37 +14,34 @@ class BufferRangeLine extends BufferRange {
 
   @override
   Iterable<BufferSegment> toSegments() sync* {
-    var begin = this.begin;
-    var end = this.end;
-
-    if (!isNormalized) {
-      end = this.begin;
-      begin = this.end;
-    }
-
-    for (var i = begin.y; i <= end.y; i++) {
-      var startX = i == begin.y ? begin.x : null;
-      var endX = i == end.y ? end.x : null;
+    final self = normalized;
+    for (var i = self.begin.y; i <= self.end.y; i++) {
+      var startX = i == self.begin.y ? self.begin.x : null;
+      var endX = i == self.end.y ? self.end.x : null;
       yield BufferSegment(this, i, startX, endX);
     }
   }
 
   @override
   bool contains(CellOffset position) {
-    return begin.isBeforeOrSame(position) && end.isAfterOrSame(position);
+    final self = normalized;
+    return self.begin.isBeforeOrSame(position) &&
+        self.end.isAfterOrSame(position);
   }
 
   @override
   BufferRangeLine merge(BufferRange range) {
-    final begin = this.begin.isBefore(range.begin) ? this.begin : range.begin;
-    final end = this.end.isAfter(range.end) ? this.end : range.end;
+    final self = normalized;
+    final begin = self.begin.isBefore(range.begin) ? self.begin : range.begin;
+    final end = self.end.isAfter(range.end) ? self.end : range.end;
     return BufferRangeLine(begin, end);
   }
 
   @override
   BufferRangeLine extend(CellOffset position) {
-    final begin = this.begin.isBefore(position) ? position : this.begin;
-    final end = this.end.isAfter(position) ? position : this.end;
+    final self = normalized;
+    final begin = self.begin.isAfter(position) ? position : self.begin;
+    final end = self.end.isBefore(position) ? position : self.end;
     return BufferRangeLine(begin, end);
   }
 
