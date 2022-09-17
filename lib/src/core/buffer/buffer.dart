@@ -519,20 +519,19 @@ class Buffer {
 
     final builder = StringBuffer();
 
-    range.toSegments().forEach(
-      (segment) {
-        if (segment.line < 0 || segment.line >= height) {
-          return;
-        }
-        final line = lines[segment.line];
-        if (!(segment.line == range!.begin.y ||
-            segment.line == 0 ||
-            line.isWrapped)) {
-          builder.write("\n");
-        }
-        builder.write(line.getText(segment.start, segment.end));
-      },
-    );
+    for (var segment in range.toSegments()) {
+      if (segment.line < 0 || segment.line >= height) {
+        continue;
+      }
+      final line = lines[segment.line];
+      if (!(segment.line == range.begin.y ||
+          segment.line == 0 ||
+          line.isWrapped)) {
+        builder.write("\n");
+      }
+      builder.write(line.getText(segment.start, segment.end));
+    }
+
     return builder.toString();
   }
 
