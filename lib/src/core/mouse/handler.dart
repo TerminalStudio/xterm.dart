@@ -6,8 +6,6 @@ import 'package:xterm/src/core/mouse/reporter.dart';
 import 'package:xterm/src/utils/platform.dart';
 import 'package:xterm/src/core/state.dart';
 
-import 'button_state.dart';
-
 class TerminalMouseEvent {
   /// The button that is pressed or released.
   final TerminalMouseButton button;
