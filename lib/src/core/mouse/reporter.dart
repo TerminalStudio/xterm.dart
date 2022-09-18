@@ -3,7 +3,7 @@ import 'package:xterm/src/core/mouse/mode.dart';
 import 'package:xterm/src/core/mouse/button.dart';
 import 'package:xterm/src/core/mouse/button_state.dart';
 
-class MouseReporter {
+abstract class MouseReporter {
   static String report(
     TerminalMouseButton button,
     TerminalMouseButtonState state,
