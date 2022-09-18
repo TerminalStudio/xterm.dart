@@ -76,3 +76,5 @@ build/
 
 .vscode/
 example/lib/debug.dart
+
+coverage/
