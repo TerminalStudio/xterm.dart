@@ -135,6 +135,7 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
   @override
   MouseMode get mouseMode => _mouseMode;
 
+  @override
   MouseReportMode get mouseReportMode => _mouseReportMode;
 
   @override
