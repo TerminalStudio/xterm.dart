@@ -1,45 +1,29 @@
 enum TerminalMouseButton {
-  left,
+  left(id: 0),
 
-  middle,
+  middle(id: 1),
 
-  right,
+  right(id: 2),
 
-  wheelUp,
+  wheelUp(id: 64 + 4, isWheel: true),
 
-  wheelDown,
+  wheelDown(id: 64 + 5, isWheel: true),
 
-  wheelLeft,
+  wheelLeft(id: 64 + 6, isWheel: true),
 
-  wheelRight,
-}
+  wheelRight(id: 64 + 7, isWheel: true),
+  ;
 
-extension ButtonIDExtension on TerminalMouseButton {
   /// The id that is used to report a button press or release to the terminal.
-  int get id {
-    switch (this) {
-      case TerminalMouseButton.left:
-      case TerminalMouseButton.middle:
-      case TerminalMouseButton.right:
-        return index;
-      // Mouse wheel up / down use button IDs 4 = 0100 (binary) and
-      // 5 = 0101 (binary). The bits three and four of the button
-      // are transposed by 64 and 128 respectively, when reporting the id of
-      // the button and have have to be adjusted correspondingly.
-      case TerminalMouseButton.wheelUp:
-        return 64 + 4;
-      case TerminalMouseButton.wheelDown:
-        return 64 + 5;
-      case TerminalMouseButton.wheelLeft:
-        return 64 + 6;
-      case TerminalMouseButton.wheelRight:
-        return 64 + 7;
-    }
-  }
+  ///
+  /// Mouse wheel up / down use button IDs 4 = 0100 (binary) and 5 = 0101 (binary).
+  /// The bits three and four of the button are transposed by 64 and 128
+  /// respectively, when reporting the id of the button and have have to be
+  /// adjusted correspondingly.
+  final int id;
 
-  /// True if the button belongs to a wheel.
-  bool get isWheel {
-    return TerminalMouseButton.wheelUp.index <= index &&
-        index <= TerminalMouseButton.wheelRight.index;
-  }
+  /// Whether this button is a mouse wheel button.
+  final bool isWheel;
+
+  const TerminalMouseButton({required this.id, this.isWheel = false});
 }
