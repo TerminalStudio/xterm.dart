@@ -8,13 +8,14 @@ class TerminalController with ChangeNotifier {
   BufferRange? get selection => _selection;
 
   PointerInputs _pointerInputs;
+
+  /// The set of pointer events which will be used as mouse input for the terminal.
+  PointerInputs get pointerInput => _pointerInputs;
+
   bool _suspendPointerInputs;
 
   /// True if sending pointer events to the terminal is suspended.
   bool get suspendedPointerInputs => _suspendPointerInputs;
-
-  /// The set of pointer events which will be used as mouse input for the terminal.
-  PointerInputs get pointerInput => _pointerInputs;
 
   TerminalController({
     PointerInputs pointerInputs = const PointerInputs.none(),
