@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:meta/meta.dart';
 import 'package:xterm/src/core/buffer/range.dart';
 import 'package:xterm/src/ui/pointer_input.dart';
 
@@ -45,6 +46,7 @@ class TerminalController with ChangeNotifier {
   }
 
   // Returns true if this type of PointerInput should be send to the Terminal.
+  @internal
   bool shouldSendPointerInput(PointerInput pointerInput) {
     // Always return false if pointer input is suspended.
     return _suspendPointerInputs
