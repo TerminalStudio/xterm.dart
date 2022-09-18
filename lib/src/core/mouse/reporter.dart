@@ -4,7 +4,7 @@ import 'package:xterm/src/core/mouse/button.dart';
 import 'package:xterm/src/core/mouse/button_state.dart';
 
 class MouseReporter {
-  static String? report(
+  static String report(
     TerminalMouseButton button,
     TerminalMouseButtonState state,
     CellOffset position,
