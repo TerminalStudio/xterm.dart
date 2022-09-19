@@ -120,7 +120,7 @@ class _TerminalGestureHandlerState extends State<TerminalGestureHandler> {
       );
     }
     // If the event was not handled by the terminal, use the supplied callback.
-    if (!handled && forceCallback) {
+    if (!handled || forceCallback) {
       callback?.call(details);
     }
   }
