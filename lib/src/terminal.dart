@@ -1,6 +1,7 @@
 import 'dart:math' show max;
 
 import 'package:xterm/src/core/buffer/buffer.dart';
+import 'package:xterm/src/core/buffer/cell_offset.dart';
 import 'package:xterm/src/core/buffer/line.dart';
 import 'package:xterm/src/core/cursor.dart';
 import 'package:xterm/src/core/escape/emitter.dart';
@@ -8,7 +9,10 @@ import 'package:xterm/src/core/escape/handler.dart';
 import 'package:xterm/src/core/escape/parser.dart';
 import 'package:xterm/src/core/input/handler.dart';
 import 'package:xterm/src/core/input/keys.dart';
-import 'package:xterm/src/core/mouse.dart';
+import 'package:xterm/src/core/mouse/mode.dart';
+import 'package:xterm/src/core/mouse/button.dart';
+import 'package:xterm/src/core/mouse/button_state.dart';
+import 'package:xterm/src/core/mouse/handler.dart';
 import 'package:xterm/src/core/state.dart';
 import 'package:xterm/src/core/tabs.dart';
 import 'package:xterm/src/utils/ascii.dart';
@@ -44,7 +48,10 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
     this.onResize,
     this.platform = TerminalTargetPlatform.unknown,
     this.inputHandler = defaultInputHandler,
+    this.mouseHandler = defaultMouseHandler,
   });
+
+  TerminalMouseHandler? mouseHandler;
 
   late final _parser = EscapeParser(this);
 
@@ -128,6 +135,7 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
   @override
   MouseMode get mouseMode => _mouseMode;
 
+  @override
   MouseReportMode get mouseReportMode => _mouseReportMode;
 
   @override
@@ -232,6 +240,26 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
     } else {
       textInput(text);
     }
+  }
+
+  // Handle a mouse event and return true if it was handled.
+  bool mouseInput(
+    TerminalMouseButton button,
+    TerminalMouseButtonState buttonState,
+    CellOffset position,
+  ) {
+    final output = mouseHandler?.call(TerminalMouseEvent(
+      button: button,
+      buttonState: buttonState,
+      position: position,
+      state: this,
+      platform: platform,
+    ));
+    if (output != null) {
+      onOutput?.call(output);
+      return true;
+    }
+    return false;
   }
 
   /// Resize the terminal screen. [newWidth] and [newHeight] should be greater

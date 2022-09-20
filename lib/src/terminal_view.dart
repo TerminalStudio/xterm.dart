@@ -130,7 +130,7 @@ class TerminalView extends StatefulWidget {
 }
 
 class TerminalViewState extends State<TerminalView> {
-  late final FocusNode _focusNode;
+  late FocusNode _focusNode;
 
   late final ShortcutManager _shortcutManager;
 
@@ -169,9 +169,15 @@ class TerminalViewState extends State<TerminalView> {
       _focusNode = widget.focusNode ?? FocusNode();
     }
     if (oldWidget.controller != widget.controller) {
+      if (oldWidget.controller == null) {
+        _controller.dispose();
+      }
       _controller = widget.controller ?? TerminalController();
     }
     if (oldWidget.scrollController != widget.scrollController) {
+      if (oldWidget.scrollController == null) {
+        _scrollController.dispose();
+      }
       _scrollController = widget.scrollController ?? ScrollController();
     }
     super.didUpdateWidget(oldWidget);
@@ -181,6 +187,12 @@ class TerminalViewState extends State<TerminalView> {
   void dispose() {
     if (widget.focusNode == null) {
       _focusNode.dispose();
+    }
+    if (widget.controller == null) {
+      _controller.dispose();
+    }
+    if (widget.scrollController == null) {
+      _scrollController.dispose();
     }
     _shortcutManager.dispose();
     super.dispose();
@@ -259,12 +271,14 @@ class TerminalViewState extends State<TerminalView> {
 
     child = TerminalGestureHandler(
       terminalView: this,
+      terminalController: _controller,
       onTapUp: _onTapUp,
       onTapDown: _onTapDown,
       onSecondaryTapDown:
           widget.onSecondaryTapDown != null ? _onSecondaryTapDown : null,
       onSecondaryTapUp:
           widget.onSecondaryTapUp != null ? _onSecondaryTapUp : null,
+      readOnly: widget.readOnly,
       child: child,
     );
 
