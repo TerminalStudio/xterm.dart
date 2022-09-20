@@ -6,6 +6,8 @@ class CustomKeyboardListener extends StatelessWidget {
 
   final FocusNode focusNode;
 
+  final bool autofocus;
+
   final void Function(String) onInsert;
 
   final void Function(String?) onComposing;
@@ -16,6 +18,7 @@ class CustomKeyboardListener extends StatelessWidget {
     Key? key,
     required this.child,
     required this.focusNode,
+    this.autofocus = false,
     required this.onInsert,
     required this.onComposing,
     required this.onKey,
@@ -54,6 +57,7 @@ class CustomKeyboardListener extends StatelessWidget {
   Widget build(BuildContext context) {
     return Focus(
       focusNode: focusNode,
+      autofocus: autofocus,
       onKey: _onKey,
       child: child,
     );

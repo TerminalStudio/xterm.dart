@@ -214,6 +214,7 @@ class TerminalViewState extends State<TerminalView> {
       child = CustomTextEdit(
         key: _customTextEditKey,
         focusNode: _focusNode,
+        autofocus: widget.autofocus,
         inputType: widget.keyboardType,
         keyboardAppearance: widget.keyboardAppearance,
         deleteDetection: widget.deleteDetection,
@@ -238,6 +239,7 @@ class TerminalViewState extends State<TerminalView> {
       child = CustomKeyboardListener(
         child: child,
         focusNode: _focusNode,
+        autofocus: widget.autofocus,
         onInsert: _onInsert,
         onComposing: _onComposing,
         onKey: _onKeyEvent,
