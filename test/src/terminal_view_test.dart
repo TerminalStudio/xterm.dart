@@ -174,33 +174,6 @@ void main() {
     );
   });
 
-  group('TerminalView.autofocus', () {
-    testWidgets(
-      'works',
-      (WidgetTester tester) async {
-        final terminal = Terminal();
-
-        final focusNode = FocusNode();
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: TerminalView(
-                terminal,
-                autofocus: true,
-                focusNode: focusNode,
-              ),
-            ),
-          ),
-        );
-
-        await tester.pump();
-
-        expect(focusNode.hasFocus, isTrue);
-      },
-    );
-  });
-
   group('TerminalController.pointerInputs', () {
     testWidgets('works', (WidgetTester tester) async {
       final output = <String>[];
@@ -233,37 +206,37 @@ void main() {
 
       expect(output, isNotEmpty);
     });
-  });
 
-  testWidgets('does not respond when disabled', (WidgetTester tester) async {
-    final output = <String>[];
+    testWidgets('does not respond when disabled', (WidgetTester tester) async {
+      final output = <String>[];
 
-    final terminal = Terminal(onOutput: output.add);
+      final terminal = Terminal(onOutput: output.add);
 
-    // enable mouse reporting
-    terminal.write('\x1b[?1000h');
+      // enable mouse reporting
+      terminal.write('\x1b[?1000h');
 
-    final terminalView = TerminalController(
-      pointerInputs: PointerInputs.none(),
-    );
+      final terminalView = TerminalController(
+        pointerInputs: PointerInputs.none(),
+      );
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: TerminalView(
-            terminal,
-            controller: terminalView,
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TerminalView(
+              terminal,
+              controller: terminalView,
+            ),
           ),
         ),
-      ),
-    );
+      );
 
-    final pointer = TestPointer(1, PointerDeviceKind.mouse);
+      final pointer = TestPointer(1, PointerDeviceKind.mouse);
 
-    await tester.sendEventToBinding(pointer.down(Offset(1, 1)));
+      await tester.sendEventToBinding(pointer.down(Offset(1, 1)));
 
-    await tester.pumpAndSettle();
+      await tester.pumpAndSettle();
 
-    expect(output, isEmpty);
+      expect(output, isEmpty);
+    });
   });
 }
