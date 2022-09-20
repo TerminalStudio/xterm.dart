@@ -330,6 +330,16 @@ class _TerminalDebuggerHandler implements EscapeHandler {
     onCommand('insertBlankChars($amount)');
   }
 
+  @override
+  void resize(int cols, int rows) {
+    onCommand('resize($cols, $rows)');
+  }
+
+  @override
+  void sendSize() {
+    onCommand('sendSize');
+  }
+
   /* Modes */
 
   @override

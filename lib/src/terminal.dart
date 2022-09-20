@@ -265,6 +265,7 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
   /// Resize the terminal screen. [newWidth] and [newHeight] should be greater
   /// than 0. Text reflow is currently not implemented and will be avaliable in
   /// the future.
+  @override
   void resize(
     int newWidth,
     int newHeight, [
@@ -554,6 +555,11 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
   @override
   void insertBlankChars(int amount) {
     _buffer.insertBlankChars(amount);
+  }
+
+  @override
+  void sendSize() {
+    onOutput?.call(_emitter.size(viewHeight, viewWidth));
   }
 
   @override

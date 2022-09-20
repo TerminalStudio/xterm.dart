@@ -22,7 +22,7 @@ dev_dependencies:
   test: ^1.6.5
   lints: ^2.0.0
   dart_code_metrics: ^4.16.0
-  mockito: ^5.0.15
+  mockito: ^5.3.1
   build_runner: ^2.1.1
 
 # For information on the generic Dart part of this file, see the

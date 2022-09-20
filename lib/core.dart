@@ -3,6 +3,8 @@ export 'src/core/buffer/cell_flags.dart';
 export 'src/core/buffer/cell_offset.dart';
 export 'src/core/buffer/line.dart';
 export 'src/core/buffer/range.dart';
+export 'src/core/buffer/range_block.dart';
+export 'src/core/buffer/range_line.dart';
 export 'src/core/buffer/segment.dart';
 export 'src/core/cell.dart';
 export 'src/core/color.dart';

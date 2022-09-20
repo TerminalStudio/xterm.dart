@@ -143,7 +143,7 @@ class _AppPlatformMenuState extends State<AppPlatformMenu> {
           ],
         ),
       ],
-      body: widget.child,
+      child: widget.child,
     );
   }
 }
