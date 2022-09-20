@@ -116,7 +116,6 @@ class TerminalShortcut<T extends Intent> {
     return null;
   }
 
-
   /// Default handler for [SelectAllTextIntent].
   static Object? defaultSelectAll(
     SelectAllTextIntent intent,
