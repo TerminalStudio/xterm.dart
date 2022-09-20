@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:xterm/xterm.dart';
 
@@ -237,6 +238,72 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(output, isEmpty);
+    });
+  });
+
+  group('TerminalView.autofocus', () {
+    testWidgets('works', (WidgetTester tester) async {
+      final terminal = Terminal();
+      final focusNode = FocusNode();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TerminalView(
+              terminal,
+              autofocus: true,
+              focusNode: focusNode,
+            ),
+          ),
+        ),
+      );
+
+      expect(focusNode.hasFocus, isTrue);
+    });
+
+    testWidgets('works in hardwareKeyboardOnly mode', (tester) async {
+      final terminal = Terminal();
+      final focusNode = FocusNode();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TerminalView(
+              terminal,
+              autofocus: true,
+              focusNode: focusNode,
+              hardwareKeyboardOnly: true,
+            ),
+          ),
+        ),
+      );
+
+      expect(focusNode.hasFocus, isTrue);
+    });
+  });
+
+  group('TerminalView.hardwareKeyboardOnly', () {
+    testWidgets('works', (WidgetTester tester) async {
+      final output = <String>[];
+      final terminal = Terminal(onOutput: output.add);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TerminalView(
+              terminal,
+              autofocus: true,
+              hardwareKeyboardOnly: true,
+            ),
+          ),
+        ),
+      );
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyB);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyC);
+
+      expect(output.join(), 'abc');
     });
   });
 }
