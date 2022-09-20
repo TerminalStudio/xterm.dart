@@ -147,6 +147,10 @@ abstract class EscapeHandler {
 
   void setUnknownDecMode(int mode, bool enabled);
 
+  void resize(int cols, int rows);
+
+  void sendSize();
+
   /* Select Graphic Rendition (SGR) */
 
   void resetCursorStyle();

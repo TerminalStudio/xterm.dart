@@ -26,4 +26,8 @@ class EscapeEmitter {
   String bracketedPaste(String text) {
     return '\x1b[200~$text\x1b[201~';
   }
+
+  String size(int rows, int cols) {
+    return '\x1b[8;$rows;${cols}t';
+  }
 }
