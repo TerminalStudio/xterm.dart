@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:xterm/xterm.dart';
@@ -171,5 +172,71 @@ void main() {
         expect(() => focusNode.addListener(() {}), returnsNormally);
       },
     );
+  });
+
+  group('TerminalController.pointerInputs', () {
+    testWidgets('works', (WidgetTester tester) async {
+      final output = <String>[];
+
+      final terminal = Terminal(onOutput: output.add);
+
+      // enable mouse reporting
+      terminal.write('\x1b[?1000h');
+
+      final terminalView = TerminalController(
+        pointerInputs: PointerInputs.all(),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TerminalView(
+              terminal,
+              controller: terminalView,
+            ),
+          ),
+        ),
+      );
+
+      final pointer = TestPointer(1, PointerDeviceKind.mouse);
+
+      await tester.sendEventToBinding(pointer.down(Offset(1, 1)));
+
+      await tester.pumpAndSettle();
+
+      expect(output, isNotEmpty);
+    });
+
+    testWidgets('does not respond when disabled', (WidgetTester tester) async {
+      final output = <String>[];
+
+      final terminal = Terminal(onOutput: output.add);
+
+      // enable mouse reporting
+      terminal.write('\x1b[?1000h');
+
+      final terminalView = TerminalController(
+        pointerInputs: PointerInputs.none(),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TerminalView(
+              terminal,
+              controller: terminalView,
+            ),
+          ),
+        ),
+      );
+
+      final pointer = TestPointer(1, PointerDeviceKind.mouse);
+
+      await tester.sendEventToBinding(pointer.down(Offset(1, 1)));
+
+      await tester.pumpAndSettle();
+
+      expect(output, isEmpty);
+    });
   });
 }

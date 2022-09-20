@@ -22,6 +22,33 @@ void main() {
       expect(handler2.events, isNotEmpty);
     });
   });
+
+  group('Terminal.mouseInput', () {
+    test('can handle mouse events', () {
+      final output = <String>[];
+
+      final terminal = Terminal(onOutput: output.add);
+
+      terminal.mouseInput(
+        TerminalMouseButton.left,
+        TerminalMouseButtonState.down,
+        CellOffset(10, 10),
+      );
+
+      expect(output, isEmpty);
+
+      // enable mouse reporting
+      terminal.write('\x1b[?1000h');
+
+      terminal.mouseInput(
+        TerminalMouseButton.left,
+        TerminalMouseButtonState.down,
+        CellOffset(10, 10),
+      );
+
+      expect(output, ['\x1B[M +,']);
+    });
+  });
 }
 
 class _TestInputHandler implements TerminalInputHandler {

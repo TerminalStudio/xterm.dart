@@ -1,11 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:meta/meta.dart';
 import 'package:xterm/src/core/buffer/cell_offset.dart';
 import 'package:xterm/src/core/buffer/range.dart';
 import 'package:xterm/src/core/buffer/range_block.dart';
 import 'package:xterm/src/core/buffer/range_line.dart';
+import 'package:xterm/src/ui/pointer_input.dart';
 import 'package:xterm/src/ui/selection_mode.dart';
 
 class TerminalController with ChangeNotifier {
+  TerminalController({
+    SelectionMode selectionMode = SelectionMode.line,
+    PointerInputs pointerInputs = const PointerInputs.none(),
+    bool suspendPointerInput = false,
+  })  : _selectionMode = selectionMode,
+        _pointerInputs = pointerInputs,
+        _suspendPointerInputs = suspendPointerInput;
+
   BufferRange? _selection;
 
   BufferRange? get selection => _selection;
@@ -14,12 +24,19 @@ class TerminalController with ChangeNotifier {
 
   SelectionMode get selectionMode => _selectionMode;
 
-  TerminalController({SelectionMode selectionMode = SelectionMode.line})
-      : _selectionMode = selectionMode;
-
   /// Set selection on the terminal to [range]. For now [range] could be either
   /// a [BufferRangeLine] or a [BufferRangeBlock]. This is not effected by
   /// [selectionMode].
+  PointerInputs _pointerInputs;
+
+  /// The set of pointer events which will be used as mouse input for the terminal.
+  PointerInputs get pointerInput => _pointerInputs;
+
+  bool _suspendPointerInputs;
+
+  /// True if sending pointer events to the terminal is suspended.
+  bool get suspendedPointerInputs => _suspendPointerInputs;
+
   void setSelection(BufferRange? range) {
     range = range?.normalized;
 
@@ -70,6 +87,27 @@ class TerminalController with ChangeNotifier {
   void clearSelection() {
     _selection = null;
     notifyListeners();
+  }
+
+  // Select which type of pointer events are send to the terminal.
+  void setPointerInputs(PointerInputs pointerInput) {
+    _pointerInputs = pointerInput;
+    notifyListeners();
+  }
+
+  // Toggle sending pointer events to the terminal.
+  void setSuspendPointerInput(bool suspend) {
+    _suspendPointerInputs = suspend;
+    notifyListeners();
+  }
+
+  // Returns true if this type of PointerInput should be send to the Terminal.
+  @internal
+  bool shouldSendPointerInput(PointerInput pointerInput) {
+    // Always return false if pointer input is suspended.
+    return _suspendPointerInputs
+        ? false
+        : _pointerInputs.inputs.contains(pointerInput);
   }
 
   void addHighlight(BufferRange? range) {

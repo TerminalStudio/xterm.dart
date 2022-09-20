@@ -1,5 +1,5 @@
 import 'package:xterm/src/core/cursor.dart';
-import 'package:xterm/src/core/mouse.dart';
+import 'package:xterm/src/core/mouse/mode.dart';
 
 abstract class TerminalState {
   int get viewWidth;
@@ -25,6 +25,8 @@ abstract class TerminalState {
   bool get autoWrapMode;
 
   MouseMode get mouseMode;
+
+  MouseReportMode get mouseReportMode;
 
   bool get cursorBlinkMode;
 
