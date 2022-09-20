@@ -62,21 +62,21 @@ class TerminalShortcut<T extends Intent> {
 
   /// Generate a list of default shortcuts for the current platform.
   static final List<TerminalShortcut> defaults = <TerminalShortcut>[
-      TerminalShortcut<CopySelectionTextIntent>.platformDefault(
-        LogicalKeyboardKey.keyC,
-        CopySelectionTextIntent.copy,
-        TerminalShortcut.defaultCopy,
-      ),
-      TerminalShortcut<PasteTextIntent>.platformDefault(
-        LogicalKeyboardKey.keyV,
-        const PasteTextIntent(SelectionChangedCause.keyboard),
-        TerminalShortcut.defaultPaste,
-      ),
-      TerminalShortcut<SelectAllTextIntent>.platformDefault(
-        LogicalKeyboardKey.keyA,
-        const SelectAllTextIntent(SelectionChangedCause.keyboard),
-        TerminalShortcut.defaultSelectAll,
-      ),
+    TerminalShortcut<CopySelectionTextIntent>.platformDefault(
+      LogicalKeyboardKey.keyC,
+      CopySelectionTextIntent.copy,
+      TerminalShortcut.defaultCopy,
+    ),
+    TerminalShortcut<PasteTextIntent>.platformDefault(
+      LogicalKeyboardKey.keyV,
+      const PasteTextIntent(SelectionChangedCause.keyboard),
+      TerminalShortcut.defaultPaste,
+    ),
+    TerminalShortcut<SelectAllTextIntent>.platformDefault(
+      LogicalKeyboardKey.keyA,
+      const SelectAllTextIntent(SelectionChangedCause.keyboard),
+      TerminalShortcut.defaultSelectAll,
+    ),
   ];
 
   /// Default handler for [CopySelectionTextIntent].
