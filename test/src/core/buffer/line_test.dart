@@ -87,4 +87,20 @@ void main() {
       expect(line.getTrimmedLength(-1000), equals(0));
     });
   });
+
+  group('BufferLine.resize', () {
+    test('can resize', () {
+      final line = BufferLine(10);
+
+      final text = 'ABCDEF';
+
+      for (var i = 0; i < text.length; i++) {
+        line.setCodePoint(i, text.codeUnitAt(i));
+      }
+
+      line.resize(20);
+
+      expect(line.length, equals(20));
+    });
+  });
 }

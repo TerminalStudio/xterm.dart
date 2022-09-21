@@ -77,4 +77,20 @@ void main() {
     expect(terminal.buffer.lines[0].toString(), '床前明月光疑');
     expect(terminal.buffer.lines[1].toString(), '是地上霜');
   });
+
+  test('lines has correct length after reflow', () {
+    final terminal = Terminal();
+
+    terminal.write('1234567890abcdefg');
+    terminal.resize(10, 10);
+
+    for (var i = 0; i < 10; i++) {
+      expect(terminal.buffer.lines[i].length, 10);
+    }
+
+    terminal.resize(13, 10);
+    for (var i = 0; i < 10; i++) {
+      expect(terminal.buffer.lines[i].length, 13);
+    }
+  });
 }
