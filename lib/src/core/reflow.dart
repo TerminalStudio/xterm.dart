@@ -153,5 +153,9 @@ List<BufferLine> reflow(
     result.addAll(reflow.finish());
   }
 
+  for (var line in result) {
+    line.resize(newWidth);
+  }
+
   return result;
 }
