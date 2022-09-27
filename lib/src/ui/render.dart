@@ -559,7 +559,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
       );
 
       final paint = Paint()
-        ..color = _theme.cursor
+        ..color = _theme.selection
         ..strokeWidth = 1;
 
       canvas.drawRect(
