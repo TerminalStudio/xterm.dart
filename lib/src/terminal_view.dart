@@ -116,7 +116,8 @@ class TerminalView extends StatefulWidget {
 
   /// Shortcuts for this terminal. This has higher priority than input handler
   /// of the terminal If not provided, [defaultTerminalShortcuts] will be used.
-  final Map<ShortcutActivator, Intent>? shortcuts;
+  //final Map<ShortcutActivator, Intent>? shortcuts;
+  final List<TerminalShortcut>? shortcuts;
 
   /// True if no input should send to the terminal.
   final bool readOnly;
@@ -132,7 +133,9 @@ class TerminalView extends StatefulWidget {
 class TerminalViewState extends State<TerminalView> {
   late FocusNode _focusNode;
 
-  late final ShortcutManager _shortcutManager;
+  late ShortcutManager _shortcutManager;
+
+  late List<TerminalShortcut> _shortcuts;
 
   final _customTextEditKey = GlobalKey<CustomTextEditState>();
 
@@ -154,9 +157,7 @@ class TerminalViewState extends State<TerminalView> {
     _focusNode = widget.focusNode ?? FocusNode();
     _controller = widget.controller ?? TerminalController();
     _scrollController = widget.scrollController ?? ScrollController();
-    _shortcutManager = ShortcutManager(
-      shortcuts: widget.shortcuts ?? defaultTerminalShortcuts,
-    );
+    _initShortcuts();
     super.initState();
   }
 
@@ -180,6 +181,12 @@ class TerminalViewState extends State<TerminalView> {
       }
       _scrollController = widget.scrollController ?? ScrollController();
     }
+    if (oldWidget.shortcuts != widget.shortcuts) {
+      // The current ShortcutManager has to be disposed
+      // before the new one is created.
+      _shortcutManager.dispose();
+      _initShortcuts();
+    }
     super.didUpdateWidget(oldWidget);
   }
 
@@ -196,6 +203,18 @@ class TerminalViewState extends State<TerminalView> {
     }
     _shortcutManager.dispose();
     super.dispose();
+  }
+
+  // Initialize the specified shortcut or set the default shortcuts.
+  void _initShortcuts() {
+    // Convert the list of shortcuts to a map suitable for the shortcut manager.
+    _shortcuts = widget.shortcuts ?? TerminalShortcut.defaults;
+    final shortcutsMap = Map.fromEntries(_shortcuts
+        .map((shortcut) => MapEntry(shortcut.activator, shortcut.intent)));
+    // Create a shortcut manager.
+    _shortcutManager = ShortcutManager(
+      shortcuts: shortcutsMap,
+    );
   }
 
   @override
@@ -261,6 +280,7 @@ class TerminalViewState extends State<TerminalView> {
     child = TerminalActions(
       terminal: widget.terminal,
       controller: _controller,
+      shortcuts: _shortcuts,
       child: child,
     );
 
