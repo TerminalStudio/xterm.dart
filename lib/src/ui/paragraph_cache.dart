@@ -13,9 +13,9 @@ class ParagraphCache {
     return _cache[key];
   }
 
-  Paragraph performAndCacheLayout(String text, TextStyle style, int key) {
+  Paragraph performAndCacheLayout(String text, TextStyle style, double textScaleFactor, int key) {
     final builder = ParagraphBuilder(style.getParagraphStyle());
-    builder.pushStyle(style.getTextStyle());
+    builder.pushStyle(style.getTextStyle(textScaleFactor: textScaleFactor));
     builder.addText(text);
 
     final paragraph = builder.build();

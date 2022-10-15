@@ -32,6 +32,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
     required EdgeInsets padding,
     required bool autoResize,
     required TerminalStyle textStyle,
+    required double textScaleFactor,
     required TerminalTheme theme,
     required FocusNode focusNode,
     required TerminalCursorType cursorType,
@@ -44,6 +45,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
         _padding = padding,
         _autoResize = autoResize,
         _textStyle = textStyle,
+        _textScaleFactor = textScaleFactor,
         _theme = theme,
         _focusNode = focusNode,
         _cursorType = cursorType,
@@ -51,7 +53,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
         _onEditableRect = onEditableRect,
         _composingText = composingText {
     _updateColorPalette();
-    _updateCharSize();
+    _charSize = calcCharSize(_textStyle, _textScaleFactor);
   }
 
   Terminal _terminal;
@@ -100,6 +102,14 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
   set textStyle(TerminalStyle value) {
     if (value == _textStyle) return;
     _textStyle = value;
+    _updateCharSize();
+    markNeedsLayout();
+  }
+
+  double _textScaleFactor;
+  set textScaleFactor(double value) {
+    if (value == _textScaleFactor) return;
+    _textScaleFactor = value;
     _updateCharSize();
     markNeedsLayout();
   }
@@ -168,7 +178,12 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
   /// Updates [_charSize] based on the current [_textStyle]. This should be
   /// called whenever the [_textStyle] changes or the system font changes.
   void _updateCharSize() {
-    _charSize = calcCharSize(_textStyle);
+    final charSize = calcCharSize(_textStyle, _textScaleFactor);
+    // rebuild on changed char size
+    if (charSize != _charSize) {
+      _paragraphCache.clear();
+    }
+    _charSize = charSize;
   }
 
   var _stickToBottom = true;
@@ -493,7 +508,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
       _charSize.height,
       PlaceholderAlignment.middle,
     );
-    builder.pushStyle(style.getTextStyle());
+    builder.pushStyle(style.getTextStyle(textScaleFactor: _textScaleFactor));
     builder.addText(composingText);
 
     final paragraph = builder.build();
@@ -611,6 +626,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
       paragraph = _paragraphCache.performAndCacheLayout(
         char,
         style,
+        _textScaleFactor,
         hash,
       );
     }

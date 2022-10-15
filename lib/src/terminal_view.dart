@@ -212,6 +212,7 @@ class TerminalViewState extends State<TerminalView> {
           padding: MediaQuery.of(context).padding,
           autoResize: widget.autoResize,
           textStyle: widget.textStyle,
+          textScaleFactor: MediaQuery.textScaleFactorOf(context),
           theme: widget.theme,
           focusNode: _focusNode,
           cursorType: widget.cursorType,
@@ -408,6 +409,7 @@ class _TerminalView extends LeafRenderObjectWidget {
     required this.padding,
     required this.autoResize,
     required this.textStyle,
+    required this.textScaleFactor,
     required this.theme,
     required this.focusNode,
     required this.cursorType,
@@ -427,6 +429,8 @@ class _TerminalView extends LeafRenderObjectWidget {
   final bool autoResize;
 
   final TerminalStyle textStyle;
+
+  final double textScaleFactor;
 
   final TerminalTheme theme;
 
@@ -449,6 +453,7 @@ class _TerminalView extends LeafRenderObjectWidget {
       padding: padding,
       autoResize: autoResize,
       textStyle: textStyle,
+      textScaleFactor: textScaleFactor,
       theme: theme,
       focusNode: focusNode,
       cursorType: cursorType,
@@ -467,6 +472,7 @@ class _TerminalView extends LeafRenderObjectWidget {
       ..padding = padding
       ..autoResize = autoResize
       ..textStyle = textStyle
+      ..textScaleFactor = textScaleFactor
       ..theme = theme
       ..focusNode = focusNode
       ..cursorType = cursorType
