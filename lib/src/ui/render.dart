@@ -103,6 +103,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
     if (value == _textStyle) return;
     _textStyle = value;
     _updateCharSize();
+    _paragraphCache.clear();
     markNeedsLayout();
   }
 
@@ -178,12 +179,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
   /// Updates [_charSize] based on the current [_textStyle]. This should be
   /// called whenever the [_textStyle] changes or the system font changes.
   void _updateCharSize() {
-    final charSize = calcCharSize(_textStyle, _textScaleFactor);
-    // rebuild on changed char size
-    if (charSize != _charSize) {
-      _paragraphCache.clear();
-    }
-    _charSize = charSize;
+    _charSize = calcCharSize(_textStyle, _textScaleFactor);
   }
 
   var _stickToBottom = true;
@@ -234,6 +230,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
   @override
   void systemFontsDidChange() {
     _updateCharSize();
+    _paragraphCache.clear();
     super.systemFontsDidChange();
   }
 
@@ -401,6 +398,9 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
     );
   }
 
+  /// The cached for cells in the terminal. Should be cleared when the same
+  /// cell no longer produces the same visual output. For example, when
+  /// [_textStyle] is changed, or when the system font changes.
   final _paragraphCache = ParagraphCache(10240);
 
   @override
@@ -591,8 +591,8 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
     final charCode = cellData.content & CellContent.codepointMask;
     if (charCode == 0) return;
 
-    final hash = cellData.getHash();
-    var paragraph = _paragraphCache.getLayoutFromCache(hash);
+    final cacheKey = cellData.getHash() ^ _textScaleFactor.hashCode;
+    var paragraph = _paragraphCache.getLayoutFromCache(cacheKey);
 
     if (paragraph == null) {
       final cellFlags = cellData.flags;
@@ -627,7 +627,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
         char,
         style,
         _textScaleFactor,
-        hash,
+        cacheKey,
       );
     }
 
