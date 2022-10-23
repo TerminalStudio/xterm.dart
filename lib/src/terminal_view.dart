@@ -27,6 +27,7 @@ class TerminalView extends StatefulWidget {
     this.controller,
     this.theme = TerminalThemes.defaultTheme,
     this.textStyle = const TerminalStyle(),
+    this.textScaleFactor,
     this.padding,
     this.scrollController,
     this.autoResize = true,
@@ -57,6 +58,11 @@ class TerminalView extends StatefulWidget {
 
   /// The style to use for painting characters.
   final TerminalStyle textStyle;
+
+  /// The number of font pixels for each logical pixel. If null, will use the
+  /// [MediaQueryData.textScaleFactor] obtained from [MediaQuery], or 1.0 if
+  /// there is no [MediaQuery] in scope.
+  final double? textScaleFactor;
 
   /// Padding around the inner [Scrollable] widget.
   final EdgeInsets? padding;
@@ -212,7 +218,8 @@ class TerminalViewState extends State<TerminalView> {
           padding: MediaQuery.of(context).padding,
           autoResize: widget.autoResize,
           textStyle: widget.textStyle,
-          textScaleFactor: MediaQuery.textScaleFactorOf(context),
+          textScaleFactor:
+              widget.textScaleFactor ?? MediaQuery.textScaleFactorOf(context),
           theme: widget.theme,
           focusNode: _focusNode,
           cursorType: widget.cursorType,
