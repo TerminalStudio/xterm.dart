@@ -32,6 +32,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
     required EdgeInsets padding,
     required bool autoResize,
     required TerminalStyle textStyle,
+    required double textScaleFactor,
     required TerminalTheme theme,
     required FocusNode focusNode,
     required TerminalCursorType cursorType,
@@ -44,6 +45,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
         _padding = padding,
         _autoResize = autoResize,
         _textStyle = textStyle,
+        _textScaleFactor = textScaleFactor,
         _theme = theme,
         _focusNode = focusNode,
         _cursorType = cursorType,
@@ -100,6 +102,15 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
   set textStyle(TerminalStyle value) {
     if (value == _textStyle) return;
     _textStyle = value;
+    _updateCharSize();
+    _paragraphCache.clear();
+    markNeedsLayout();
+  }
+
+  double _textScaleFactor;
+  set textScaleFactor(double value) {
+    if (value == _textScaleFactor) return;
+    _textScaleFactor = value;
     _updateCharSize();
     markNeedsLayout();
   }
@@ -168,7 +179,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
   /// Updates [_charSize] based on the current [_textStyle]. This should be
   /// called whenever the [_textStyle] changes or the system font changes.
   void _updateCharSize() {
-    _charSize = calcCharSize(_textStyle);
+    _charSize = calcCharSize(_textStyle, _textScaleFactor);
   }
 
   var _stickToBottom = true;
@@ -219,6 +230,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
   @override
   void systemFontsDidChange() {
     _updateCharSize();
+    _paragraphCache.clear();
     super.systemFontsDidChange();
   }
 
@@ -386,6 +398,9 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
     );
   }
 
+  /// The cached for cells in the terminal. Should be cleared when the same
+  /// cell no longer produces the same visual output. For example, when
+  /// [_textStyle] is changed, or when the system font changes.
   final _paragraphCache = ParagraphCache(10240);
 
   @override
@@ -493,7 +508,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
       _charSize.height,
       PlaceholderAlignment.middle,
     );
-    builder.pushStyle(style.getTextStyle());
+    builder.pushStyle(style.getTextStyle(textScaleFactor: _textScaleFactor));
     builder.addText(composingText);
 
     final paragraph = builder.build();
@@ -576,8 +591,8 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
     final charCode = cellData.content & CellContent.codepointMask;
     if (charCode == 0) return;
 
-    final hash = cellData.getHash();
-    var paragraph = _paragraphCache.getLayoutFromCache(hash);
+    final cacheKey = cellData.getHash() ^ _textScaleFactor.hashCode;
+    var paragraph = _paragraphCache.getLayoutFromCache(cacheKey);
 
     if (paragraph == null) {
       final cellFlags = cellData.flags;
@@ -611,7 +626,8 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
       paragraph = _paragraphCache.performAndCacheLayout(
         char,
         style,
-        hash,
+        _textScaleFactor,
+        cacheKey,
       );
     }
 
