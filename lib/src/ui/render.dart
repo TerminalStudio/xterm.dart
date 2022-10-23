@@ -53,7 +53,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
         _onEditableRect = onEditableRect,
         _composingText = composingText {
     _updateColorPalette();
-    _charSize = calcCharSize(_textStyle, _textScaleFactor);
+    _updateCharSize();
   }
 
   Terminal _terminal;
