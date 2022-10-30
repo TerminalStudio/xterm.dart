@@ -144,6 +144,9 @@ key Clear       +KeyPad : "\E[E"
 key Enter+NewLine : "\r\n"
 key Enter-NewLine : "\r"
 
+key NumEnter+NewLine : "\r\n"
+key NumEnter-NewLine : "\r"
+
 key Home        -AnyMod-AppCuKeys : "\E[H"  
 key End         -AnyMod-AppCuKeys : "\E[F"  
 key Home        -AnyMod+AppCuKeys : "\EOH"  

@@ -8,6 +8,7 @@ const qtKeynameMap = <String, TerminalKey>{
   'Backspace': TerminalKey.backspace,
   'Return': TerminalKey.returnKey,
   'Enter': TerminalKey.enter,
+  'NumEnter': TerminalKey.numpadEnter,
   'Insert': TerminalKey.insert,
   'Delete': TerminalKey.delete,
   'Pause': TerminalKey.pause,
