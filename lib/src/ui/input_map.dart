@@ -280,5 +280,9 @@ TerminalKey? keyToTerminalKey(LogicalKeyboardKey key) {
 /// For example, `charToTerminalKey('a')` or `charToTerminalKey('A')` will both
 /// return [TerminalKey.a].
 TerminalKey? charToTerminalKey(String char) {
+  if (char.length != 1) {
+    return null;
+  }
+
   return _keyByChar[char];
 }
