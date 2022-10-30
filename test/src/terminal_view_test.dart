@@ -60,7 +60,7 @@ void main() {
   );
 
   group('TerminalView.readOnly', () {
-    testWidgets('works', (WidgetTester tester) async {
+    testWidgets('works', (tester) async {
       final terminalOutput = <String>[];
       final terminal = Terminal(onOutput: terminalOutput.add);
 
@@ -80,7 +80,7 @@ void main() {
       expect(terminalOutput.join(), isEmpty);
     });
 
-    testWidgets('does not block input when false', (WidgetTester tester) async {
+    testWidgets('does not block input when false', (tester) async {
       final terminalOutput = <String>[];
       final terminal = Terminal(onOutput: terminalOutput.add);
 
@@ -102,81 +102,75 @@ void main() {
   });
 
   group('TerminalView.focusNode', () {
-    testWidgets(
-      'is not listened when terminal is disposed',
-      (WidgetTester tester) async {
-        final terminal = Terminal();
+    testWidgets('is not listened when terminal is disposed', (tester) async {
+      final terminal = Terminal();
 
-        final focusNode = FocusNode();
+      final focusNode = FocusNode();
 
-        final isActive = ValueNotifier(true);
+      final isActive = ValueNotifier(true);
 
-        await tester.pumpWidget(MaterialApp(
-          home: Scaffold(
-            body: ValueListenableBuilder<bool>(
-              valueListenable: isActive,
-              builder: (context, isActive, child) {
-                if (!isActive) {
-                  return Container();
-                }
-                return TerminalView(
-                  terminal,
-                  focusNode: focusNode,
-                  autofocus: true,
-                );
-              },
-            ),
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: ValueListenableBuilder<bool>(
+            valueListenable: isActive,
+            builder: (context, isActive, child) {
+              if (!isActive) {
+                return Container();
+              }
+              return TerminalView(
+                terminal,
+                focusNode: focusNode,
+                autofocus: true,
+              );
+            },
           ),
-        ));
+        ),
+      ));
 
-        // ignore: invalid_use_of_protected_member
-        expect(focusNode.hasListeners, isTrue);
+      // ignore: invalid_use_of_protected_member
+      expect(focusNode.hasListeners, isTrue);
 
-        isActive.value = false;
-        await tester.pumpAndSettle();
+      isActive.value = false;
+      await tester.pumpAndSettle();
 
-        // ignore: invalid_use_of_protected_member
-        expect(focusNode.hasListeners, isFalse);
-      },
-    );
+      // ignore: invalid_use_of_protected_member
+      expect(focusNode.hasListeners, isFalse);
+    });
 
-    testWidgets(
-      'does not dispose external focus node',
-      (WidgetTester tester) async {
-        final terminal = Terminal();
+    testWidgets('does not dispose external focus node', (tester) async {
+      final terminal = Terminal();
 
-        final focusNode = FocusNode();
+      final focusNode = FocusNode();
 
-        final isActive = ValueNotifier(true);
+      final isActive = ValueNotifier(true);
 
-        await tester.pumpWidget(MaterialApp(
-          home: Scaffold(
-            body: ValueListenableBuilder<bool>(
-              valueListenable: isActive,
-              builder: (context, isActive, child) {
-                if (!isActive) {
-                  return Container();
-                }
-                return TerminalView(
-                  terminal,
-                  focusNode: focusNode,
-                  autofocus: true,
-                );
-              },
-            ),
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: ValueListenableBuilder<bool>(
+            valueListenable: isActive,
+            builder: (context, isActive, child) {
+              if (!isActive) {
+                return Container();
+              }
+              return TerminalView(
+                terminal,
+                focusNode: focusNode,
+                autofocus: true,
+              );
+            },
           ),
-        ));
+        ),
+      ));
 
-        isActive.value = false;
-        await tester.pumpAndSettle();
+      isActive.value = false;
+      await tester.pumpAndSettle();
 
-        expect(() => focusNode.addListener(() {}), returnsNormally);
-      },
-    );
+      expect(() => focusNode.addListener(() {}), returnsNormally);
+    });
   });
 
   group('TerminalController.pointerInputs', () {
-    testWidgets('works', (WidgetTester tester) async {
+    testWidgets('works', (tester) async {
       final output = <String>[];
 
       final terminal = Terminal(onOutput: output.add);
@@ -208,7 +202,7 @@ void main() {
       expect(output, isNotEmpty);
     });
 
-    testWidgets('does not respond when disabled', (WidgetTester tester) async {
+    testWidgets('does not respond when disabled', (tester) async {
       final output = <String>[];
 
       final terminal = Terminal(onOutput: output.add);
@@ -242,7 +236,7 @@ void main() {
   });
 
   group('TerminalView.autofocus', () {
-    testWidgets('works', (WidgetTester tester) async {
+    testWidgets('works', (tester) async {
       final terminal = Terminal();
       final focusNode = FocusNode();
 
@@ -283,7 +277,7 @@ void main() {
   });
 
   group('TerminalView.hardwareKeyboardOnly', () {
-    testWidgets('works', (WidgetTester tester) async {
+    testWidgets('works', (tester) async {
       final output = <String>[];
       final terminal = Terminal(onOutput: output.add);
 
@@ -307,79 +301,68 @@ void main() {
     });
   });
 
-  group(
-    'TerminalView.textScaleFactor',
-    () {
-      testWidgets(
-        'works',
-        (WidgetTester tester) async {
-          final terminal = Terminal();
+  group('TerminalView.textScaleFactor', () {
+    testWidgets('works', (tester) async {
+      final terminal = Terminal();
 
-          final textScaleFactor = ValueNotifier(1.0);
+      final textScaleFactor = ValueNotifier(1.0);
 
-          await tester.pumpWidget(
-            MaterialApp(
-              home: Scaffold(
-                body: ValueListenableBuilder<double>(
-                  valueListenable: textScaleFactor,
-                  builder: (context, textScaleFactor, child) {
-                    return TerminalView(
-                      terminal,
-                      textScaleFactor: textScaleFactor,
-                    );
-                  },
-                ),
-              ),
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ValueListenableBuilder<double>(
+              valueListenable: textScaleFactor,
+              builder: (context, textScaleFactor, child) {
+                return TerminalView(
+                  terminal,
+                  textScaleFactor: textScaleFactor,
+                );
+              },
             ),
-          );
-
-          terminal.write('Hello World');
-          await tester.pump();
-
-          await expectLater(
-            find.byType(TerminalView),
-            matchesGoldenFile('_goldens/text_scale_factor@1x.png'),
-          );
-
-          textScaleFactor.value = 2.0;
-          await tester.pump();
-
-          await expectLater(
-            find.byType(TerminalView),
-            matchesGoldenFile('_goldens/text_scale_factor@2x.png'),
-          );
-        },
-        skip: !Platform.isMacOS,
+          ),
+        ),
       );
 
-      testWidgets(
-        'can obtain textScaleFactor from parent',
-        (WidgetTester tester) async {
-          final terminal = Terminal();
+      terminal.write('Hello World');
+      await tester.pump();
 
-          await tester.pumpWidget(
-            MaterialApp(
-              home: Scaffold(
-                body: MediaQuery(
-                  data: const MediaQueryData(textScaleFactor: 2.0),
-                  child: TerminalView(
-                    terminal,
-                  ),
-                ),
+      await expectLater(
+        find.byType(TerminalView),
+        matchesGoldenFile('_goldens/text_scale_factor@1x.png'),
+      );
+
+      textScaleFactor.value = 2.0;
+      await tester.pump();
+
+      await expectLater(
+        find.byType(TerminalView),
+        matchesGoldenFile('_goldens/text_scale_factor@2x.png'),
+      );
+    });
+
+    testWidgets('can obtain textScaleFactor from parent', (tester) async {
+      final terminal = Terminal();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MediaQuery(
+              data: const MediaQueryData(textScaleFactor: 2.0),
+              child: TerminalView(
+                terminal,
               ),
             ),
-          );
-
-          terminal.write('Hello World');
-          await tester.pump();
-
-          await expectLater(
-            find.byType(TerminalView),
-            matchesGoldenFile('_goldens/text_scale_factor@2x.png'),
-          );
-        },
+          ),
+        ),
       );
-    },
-    skip: !Platform.isMacOS,
-  );
+
+      terminal.write('Hello World');
+      await tester.pump();
+
+      await expectLater(
+        find.byType(TerminalView),
+        matchesGoldenFile('_goldens/text_scale_factor@2x.png'),
+      );
+    });
+  });
 }
