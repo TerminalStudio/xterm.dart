@@ -433,14 +433,16 @@ class Buffer {
     _cursorX = _cursorX.clamp(0, newWidth - 1);
     _cursorY = _cursorY.clamp(0, newHeight - 1);
 
-    if (!isAltBuffer && newWidth != oldWidth) {
-      final reflowResult = reflow(lines, oldWidth, newWidth);
+    if (terminal.reflowEnabled) {
+      if (!isAltBuffer && newWidth != oldWidth) {
+        final reflowResult = reflow(lines, oldWidth, newWidth);
 
-      while (reflowResult.length < newHeight) {
-        reflowResult.add(_newEmptyLine(newWidth));
+        while (reflowResult.length < newHeight) {
+          reflowResult.add(_newEmptyLine(newWidth));
+        }
+
+        lines.replaceWith(reflowResult);
       }
-
-      lines.replaceWith(reflowResult);
     }
   }
 

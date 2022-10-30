@@ -49,6 +49,7 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
     this.platform = TerminalTargetPlatform.unknown,
     this.inputHandler = defaultInputHandler,
     this.mouseHandler = defaultMouseHandler,
+    this.reflowEnabled = true,
   });
 
   TerminalMouseHandler? mouseHandler;
@@ -165,6 +166,11 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
   bool get isUsingAltBuffer => _buffer == _altBuffer;
 
   CircularList<BufferLine> get lines => _buffer.lines;
+
+  /// Whether the terminal performs reflow when the viewport size changes or
+  /// simply truncates lines. true by default.
+  @override
+  bool reflowEnabled;
 
   void write(String data) {
     _parser.write(data);

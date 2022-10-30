@@ -49,6 +49,42 @@ void main() {
       expect(output, ['\x1B[M +,']);
     });
   });
+
+  group('Terminal.reflowEnabled', () {
+    test('prevents reflow when set to false', () {
+      final terminal = Terminal(reflowEnabled: false);
+
+      terminal.write('Hello World');
+      terminal.resize(5, 5);
+
+      expect(terminal.buffer.lines[0].toString(), 'Hello');
+      expect(terminal.buffer.lines[1].toString(), isEmpty);
+    });
+
+    test('preserves hidden cells when reflow is disabled', () {
+      final terminal = Terminal(reflowEnabled: false);
+
+      terminal.write('Hello World');
+      terminal.resize(5, 5);
+      terminal.resize(20, 5);
+
+      expect(terminal.buffer.lines[0].toString(), 'Hello World');
+      expect(terminal.buffer.lines[1].toString(), isEmpty);
+    });
+
+    test('can be set at runtime', () {
+      final terminal = Terminal(reflowEnabled: true);
+
+      terminal.resize(5, 5);
+      terminal.write('Hello World');
+      terminal.reflowEnabled = false;
+      terminal.resize(20, 5);
+
+      expect(terminal.buffer.lines[0].toString(), 'Hello');
+      expect(terminal.buffer.lines[1].toString(), ' Worl');
+      expect(terminal.buffer.lines[2].toString(), 'd');
+    });
+  });
 }
 
 class _TestInputHandler implements TerminalInputHandler {

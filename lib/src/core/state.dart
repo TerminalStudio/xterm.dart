@@ -8,6 +8,8 @@ abstract class TerminalState {
 
   CursorStyle get cursor;
 
+  bool get reflowEnabled;
+
   /* Modes */
 
   bool get insertMode;
