@@ -4,9 +4,14 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
 import 'package:xterm/xterm.dart';
 
 import '../_fixture/_fixture.dart';
+
+@GenerateNiceMocks([MockSpec<TerminalInputHandler>()])
+import 'terminal_view_test.mocks.dart';
 
 void main() {
   final binding = TestWidgetsFlutterBinding.ensureInitialized();
@@ -363,6 +368,55 @@ void main() {
         find.byType(TerminalView),
         matchesGoldenFile('_goldens/text_scale_factor@2x.png'),
       );
+    });
+  });
+
+  group('TerminalView.inputHandler', () {
+    testWidgets('works', (tester) async {
+      final terminalOutput = <String>[];
+      final terminal = Terminal(onOutput: terminalOutput.add);
+
+      await tester.pumpWidget(MaterialApp(
+        home: TerminalView(terminal, autofocus: true),
+      ));
+
+      await tester.tap(find.byType(TerminalView));
+      await tester.pump(Duration(seconds: 1));
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.keyD);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.keyD);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+
+      await tester.pumpAndSettle();
+
+      expect(terminalOutput.join(), '\x04');
+    });
+
+    testWidgets('can convert text input to key events', (tester) async {
+      final inputHandler = MockTerminalInputHandler();
+      when(inputHandler.call(any)).thenAnswer((invocation) => 'AAA');
+
+      final terminalOutput = <String>[];
+      final terminal = Terminal(
+        inputHandler: inputHandler,
+        onOutput: terminalOutput.add,
+      );
+
+      await tester.pumpWidget(MaterialApp(
+        home: TerminalView(terminal, autofocus: true),
+      ));
+
+      await tester.tap(find.byType(TerminalView));
+      await tester.pump(Duration(seconds: 1));
+
+      binding.testTextInput.enterText('c');
+      await binding.idle();
+
+      await tester.pumpAndSettle();
+
+      verify(inputHandler.call(any));
+      expect(terminalOutput.join(), 'AAA');
     });
   });
 }
