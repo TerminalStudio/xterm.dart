@@ -10,7 +10,7 @@ import 'package:xterm/src/core/state.dart';
 ///
 /// See also:
 /// - [TerminalInputHandler]
-class TerminalInputEvent {
+class TerminalKeyboardEvent {
   final TerminalKey key;
 
   final bool shift;
@@ -25,7 +25,7 @@ class TerminalInputEvent {
 
   final TerminalTargetPlatform platform;
 
-  TerminalInputEvent({
+  TerminalKeyboardEvent({
     required this.key,
     required this.shift,
     required this.ctrl,
@@ -35,7 +35,7 @@ class TerminalInputEvent {
     required this.platform,
   });
 
-  TerminalInputEvent copyWith({
+  TerminalKeyboardEvent copyWith({
     TerminalKey? key,
     bool? shift,
     bool? ctrl,
@@ -44,7 +44,7 @@ class TerminalInputEvent {
     bool? altBuffer,
     TerminalTargetPlatform? platform,
   }) {
-    return TerminalInputEvent(
+    return TerminalKeyboardEvent(
       key: key ?? this.key,
       shift: shift ?? this.shift,
       ctrl: ctrl ?? this.ctrl,
@@ -56,12 +56,12 @@ class TerminalInputEvent {
   }
 }
 
-/// TerminalInputHandler contains the logic for translating a [TerminalInputEvent]
+/// TerminalInputHandler contains the logic for translating a [TerminalKeyboardEvent]
 /// into escape sequences that can be recognized by the terminal.
 abstract class TerminalInputHandler {
-  /// Translates a [TerminalInputEvent] into an escape sequence. If the event
+  /// Translates a [TerminalKeyboardEvent] into an escape sequence. If the event
   /// cannot be translated, null is returned.
-  String? call(TerminalInputEvent event);
+  String? call(TerminalKeyboardEvent event);
 }
 
 /// A [TerminalInputHandler] that chains multiple handlers together. If any
@@ -73,7 +73,7 @@ class CascadeInputHandler implements TerminalInputHandler {
   const CascadeInputHandler(this._handlers);
 
   @override
-  String? call(TerminalInputEvent event) {
+  String? call(TerminalKeyboardEvent event) {
     for (var handler in _handlers) {
       final result = handler(event);
       if (result != null) {
@@ -107,7 +107,7 @@ class KeytabInputHandler implements TerminalInputHandler {
   const KeytabInputHandler();
 
   @override
-  String? call(TerminalInputEvent event) {
+  String? call(TerminalKeyboardEvent event) {
     final action = _keytab.find(
       event.key,
       ctrl: event.ctrl,
@@ -134,7 +134,7 @@ class CtrlInputHandler implements TerminalInputHandler {
   const CtrlInputHandler();
 
   @override
-  String? call(TerminalInputEvent event) {
+  String? call(TerminalKeyboardEvent event) {
     if (!event.ctrl || event.shift || event.alt) {
       return null;
     }
@@ -157,7 +157,7 @@ class AltInputHandler implements TerminalInputHandler {
   const AltInputHandler();
 
   @override
-  String? call(TerminalInputEvent event) {
+  String? call(TerminalKeyboardEvent event) {
     if (!event.alt || event.ctrl || event.shift) {
       return null;
     }

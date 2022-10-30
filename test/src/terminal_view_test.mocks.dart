@@ -23,7 +23,7 @@ import 'package:xterm/src/core/input/handler.dart' as _i2;
 class MockTerminalInputHandler extends _i1.Mock
     implements _i2.TerminalInputHandler {
   @override
-  String? call(_i2.TerminalInputEvent? event) => (super.noSuchMethod(
+  String? call(_i2.TerminalKeyboardEvent? event) => (super.noSuchMethod(
         Invocation.method(
           #call,
           [event],

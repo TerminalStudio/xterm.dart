@@ -52,10 +52,10 @@ void main() {
 }
 
 class _TestInputHandler implements TerminalInputHandler {
-  final events = <TerminalInputEvent>[];
+  final events = <TerminalKeyboardEvent>[];
 
   @override
-  String? call(TerminalInputEvent event) {
+  String? call(TerminalKeyboardEvent event) {
     events.add(event);
     return null;
   }

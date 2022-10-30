@@ -178,7 +178,7 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
     bool ctrl = false,
   }) {
     final output = inputHandler?.call(
-      TerminalInputEvent(
+      TerminalKeyboardEvent(
         key: key,
         shift: shift,
         alt: alt,
