@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
+import 'package:example/src/virtual_keyboard.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:xterm/xterm.dart';
 
@@ -34,7 +35,9 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final terminal = Terminal();
+  late final terminal = Terminal(inputHandler: keyboard);
+
+  final keyboard = VirtualKeyboard(defaultInputHandler);
 
   var title = host;
 
@@ -96,8 +99,13 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor:
             CupertinoTheme.of(context).barBackgroundColor.withOpacity(0.5),
       ),
-      child: TerminalView(
-        terminal,
+      child: Column(
+        children: [
+          Expanded(
+            child: TerminalView(terminal),
+          ),
+          VirtualKeyboardView(keyboard),
+        ],
       ),
     );
   }
