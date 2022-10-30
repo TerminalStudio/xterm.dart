@@ -1,3 +1,21 @@
+## [3.3.0] - 2022-9-13
+* Sync ShortcutManager's shortcuts in didUpdateWidget [#140], thanks [@jpnurmi].
+* fix: terminal font size not respecting system level font scale [#138], thanks [@LucasAschenbach].
+* Fix selection color [#135], thanks [@jpnurmi].
+* fix: dispose controllers of TerminalView [#132], thanks [@tauu].
+* feat: add hardwareKeyboardOnly flag to TerminalView [#131], thanks [@tauu].
+* feat: initial mouse support [#130], thanks [@tauu].
+* feat: limited window manipulation support [#129], thanks [@tauu].
+* fix: workaround to draw underlined spaces [#128], thanks [@tauu].
+* feat: block selection [#127], thanks [@tauu].
+* feat: enable changing the inputHandler of a terminal [#126], thanks [@tauu].
+* fix: export TerminalTargetPlatform [#125], thanks [@tauu].
+* fix: only dispose the FocusNodes which TerminalView creates [#124], thanks [@tauu].
+* feat: expose readOnly flag of CustomTextEdit in TerminalView [#123], thanks [@tauu].
+* fix: supports numpad enter key [#137].
+* feat: expose `reflowEnabled` flag [#104].
+* docs: add virtual keyboard example [#141].
+
 ## [3.2.7] - 2022-9-13
 * Fix lint issues.
 
@@ -174,6 +192,9 @@
 [@michaellee8]: https://github.com/michaellee8
 [@linhanyu]: https://github.com/linhanyu
 [@jda258]: https://github.com/jda258
+[@jpnurmi]: https://github.com/jpnurmi
+[@LucasAschenbach]: https://github.com/LucasAschenbach
+[@tauu]: https://github.com/tauu
 
 [#40]: https://github.com/TerminalStudio/xterm.dart/pull/40
 [#43]: https://github.com/TerminalStudio/xterm.dart/pull/43
@@ -197,3 +218,21 @@
 [#69]: https://github.com/TerminalStudio/xterm.dart/pull/69
 [#74]: https://github.com/TerminalStudio/xterm.dart/pull/74
 [#77]: https://github.com/TerminalStudio/xterm.dart/pull/77
+
+[#104]: https://github.com/TerminalStudio/xterm.dart/issues/104
+[#123]: https://github.com/TerminalStudio/xterm.dart/pull/123
+[#124]: https://github.com/TerminalStudio/xterm.dart/pull/124
+[#125]: https://github.com/TerminalStudio/xterm.dart/pull/125
+[#126]: https://github.com/TerminalStudio/xterm.dart/pull/126
+[#127]: https://github.com/TerminalStudio/xterm.dart/pull/127
+[#128]: https://github.com/TerminalStudio/xterm.dart/pull/128
+[#129]: https://github.com/TerminalStudio/xterm.dart/pull/129
+[#130]: https://github.com/TerminalStudio/xterm.dart/pull/130
+[#131]: https://github.com/TerminalStudio/xterm.dart/pull/131
+[#132]: https://github.com/TerminalStudio/xterm.dart/pull/132
+[#135]: https://github.com/TerminalStudio/xterm.dart/pull/135
+[#137]: https://github.com/TerminalStudio/xterm.dart/issues/137
+[#138]: https://github.com/TerminalStudio/xterm.dart/pull/138
+[#140]: https://github.com/TerminalStudio/xterm.dart/pull/140
+[#141]: https://github.com/TerminalStudio/xterm.dart/pull/141
+
