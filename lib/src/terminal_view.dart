@@ -345,8 +345,18 @@ class TerminalViewState extends State<TerminalView> {
   }
 
   void _onInsert(String text) {
+    final key = charToTerminalKey(text.trim());
+
+    // On mobile platforms there is no guarantee that virtual keyboard will
+    // generate hardware key events. So we need first try to send the key
+    // as a hardware key event. If it fails, then we send it as a text input.
+    final consumed = key == null ? false : widget.terminal.keyInput(key);
+
+    if (!consumed) {
+      widget.terminal.textInput(text);
+    }
+
     _scrollToBottom();
-    widget.terminal.textInput(text);
   }
 
   void _onComposing(String? text) {
@@ -368,7 +378,7 @@ class TerminalViewState extends State<TerminalView> {
       return KeyEventResult.ignored;
     }
 
-    final key = inputMap(event.logicalKey);
+    final key = keyToTerminalKey(event.logicalKey);
 
     if (key == null) {
       return KeyEventResult.ignored;

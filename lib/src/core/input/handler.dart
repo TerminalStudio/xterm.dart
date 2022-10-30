@@ -3,6 +3,13 @@ import 'package:xterm/src/core/input/keytab/keytab.dart';
 import 'package:xterm/src/utils/platform.dart';
 import 'package:xterm/src/core/state.dart';
 
+/// The key event received from the keyboard, along with the state of the
+/// modifier keys and state of the terminal. Typically consumed by the
+/// [TerminalInputHandler] to produce a escape sequence that can be recognized
+/// by the terminal.
+///
+/// See also:
+/// - [TerminalInputHandler]
 class TerminalInputEvent {
   final TerminalKey key;
 
@@ -27,12 +34,39 @@ class TerminalInputEvent {
     required this.altBuffer,
     required this.platform,
   });
+
+  TerminalInputEvent copyWith({
+    TerminalKey? key,
+    bool? shift,
+    bool? ctrl,
+    bool? alt,
+    TerminalState? state,
+    bool? altBuffer,
+    TerminalTargetPlatform? platform,
+  }) {
+    return TerminalInputEvent(
+      key: key ?? this.key,
+      shift: shift ?? this.shift,
+      ctrl: ctrl ?? this.ctrl,
+      alt: alt ?? this.alt,
+      state: state ?? this.state,
+      altBuffer: altBuffer ?? this.altBuffer,
+      platform: platform ?? this.platform,
+    );
+  }
 }
 
+/// TerminalInputHandler contains the logic for translating a [TerminalInputEvent]
+/// into escape sequences that can be recognized by the terminal.
 abstract class TerminalInputHandler {
+  /// Translates a [TerminalInputEvent] into an escape sequence. If the event
+  /// cannot be translated, null is returned.
   String? call(TerminalInputEvent event);
 }
 
+/// A [TerminalInputHandler] that chains multiple handlers together. If any
+/// handler returns a non-null value, it is returned. Otherwise, null is
+/// returned.
 class CascadeInputHandler implements TerminalInputHandler {
   final List<TerminalInputHandler> _handlers;
 
@@ -50,6 +84,15 @@ class CascadeInputHandler implements TerminalInputHandler {
   }
 }
 
+/// The default input handler for the terminal. That is composed of a
+/// [KeytabInputHandler], a [CtrlInputHandler], and a [AltInputHandler].
+///
+/// It's possible to override the default input handler behavior by chaining
+/// another input handler before or after the default input handler using
+/// [CascadeInputHandler].
+///
+/// See also:
+///  * [CascadeInputHandler]
 const defaultInputHandler = CascadeInputHandler([
   KeytabInputHandler(),
   CtrlInputHandler(),
@@ -58,6 +101,8 @@ const defaultInputHandler = CascadeInputHandler([
 
 final _keytab = Keytab.defaultKeytab();
 
+/// A [TerminalInputHandler] that translates key events according to a keytab
+/// file.
 class KeytabInputHandler implements TerminalInputHandler {
   const KeytabInputHandler();
 
@@ -83,6 +128,8 @@ class KeytabInputHandler implements TerminalInputHandler {
   }
 }
 
+/// A [TerminalInputHandler] that translates ctrl + key events into escape
+/// sequences. For example, ctrl + a becomes ^A.
 class CtrlInputHandler implements TerminalInputHandler {
   const CtrlInputHandler();
 
@@ -104,6 +151,8 @@ class CtrlInputHandler implements TerminalInputHandler {
   }
 }
 
+/// A [TerminalInputHandler] that translates alt + key events into escape
+/// sequences. For example, alt + a becomes ^[a.
 class AltInputHandler implements TerminalInputHandler {
   const AltInputHandler();
 
