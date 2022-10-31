@@ -1,3 +1,6 @@
+## [next] - unreleased
+* Mouse input is enabled by default.
+
 ## [3.3.0] - 2022-9-13
 * Sync ShortcutManager's shortcuts in didUpdateWidget [#140], thanks [@jpnurmi].
 * fix: terminal font size not respecting system level font scale [#138], thanks [@LucasAschenbach].
