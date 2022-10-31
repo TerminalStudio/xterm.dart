@@ -4,11 +4,16 @@ enum MouseMode {
 
   clickOnly,
 
-  upDownScroll,
+  upDownScroll(reportScroll: true),
 
-  upDownScrollDrag,
+  upDownScrollDrag(reportScroll: true),
 
-  upDownScrollMove,
+  upDownScrollMove(reportScroll: true),
+  ;
+
+  const MouseMode({this.reportScroll = false});
+
+  final bool reportScroll;
 }
 
 /// https://terminalguide.namepad.de/mouse/
