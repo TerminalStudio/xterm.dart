@@ -20,21 +20,44 @@ import 'package:xterm/src/utils/circular_list.dart';
 import 'package:xterm/src/utils/observable.dart';
 import 'package:xterm/src/utils/platform.dart';
 
+/// [Terminal] is an interface to interact with command line applications. It
+/// translates escape sequences from the application into updates to the
+/// [buffer] and events such as [onTitleChange] or [onBell], as well as
+/// translating user input into escape sequences that the application can
+/// understand.
 class Terminal with Observable implements TerminalState, EscapeHandler {
+  /// The number of lines that the scrollback buffer can hold. If the buffer
+  /// exceeds this size, the lines at the top of the buffer will be removed.
   final int maxLines;
 
+  /// Function that is called when the program requests the terminal to ring
+  /// the bell. If not set, the terminal will do nothing.
   void Function()? onBell;
 
-  void Function(String)? onTitleChange;
+  /// Function that is called when the program requests the terminal to change
+  /// the title of the window to [title].
+  void Function(String title)? onTitleChange;
 
-  void Function(String)? onIconChange;
+  /// Function that is called when the program requests the terminal to change
+  /// the icon of the window. [icon] is the name of the icon.
+  void Function(String icon)? onIconChange;
 
-  void Function(String)? onOutput;
+  /// Function that is called when the terminal emits data to the underlying
+  /// program. This is typically caused by user inputs from [textInput],
+  /// [keyInput], [mouseInput], or [paste].
+  void Function(String data)? onOutput;
 
+  /// Function that is called when the dimensions of the terminal change.
   void Function(int width, int height, int pixelWidth, int pixelHeight)?
       onResize;
 
+  /// The [TerminalInputHandler] used by this terminal. [defaultInputHandler] is
+  /// used when not specified. User of this class can provide their own
+  /// implementation of [TerminalInputHandler] or extend [defaultInputHandler]
+  /// with [CascadeInputHandler].
   TerminalInputHandler? inputHandler;
+
+  TerminalMouseHandler? mouseHandler;
 
   /// Flag to toggle os specific behaviors.
   final TerminalTargetPlatform platform;
@@ -52,8 +75,6 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
     this.reflowEnabled = true,
   });
 
-  TerminalMouseHandler? mouseHandler;
-
   late final _parser = EscapeParser(this);
 
   final _emitter = const EscapeEmitter();
@@ -64,8 +85,10 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
 
   late final _altBuffer = Buffer(this, maxLines: maxLines, isAltBuffer: true);
 
-  final tabStops = TabStops();
+  final _tabStops = TabStops();
 
+  /// The last character written to the buffer. Used to implement some escape
+  /// sequences that repeat the last character.
   var _precedingCodepoint = 0;
 
   /* TerminalState */
@@ -106,9 +129,11 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
 
   /* State getters */
 
+  /// Number of cells in a terminal row.
   @override
   int get viewWidth => _viewWidth;
 
+  /// Number of rows in this terminal.
   @override
   int get viewHeight => _viewHeight;
 
@@ -157,6 +182,9 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
   @override
   bool get bracketedPasteMode => _bracketedPasteMode;
 
+  /// Current active buffer of the terminal. This is initially [mainBuffer] and
+  /// can be switched back and forth from [altBuffer] to [mainBuffer] when
+  /// the underlying program requests it.
   Buffer get buffer => _buffer;
 
   Buffer get mainBuffer => _mainBuffer;
@@ -165,6 +193,7 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
 
   bool get isUsingAltBuffer => _buffer == _altBuffer;
 
+  /// Lines of the active buffer.
   CircularList<BufferLine> get lines => _buffer.lines;
 
   /// Whether the terminal performs reflow when the viewport size changes or
@@ -172,11 +201,20 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
   @override
   bool reflowEnabled;
 
+  /// Writes the data from the underlying program to the terminal. Calling this
+  /// updates the states of the terminal and emits events such as [onBell] or
+  /// [onTitleChange] when the escape sequences in [data] request it.
   void write(String data) {
     _parser.write(data);
     notifyListeners();
   }
 
+  /// Sends a key event to the underlying program.
+  ///
+  /// See also:
+  /// - [charInput]
+  /// - [textInput]
+  /// - [paste]
   bool keyInput(
     TerminalKey key, {
     bool shift = false,
@@ -203,6 +241,13 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
     return false;
   }
 
+  /// Similary to [keyInput], but takes a character as input instead of a
+  /// [TerminalKey].
+  ///
+  /// See also:
+  /// - [keyInput]
+  /// - [textInput]
+  /// - [paste]
   bool charInput(
     int charCode, {
     bool alt = false,
@@ -236,10 +281,23 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
     return false;
   }
 
+  /// Sends regular text input to the underlying program.
+  ///
+  /// See also:
+  /// - [keyInput]
+  /// - [charInput]
+  /// - [paste]
   void textInput(String text) {
     onOutput?.call(text);
   }
 
+  /// Similar to [textInput], except that when the program tells the terminal
+  /// that it supports [bracketedPasteMode], the text is wrapped in escape
+  /// sequences to indicate that it is a paste operation. Prefer this method
+  /// over [textInput] when pasting text.
+  ///
+  /// See also:
+  /// - [textInput]
   void paste(String text) {
     if (_bracketedPasteMode) {
       onOutput?.call(_emitter.bracketedPaste(text));
@@ -325,7 +383,7 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
 
   @override
   void tab() {
-    final nextStop = tabStops.find(_buffer.cursorX, _viewWidth);
+    final nextStop = _tabStops.find(_buffer.cursorX, _viewWidth);
 
     if (nextStop != null) {
       _buffer.setCursorX(nextStop);
@@ -385,7 +443,7 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
 
   @override
   void setTapStop() {
-    tabStops.isSetAt(_buffer.cursorX);
+    _tabStops.isSetAt(_buffer.cursorX);
   }
 
   @override
@@ -443,12 +501,12 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
 
   @override
   void clearTabStopUnderCursor() {
-    tabStops.clearAt(_buffer.cursorX);
+    _tabStops.clearAt(_buffer.cursorX);
   }
 
   @override
   void clearAllTabStops() {
-    tabStops.clearAll();
+    _tabStops.clearAll();
   }
 
   @override
