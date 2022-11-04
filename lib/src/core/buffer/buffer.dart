@@ -146,7 +146,7 @@ class Buffer {
   void eraseDisplayFromCursor() {
     eraseLineFromCursor();
 
-    for (var i = absoluteCursorY; i < height; i++) {
+    for (var i = absoluteCursorY + 1; i < height; i++) {
       final line = lines[i];
       line.isWrapped = false;
       line.eraseRange(0, viewWidth, terminal.cursor);

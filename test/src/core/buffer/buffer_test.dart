@@ -164,4 +164,19 @@ void main() {
     expect(terminal.buffer.lines[8].toString(), 'line9');
     expect(terminal.buffer.lines[9].toString(), 'line10');
   });
+
+  group('Buffer.eraseDisplayFromCursor()', () {
+    test('works', () {
+      final terminal = Terminal();
+      terminal.resize(3, 3);
+      terminal.write('123\r\n456\r\n789');
+
+      terminal.setCursor(1, 1);
+      terminal.buffer.eraseDisplayFromCursor();
+
+      expect(terminal.buffer.lines[0].toString(), '123');
+      expect(terminal.buffer.lines[1].toString(), '4');
+      expect(terminal.buffer.lines[2].toString(), '');
+    });
+  });
 }
