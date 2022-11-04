@@ -118,6 +118,7 @@ class _CommandItem extends StatelessWidget {
                   '${index + 1}',
                   style: TextStyle(
                     color: selected ? Colors.blue : Colors.black,
+                    fontSize: 14,
                     fontFamily: 'monospace',
                     fontFamilyFallback: [
                       'Menlo',
@@ -141,17 +142,23 @@ class _CommandItem extends StatelessWidget {
               ),
               SizedBox(width: 20),
               Container(
-                width: 100,
+                width: 400,
                 child: Text(
                   command.escapedChars,
-                  style: TextStyle(color: command.error ? Colors.red : null),
+                  style: TextStyle(
+                    color: command.error ? Colors.red : null,
+                    fontSize: 14,
+                  ),
                 ),
               ),
               Expanded(
                 child: Container(
                   child: Text(
                     command.explanation.join(','),
-                    style: TextStyle(color: command.error ? Colors.red : null),
+                    style: TextStyle(
+                      color: command.error ? Colors.red : null,
+                      fontSize: 14,
+                    ),
                   ),
                 ),
               ),
