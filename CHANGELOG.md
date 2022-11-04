@@ -1,7 +1,10 @@
-## [next] - unreleased
+## [3.4.0] - 2022-11-4
 * Mouse input is enabled by default.
+* Support scrolling in alternate buffer.
+* Fix `deleteLines` behavior.
+* Fix `eraseDisplayFromCursor` removes characters before the cursor.
 
-## [3.3.0] - 2022-9-13
+## [3.3.0] - 2022-10-30
 * Sync ShortcutManager's shortcuts in didUpdateWidget [#140], thanks [@jpnurmi].
 * fix: terminal font size not respecting system level font scale [#138], thanks [@LucasAschenbach].
 * Fix selection color [#135], thanks [@jpnurmi].
