@@ -108,4 +108,60 @@ void main() {
       }
     });
   });
+
+  group('Buffer.deleteLines()', () {
+    test('works', () {
+      final terminal = Terminal();
+      terminal.resize(10, 10);
+
+      for (var i = 1; i <= 10; i++) {
+        terminal.write('line$i');
+
+        if (i < 10) {
+          terminal.write('\r\n');
+        }
+      }
+
+      terminal.setMargins(3, 7);
+      terminal.setCursor(0, 5);
+
+      terminal.buffer.deleteLines(1);
+
+      expect(terminal.buffer.lines[2].toString(), 'line3');
+      expect(terminal.buffer.lines[3].toString(), 'line4');
+      expect(terminal.buffer.lines[4].toString(), 'line5');
+      expect(terminal.buffer.lines[5].toString(), 'line7');
+      expect(terminal.buffer.lines[6].toString(), 'line8');
+      expect(terminal.buffer.lines[7].toString(), '');
+      expect(terminal.buffer.lines[8].toString(), 'line9');
+      expect(terminal.buffer.lines[9].toString(), 'line10');
+    });
+  });
+
+  test('does not delete lines beyond the scroll region', () {
+    final terminal = Terminal();
+    terminal.resize(10, 10);
+
+    for (var i = 1; i <= 10; i++) {
+      terminal.write('line$i');
+
+      if (i < 10) {
+        terminal.write('\r\n');
+      }
+    }
+
+    terminal.setMargins(3, 7);
+    terminal.setCursor(0, 5);
+
+    terminal.buffer.deleteLines(20);
+
+    expect(terminal.buffer.lines[2].toString(), 'line3');
+    expect(terminal.buffer.lines[3].toString(), 'line4');
+    expect(terminal.buffer.lines[4].toString(), 'line5');
+    expect(terminal.buffer.lines[5].toString(), '');
+    expect(terminal.buffer.lines[6].toString(), '');
+    expect(terminal.buffer.lines[7].toString(), '');
+    expect(terminal.buffer.lines[8].toString(), 'line9');
+    expect(terminal.buffer.lines[9].toString(), 'line10');
+  });
 }

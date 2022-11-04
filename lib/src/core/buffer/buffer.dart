@@ -393,6 +393,9 @@ class Buffer {
     }
   }
 
+  /// Remove [count] lines starting at the current cursor position. Lines below
+  /// the removed lines are shifted up. This only affects the scrollable region.
+  /// Lines outside the scrollable region are not affected.
   void deleteLines(int count) {
     if (!isInVerticalMargin) {
       return;
@@ -400,9 +403,17 @@ class Buffer {
 
     setCursorX(0);
 
+    count = min(count, absoluteMarginBottom - absoluteCursorY + 1);
+
+    final linesToMove = absoluteMarginBottom - absoluteCursorY + 1 - count;
+
+    for (var i = 0; i < linesToMove; i++) {
+      final index = absoluteCursorY + i;
+      lines[index] = lines[index + count];
+    }
+
     for (var i = 0; i < count; i++) {
-      lines.insert(absoluteMarginBottom, _newEmptyLine());
-      lines.remove(absoluteCursorY);
+      lines[absoluteMarginBottom - i] = _newEmptyLine();
     }
   }
 
