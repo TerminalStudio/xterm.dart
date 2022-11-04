@@ -261,6 +261,10 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
     return _offset.pixels;
   }
 
+  /// The height of a terminal line in pixels. This includes the line spacing.
+  /// Height of the entire terminal is expected to be a multiple of this value.
+  double get lineHeight => _charSize.height;
+
   /// Get the top-left corner of the cell at [cellOffset] in pixels.
   Offset getOffset(CellOffset cellOffset) {
     final row = cellOffset.y;

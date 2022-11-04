@@ -14,6 +14,7 @@ import 'package:xterm/src/ui/input_map.dart';
 import 'package:xterm/src/ui/keyboard_listener.dart';
 import 'package:xterm/src/ui/keyboard_visibility.dart';
 import 'package:xterm/src/ui/render.dart';
+import 'package:xterm/src/ui/scroll_handler.dart';
 import 'package:xterm/src/ui/shortcut/actions.dart';
 import 'package:xterm/src/ui/shortcut/shortcuts.dart';
 import 'package:xterm/src/ui/terminal_text_style.dart';
@@ -46,6 +47,7 @@ class TerminalView extends StatefulWidget {
     this.shortcuts,
     this.readOnly = false,
     this.hardwareKeyboardOnly = false,
+    this.simulateScroll = true,
   }) : super(key: key);
 
   /// The underlying terminal that this widget renders.
@@ -130,6 +132,13 @@ class TerminalView extends StatefulWidget {
   /// True if only hardware keyboard events should be used as input. This will
   /// also prevent any on-screen keyboard to be shown.
   final bool hardwareKeyboardOnly;
+
+  /// If true, when the terminal is in alternate buffer (for example running
+  /// vim, man, etc), if the application does not declare that it can handle
+  /// scrolling, the terminal will simulate scrolling by sending up/down arrow
+  /// keys to the application. This is standard behavior for most terminal
+  /// emulators. True by default.
+  final bool simulateScroll;
 
   @override
   State<TerminalView> createState() => TerminalViewState();
@@ -229,6 +238,14 @@ class TerminalViewState extends State<TerminalView> {
           composingText: _composingText,
         );
       },
+    );
+
+    child = TerminalScrollGestureHandler(
+      terminal: widget.terminal,
+      simulateScroll: widget.simulateScroll,
+      getCellOffset: (offset) => renderTerminal.getCellOffset(offset),
+      getLineHeight: () => renderTerminal.lineHeight,
+      child: child,
     );
 
     if (!widget.hardwareKeyboardOnly) {
