@@ -8,8 +8,9 @@ import 'package:xterm/xterm.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  if (isDesktop) {}
-  setupAcrylic();
+  if (isDesktop) {
+    setupAcrylic();
+  }
 
   runApp(MyApp());
 }
