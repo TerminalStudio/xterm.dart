@@ -1,28 +1,28 @@
 PODS:
-  - flutter_acrylic (0.1.0):
-    - FlutterMacOS
   - flutter_pty (0.0.1):
     - FlutterMacOS
   - FlutterMacOS (1.0.0)
+  - macos_window_utils (1.0.0):
+    - FlutterMacOS
 
 DEPENDENCIES:
-  - flutter_acrylic (from `Flutter/ephemeral/.symlinks/plugins/flutter_acrylic/macos`)
   - flutter_pty (from `Flutter/ephemeral/.symlinks/plugins/flutter_pty/macos`)
   - FlutterMacOS (from `Flutter/ephemeral`)
+  - macos_window_utils (from `Flutter/ephemeral/.symlinks/plugins/macos_window_utils/macos`)
 
 EXTERNAL SOURCES:
-  flutter_acrylic:
-    :path: Flutter/ephemeral/.symlinks/plugins/flutter_acrylic/macos
   flutter_pty:
     :path: Flutter/ephemeral/.symlinks/plugins/flutter_pty/macos
   FlutterMacOS:
     :path: Flutter/ephemeral
+  macos_window_utils:
+    :path: Flutter/ephemeral/.symlinks/plugins/macos_window_utils/macos
 
 SPEC CHECKSUMS:
-  flutter_acrylic: c3df24ae52ab6597197837ce59ef2a8542640c17
   flutter_pty: 41b6f848ade294be726a6b94cdd4a67c3bc52f59
   FlutterMacOS: ae6af50a8ea7d6103d888583d46bd8328a7e9811
+  macos_window_utils: 933f91f64805e2eb91a5bd057cf97cd097276663
 
-PODFILE CHECKSUM: 6eac6b3292e5142cfc23bdeb71848a40ec51c14c
+PODFILE CHECKSUM: 0d3963a09fc94f580682bd88480486da345dc3f0
 
 COCOAPODS: 1.11.3

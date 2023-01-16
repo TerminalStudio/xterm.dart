@@ -177,6 +177,8 @@ class _TerminalGestureHandlerState extends State<TerminalGestureHandler> {
   void onDragStart(DragStartDetails details) {
     _lastDragStartDetails = details;
 
+    // FIXME@Martin: Set start selection position
+    renderTerminal.setStartOffset();
     details.kind == PointerDeviceKind.mouse
         ? renderTerminal.selectCharacters(details.localPosition)
         : renderTerminal.selectWord(details.localPosition);
