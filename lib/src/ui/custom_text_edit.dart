@@ -51,8 +51,7 @@ class CustomTextEdit extends StatefulWidget {
   CustomTextEditState createState() => CustomTextEditState();
 }
 
-class CustomTextEditState extends State<CustomTextEdit>
-    implements TextInputClient {
+class CustomTextEditState extends State<CustomTextEdit> with TextInputClient {
   TextInputConnection? _connection;
 
   @override
