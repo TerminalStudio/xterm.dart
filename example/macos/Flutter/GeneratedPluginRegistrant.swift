@@ -5,8 +5,8 @@
 import FlutterMacOS
 import Foundation
 
-import flutter_acrylic
+import macos_window_utils
 
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
-  FlutterAcrylicPlugin.register(with: registry.registrar(forPlugin: "FlutterAcrylicPlugin"))
+  MacOSWindowUtilsPlugin.register(with: registry.registrar(forPlugin: "MacOSWindowUtilsPlugin"))
 }
