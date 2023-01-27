@@ -414,6 +414,8 @@ class EscapeParser {
       return handler.resetCursorStyle();
     }
 
+    // This is a workaround for a bug in the analyzer.
+    // ignore: dead_code
     for (var i = 0; i < _csi.params.length; i++) {
       final param = params[i];
       switch (param) {
