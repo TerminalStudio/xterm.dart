@@ -62,6 +62,8 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
   /// Flag to toggle os specific behaviors.
   final TerminalTargetPlatform platform;
 
+  Set<int>? wordSeparators;
+
   Terminal({
     this.maxLines = 1000,
     this.onBell,
@@ -73,6 +75,7 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
     this.inputHandler = defaultInputHandler,
     this.mouseHandler = defaultMouseHandler,
     this.reflowEnabled = true,
+    this.wordSeparators,
   });
 
   late final _parser = EscapeParser(this);
@@ -81,9 +84,19 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
 
   late var _buffer = _mainBuffer;
 
-  late final _mainBuffer = Buffer(this, maxLines: maxLines, isAltBuffer: false);
+  late final _mainBuffer = Buffer(
+    this,
+    maxLines: maxLines,
+    isAltBuffer: false,
+    wordSeparators: wordSeparators,
+  );
 
-  late final _altBuffer = Buffer(this, maxLines: maxLines, isAltBuffer: true);
+  late final _altBuffer = Buffer(
+    this,
+    maxLines: maxLines,
+    isAltBuffer: true,
+    wordSeparators: wordSeparators,
+  );
 
   final _tabStops = TabStops();
 

@@ -18,10 +18,13 @@ class Buffer {
 
   final bool isAltBuffer;
 
+  Set<int>? wordSeparators;
+
   Buffer(
     this.terminal, {
     required this.maxLines,
     required this.isAltBuffer,
+    this.wordSeparators,
   }) {
     for (int i = 0; i < terminal.viewHeight; i++) {
       lines.push(_newEmptyLine());
@@ -464,12 +467,12 @@ class Buffer {
     return line;
   }
 
-  static final _kWordSeparators = <int>{
+  static final _defaultWordSeparators = <int>{
     0,
     r' '.codeUnitAt(0),
     r'.'.codeUnitAt(0),
     r':'.codeUnitAt(0),
-    // r'-'.codeUnitAt(0),
+    r'-'.codeUnitAt(0),
     r'\'.codeUnitAt(0),
     r'"'.codeUnitAt(0),
     r'*'.codeUnitAt(0),
@@ -479,6 +482,7 @@ class Buffer {
   };
 
   BufferRangeLine? getWordBoundary(CellOffset position) {
+    var separators = wordSeparators ?? _defaultWordSeparators;
     if (position.y >= lines.length) {
       return null;
     }
@@ -492,7 +496,7 @@ class Buffer {
         break;
       }
       final char = line.getCodePoint(start - 1);
-      if (_kWordSeparators.contains(char)) {
+      if (separators.contains(char)) {
         break;
       }
       start--;
@@ -503,7 +507,7 @@ class Buffer {
         break;
       }
       final char = line.getCodePoint(end);
-      if (_kWordSeparators.contains(char)) {
+      if (separators.contains(char)) {
         break;
       }
       end++;
