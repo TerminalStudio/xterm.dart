@@ -1,3 +1,6 @@
+# [upcoming]
+* Support customizing word separators for selection [#160]. Thanks [@itzhoujun].
+
 ## [3.4.1] - 2023-01-27
 * Fix Flutter 3.7 incompatibilities [#151], thanks [@jpnurmi].
 
@@ -204,6 +207,8 @@
 [@jpnurmi]: https://github.com/jpnurmi
 [@LucasAschenbach]: https://github.com/LucasAschenbach
 [@tauu]: https://github.com/tauu
+[@itzhoujun]: https://github.com/itzhoujun
+
 
 [#40]: https://github.com/TerminalStudio/xterm.dart/pull/40
 [#43]: https://github.com/TerminalStudio/xterm.dart/pull/43
@@ -246,4 +251,6 @@
 [#141]: https://github.com/TerminalStudio/xterm.dart/pull/141
 
 [#151]: https://github.com/TerminalStudio/xterm.dart/pull/151
+
+[#160]: https://github.com/TerminalStudio/xterm.dart/pull/160
 
