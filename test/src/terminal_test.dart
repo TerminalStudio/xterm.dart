@@ -85,6 +85,34 @@ void main() {
       expect(terminal.buffer.lines[2].toString(), 'd');
     });
   });
+
+  group('Terminal.mouseInput', () {
+    test('applys to the main buffer', () {
+      final terminal = Terminal(
+        wordSeparators: {
+          'z'.codeUnitAt(0),
+        },
+      );
+
+      expect(
+        terminal.mainBuffer.wordSeparators,
+        contains('z'.codeUnitAt(0)),
+      );
+    });
+
+    test('applys to the alternate buffer', () {
+      final terminal = Terminal(
+        wordSeparators: {
+          'z'.codeUnitAt(0),
+        },
+      );
+
+      expect(
+        terminal.altBuffer.wordSeparators,
+        contains('z'.codeUnitAt(0)),
+      );
+    });
+  });
 }
 
 class _TestInputHandler implements TerminalInputHandler {

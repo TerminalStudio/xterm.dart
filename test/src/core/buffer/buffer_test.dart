@@ -138,6 +138,24 @@ void main() {
     });
   });
 
+  group('Buffer.getWordBoundary supports custom word separators', () {
+    test('can set word separators', () {
+      final terminal = Terminal(wordSeparators: {'o'.codeUnitAt(0)});
+
+      terminal.write('Hello World');
+
+      expect(
+        terminal.mainBuffer.getWordBoundary(CellOffset(0, 0)),
+        BufferRangeLine(CellOffset(0, 0), CellOffset(4, 0)),
+      );
+
+      expect(
+        terminal.mainBuffer.getWordBoundary(CellOffset(5, 0)),
+        BufferRangeLine(CellOffset(5, 0), CellOffset(7, 0)),
+      );
+    });
+  });
+
   test('does not delete lines beyond the scroll region', () {
     final terminal = Terminal();
     terminal.resize(10, 10);
