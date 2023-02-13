@@ -62,7 +62,9 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
   /// Flag to toggle os specific behaviors.
   final TerminalTargetPlatform platform;
 
-  Set<int>? wordSeparators;
+  /// Characters that break selection when double clicking. If not set, the
+  /// [Buffer.defaultWordSeparators] will be used.
+  final Set<int>? wordSeparators;
 
   Terminal({
     this.maxLines = 1000,

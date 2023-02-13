@@ -18,7 +18,9 @@ class Buffer {
 
   final bool isAltBuffer;
 
-  Set<int>? wordSeparators;
+  /// Characters that break selection when calling [getWordBoundary]. If null,
+  /// defaults to [defaultWordSeparators].
+  final Set<int>? wordSeparators;
 
   Buffer(
     this.terminal, {
@@ -467,7 +469,7 @@ class Buffer {
     return line;
   }
 
-  static final _defaultWordSeparators = <int>{
+  static final defaultWordSeparators = <int>{
     0,
     r' '.codeUnitAt(0),
     r'.'.codeUnitAt(0),
@@ -482,7 +484,7 @@ class Buffer {
   };
 
   BufferRangeLine? getWordBoundary(CellOffset position) {
-    var separators = wordSeparators ?? _defaultWordSeparators;
+    var separators = wordSeparators ?? defaultWordSeparators;
     if (position.y >= lines.length) {
       return null;
     }
