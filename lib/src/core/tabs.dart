@@ -18,13 +18,13 @@ class TabStops {
     }
   }
 
-  /// Finds the next tab stop between [start] and [end].
+  /// Finds the next tab stop index, which satisfies [start] <= index < [end].
   int? find(int start, int end) {
     if (start >= end) {
       return null;
     }
     end = min(end, _stops.length);
-    for (var i = start + 1; i < end; i++) {
+    for (var i = start; i < end; i++) {
       if (_stops[i]) {
         return i;
       }

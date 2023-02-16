@@ -396,7 +396,7 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
 
   @override
   void tab() {
-    final nextStop = _tabStops.find(_buffer.cursorX, _viewWidth);
+    final nextStop = _tabStops.find(_buffer.cursorX + 1, _viewWidth);
 
     if (nextStop != null) {
       _buffer.setCursorX(nextStop);
