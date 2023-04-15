@@ -32,6 +32,7 @@ class Keytab {
     bool newLineMode = false,
     bool appCursorKeys = false,
     bool appKeyPad = false,
+    bool keyPad = false,
     bool appScreen = false,
     bool macos = false,
     // bool meta,
@@ -73,6 +74,10 @@ class Keytab {
       }
 
       if (record.appKeyPad != null && record.appKeyPad != appKeyPad) {
+        continue;
+      }
+
+      if (record.keyPad != null && record.keyPad != keyPad) {
         continue;
       }
 
