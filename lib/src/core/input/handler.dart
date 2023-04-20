@@ -108,7 +108,7 @@ class KeytabInputHandler implements TerminalInputHandler {
 
   @override
   String? call(TerminalKeyboardEvent event) {
-    final action = _keytab.find(
+    final record = _keytab.find(
       event.key,
       ctrl: event.ctrl,
       alt: event.alt,
@@ -120,11 +120,11 @@ class KeytabInputHandler implements TerminalInputHandler {
       macos: event.platform == TerminalTargetPlatform.macos,
     );
 
-    if (action == null) {
+    if (record == null) {
       return null;
     }
 
-    var result = action.action.unescapedValue();
+    var result = record.action.unescapedValue();
     result = insertModifiers(event, result);
     return result;
   }
