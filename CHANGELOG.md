@@ -1,4 +1,4 @@
-# [upcoming]
+## [3.5.0] - 2023-04-20
 * Support customizing word separators for selection [#160]. Thanks [@itzhoujun].
 * Fix incorrect tab stop handling [#161]. Thanks [@itzhoujun].
 * Added support for Ctrl+Home, Ctrl+End etc [#169]. Thanks [@nuc134r].
