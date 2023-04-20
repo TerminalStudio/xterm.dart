@@ -1,6 +1,7 @@
 # [upcoming]
 * Support customizing word separators for selection [#160]. Thanks [@itzhoujun].
 * Fix incorrect tab stop handling [#161]. Thanks [@itzhoujun].
+* Added support for Ctrl+Home, Ctrl+End etc [#169]. Thanks [@nuc134r].
 
 ## [3.4.1] - 2023-01-27
 * Fix Flutter 3.7 incompatibilities [#151], thanks [@jpnurmi].
@@ -209,6 +210,7 @@
 [@LucasAschenbach]: https://github.com/LucasAschenbach
 [@tauu]: https://github.com/tauu
 [@itzhoujun]: https://github.com/itzhoujun
+[@nuc134r]: https://github.com/nuc134r
 
 
 [#40]: https://github.com/TerminalStudio/xterm.dart/pull/40
@@ -255,4 +257,5 @@
 
 [#160]: https://github.com/TerminalStudio/xterm.dart/pull/160
 [#161]: https://github.com/TerminalStudio/xterm.dart/pull/161
+[#169]: https://github.com/TerminalStudio/xterm.dart/pull/169
 
