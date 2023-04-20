@@ -1,7 +1,7 @@
 import 'package:xterm/src/core/input/keys.dart';
 import 'package:xterm/src/core/input/keytab/keytab.dart';
-import 'package:xterm/src/utils/platform.dart';
 import 'package:xterm/src/core/state.dart';
+import 'package:xterm/src/utils/platform.dart';
 
 /// The key event received from the keyboard, along with the state of the
 /// modifier keys and state of the terminal. Typically consumed by the
@@ -99,16 +99,18 @@ const defaultInputHandler = CascadeInputHandler([
   AltInputHandler(),
 ]);
 
-final _keytab = Keytab.defaultKeytab();
-
 /// A [TerminalInputHandler] that translates key events according to a keytab
-/// file.
+/// file. If no keytab is provided, [Keytab.defaultKeytab] is used.
 class KeytabInputHandler implements TerminalInputHandler {
-  const KeytabInputHandler();
+  const KeytabInputHandler([this.keytab]);
+
+  final Keytab? keytab;
 
   @override
   String? call(TerminalKeyboardEvent event) {
-    final action = _keytab.find(
+    final keytab = this.keytab ?? Keytab.defaultKeytab;
+
+    final record = keytab.find(
       event.key,
       ctrl: event.ctrl,
       alt: event.alt,
@@ -120,11 +122,39 @@ class KeytabInputHandler implements TerminalInputHandler {
       macos: event.platform == TerminalTargetPlatform.macos,
     );
 
-    if (action == null) {
+    if (record == null) {
       return null;
     }
 
-    return action.action.unescapedValue();
+    var result = record.action.unescapedValue();
+    result = insertModifiers(event, result);
+    return result;
+  }
+
+  String insertModifiers(TerminalKeyboardEvent event, String action) {
+    String? code;
+
+    if (event.shift && event.alt && event.ctrl) {
+      code = '8';
+    } else if (event.ctrl && event.alt) {
+      code = '7';
+    } else if (event.shift && event.ctrl) {
+      code = '6';
+    } else if (event.ctrl) {
+      code = '5';
+    } else if (event.shift && event.alt) {
+      code = '4';
+    } else if (event.alt) {
+      code = '3';
+    } else if (event.shift) {
+      code = '2';
+    }
+
+    if (code != null) {
+      return action.replaceAll('*', code);
+    }
+
+    return action;
   }
 }
 

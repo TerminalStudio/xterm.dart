@@ -16,9 +16,7 @@ class Keytab {
     return parser.result;
   }
 
-  factory Keytab.defaultKeytab() {
-    return Keytab.parse(kDefaultKeytab);
-  }
+  static final defaultKeytab = Keytab.parse(kDefaultKeytab);
 
   final String? name;
 
@@ -32,6 +30,7 @@ class Keytab {
     bool newLineMode = false,
     bool appCursorKeys = false,
     bool appKeyPad = false,
+    bool keyPad = false,
     bool appScreen = false,
     bool macos = false,
     // bool meta,
@@ -73,6 +72,10 @@ class Keytab {
       }
 
       if (record.appKeyPad != null && record.appKeyPad != appKeyPad) {
+        continue;
+      }
+
+      if (record.keyPad != null && record.keyPad != keyPad) {
         continue;
       }
 
