@@ -16,9 +16,7 @@ class Keytab {
     return parser.result;
   }
 
-  factory Keytab.defaultKeytab() {
-    return Keytab.parse(kDefaultKeytab);
-  }
+  static final defaultKeytab = Keytab.parse(kDefaultKeytab);
 
   final String? name;
 
