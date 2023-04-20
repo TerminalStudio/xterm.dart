@@ -93,22 +93,22 @@ class CascadeInputHandler implements TerminalInputHandler {
 ///
 /// See also:
 ///  * [CascadeInputHandler]
-const defaultInputHandler = CascadeInputHandler([
-  KeytabInputHandler(),
+final defaultInputHandler = CascadeInputHandler([
+  KeytabInputHandler(Keytab.defaultKeytab),
   CtrlInputHandler(),
   AltInputHandler(),
 ]);
 
-final _keytab = Keytab.defaultKeytab();
-
 /// A [TerminalInputHandler] that translates key events according to a keytab
 /// file.
 class KeytabInputHandler implements TerminalInputHandler {
-  const KeytabInputHandler();
+  const KeytabInputHandler(this.keytab);
+
+  final Keytab keytab;
 
   @override
   String? call(TerminalKeyboardEvent event) {
-    final record = _keytab.find(
+    final record = keytab.find(
       event.key,
       ctrl: event.ctrl,
       alt: event.alt,
