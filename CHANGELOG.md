@@ -1,3 +1,6 @@
+## [3.6.0-pre] - 2023-04-7
+* Basic ZMODEM support
+
 ## [3.5.0] - 2023-04-20
 * Support customizing word separators for selection [#160]. Thanks [@itzhoujun].
 * Fix incorrect tab stop handling [#161]. Thanks [@itzhoujun].

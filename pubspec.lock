@@ -582,7 +582,7 @@ packages:
       name: zmodem
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.0.5"
+    version: "0.0.6"
 sdks:
   dart: ">=2.18.0 <3.0.0"
   flutter: ">=3.0.0"

@@ -3,7 +3,6 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
-import 'package:example/src/virtual_keyboard.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:path/path.dart' as path;
@@ -37,9 +36,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  late final terminal = Terminal(inputHandler: keyboard);
-
-  final keyboard = VirtualKeyboard(defaultInputHandler);
+  late final terminal = Terminal();
 
   var title = host;
 
@@ -56,6 +53,7 @@ class _MyHomePageState extends State<MyHomePage> {
       await SSHSocket.connect(host, port),
       username: username,
       onPasswordRequest: () => password,
+      printTrace: print,
     );
 
     terminal.write('Connected\r\n');
@@ -165,14 +163,7 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor:
             CupertinoTheme.of(context).barBackgroundColor.withOpacity(0.5),
       ),
-      child: Column(
-        children: [
-          Expanded(
-            child: TerminalView(terminal),
-          ),
-          VirtualKeyboardView(keyboard),
-        ],
-      ),
+      child: TerminalView(terminal),
     );
   }
 }

@@ -50,7 +50,7 @@ class ZModemMux {
   final Stream<Uint8List> stdout;
 
   /// The sink to write data to the underlying data channel.
-  final StreamSink stdin;
+  final StreamSink<List<int>> stdin;
 
   /// The callback to receive data that should be written to the terminal.
   ZModemInputHandler? onTerminalInput;
@@ -71,7 +71,7 @@ class ZModemMux {
   /// space is available in local buffers.
   late final StreamSubscription<Uint8List> _stdoutSubscription;
 
-  late final _terminalInputSink = StreamController<List<int>>(
+  late final _terminalSink = StreamController<List<int>>(
       // onPause: _stdoutSubscription.pause,
       // onResume: _stdoutSubscription.resume,
       )
@@ -93,7 +93,6 @@ class ZModemMux {
   /// buffered if a ZModem session is active.
   void terminalWrite(String input) {
     if (_session == null) {
-      print('-->t: ${input}');
       stdin.add(utf8.encode(input) as Uint8List);
     }
   }
@@ -101,8 +100,6 @@ class ZModemMux {
   /// This is the entry point of multiplexing, dispatching data to ZModem or
   /// terminal depending on the current state.
   void _handleStdout(Uint8List chunk) {
-    print('<--: ${chunk.dump()}');
-
     if (_session != null) {
       _handleZModem(chunk);
       return;
@@ -112,7 +109,7 @@ class ZModemMux {
       return;
     }
 
-    _terminalInputSink.add(chunk);
+    _terminalSink.add(chunk);
   }
 
   /// Detects a ZModem session in [chunk] and starts it if found. Returns true
@@ -122,12 +119,11 @@ class ZModemMux {
         chunk.listIndexOf(_zmodemReceiverInit);
 
     if (index != null) {
-      _terminalInputSink.add(Uint8List.sublistView(chunk, 0, index));
+      _terminalSink.add(Uint8List.sublistView(chunk, 0, index));
 
       _session = ZModemCore(
-        onTrace: print,
         onPlainText: (text) {
-          _terminalInputSink.add([text]);
+          _terminalSink.add([text]);
         },
       );
 
@@ -138,32 +134,29 @@ class ZModemMux {
     return false;
   }
 
-  void _handleZModem(Uint8List chunk) {
-    print('_handleZModem');
-    // print('bytes: ${chunk.map((e) => e.toRadixString(16)).toList()}');
-
+  void _handleZModem(Uint8List chunk) async {
     for (final event in _session!.receive(chunk)) {
-      print('event: $event');
-
       /// remote is sz
       if (event is ZFileOfferedEvent) {
         _handleZFileOfferedEvent(event);
       } else if (event is ZFileDataEvent) {
         _handleZFileDataEvent(event);
       } else if (event is ZFileEndEvent) {
-        _handleZFileEndEvent(event);
+        await _handleZFileEndEvent(event);
       } else if (event is ZSessionFinishedEvent) {
-        _handleZSessionFinishedEvent(event);
+        await _handleZSessionFinishedEvent(event);
       }
 
       /// remote is rz
       else if (event is ZReadyToSendEvent) {
-        _handleFileRequestEvent(event);
+        await _handleFileRequestEvent(event);
       } else if (event is ZFileAcceptedEvent) {
-        _handleFileAcceptedEvent(event);
+        await _handleFileAcceptedEvent(event);
       } else if (event is ZFileSkippedEvent) {
         _handleFileSkippedEvent(event);
       }
+
+      _flush();
     }
 
     _flush();
@@ -174,7 +167,6 @@ class ZModemMux {
 
     if (onFileOffer == null) {
       _session!.skipFile();
-      _flush();
       return;
     }
 
@@ -185,37 +177,38 @@ class ZModemMux {
     _receiveSink!.add(event.data as Uint8List);
   }
 
-  void _handleZFileEndEvent(ZFileEndEvent event) async {
+  Future<void> _handleZFileEndEvent(ZFileEndEvent event) async {
     await _closeReceiveSink();
   }
 
-  void _handleZSessionFinishedEvent(ZSessionFinishedEvent event) async {
+  Future<void> _handleZSessionFinishedEvent(ZSessionFinishedEvent event) async {
+    _flush();
     await _reset();
   }
 
-  void _handleFileRequestEvent(ZReadyToSendEvent event) async {
+  Future<void> _handleFileRequestEvent(ZReadyToSendEvent event) async {
     _fileOffers ??= (await onFileRequest?.call())?.iterator;
 
     _moveToNextOffer();
   }
 
-  void _handleFileAcceptedEvent(ZFileAcceptedEvent event) async {
+  Future<void> _handleFileAcceptedEvent(ZFileAcceptedEvent event) async {
     final data = _fileOffers!.current.accept(event.offset);
     var bytesSent = 0;
 
-    final subscription = data.listen(
-      (chunk) {
-        bytesSent += chunk.length;
-        print('bytesSent: $bytesSent');
-        _session!.sendFileData(chunk);
-        _flush();
-      },
-      onDone: () {
-        print('bytesSent fin: $bytesSent');
-        _session!.finishSending(event.offset + bytesSent);
-        _flush();
-      },
+    await stdin.addStream(
+      data.transform(
+        StreamTransformer<Uint8List, Uint8List>.fromHandlers(
+          handleData: (chunk, sink) {
+            bytesSent += chunk.length;
+            _session!.sendFileData(chunk);
+            sink.add(_session!.dataToSend());
+          },
+        ),
+      ),
     );
+
+    _session!.finishSending(event.offset + bytesSent);
   }
 
   void _handleFileSkippedEvent(ZFileSkippedEvent event) {
@@ -225,16 +218,12 @@ class ZModemMux {
 
   /// Sends next file offer if available, or closes the session if not.
   void _moveToNextOffer() {
-    print('_offerNextFileIfNeeded');
-
     if (_fileOffers?.moveNext() != true) {
-      print('no more files');
       _closeSession();
       return;
     }
 
     _session!.offerFile(_fileOffers!.current.info);
-    _flush();
   }
 
   /// Creates a [ZModemOffer] ƒrom the info from remote peer that can be used
@@ -258,20 +247,24 @@ class ZModemMux {
 
   void _createReceiveSink() {
     _receiveSink = StreamController<Uint8List>(
-      // onPause: _stdoutSubscription.pause,
-      onResume: _stdoutSubscription.resume,
+      onPause: () {
+        // _stdoutSubscription.pause();
+      },
+      onResume: () {
+        // _stdoutSubscription.resume();
+      },
     );
   }
 
   Future<void> _closeReceiveSink() async {
+    _stdoutSubscription.resume();
     await _receiveSink?.close();
     _receiveSink = null;
   }
 
   /// Requests remote to close the session.
-  Future<void> _closeSession() async {
+  void _closeSession() {
     _session!.finishSession();
-    _flush();
   }
 
   /// Clears all ZModem state.
@@ -284,15 +277,14 @@ class ZModemMux {
   /// Sends all pending data packets to the remote. No data is automatically
   /// sent to the remote without calling this method.
   void _flush() {
-    final dataToSend = _session!.dataToSend();
-    if (dataToSend.isNotEmpty) {
-      // print('-->: ${dataToSend.dump()}');
+    final dataToSend = _session?.dataToSend();
+    if (dataToSend != null && dataToSend.isNotEmpty) {
       stdin.add(dataToSend);
     }
   }
 }
 
-extension on List<int> {
+extension ListExtension on List<int> {
   String dump() {
     return map((e) => e.toRadixString(16).padLeft(2, '0')).join(' ');
   }
