@@ -5,17 +5,10 @@ import 'package:example/src/platform_menu.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:flutter_pty/flutter_pty.dart';
 import 'package:xterm/xterm.dart';
 
 void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  if (isDesktop) {
-    setupAcrylic();
-  }
-
   runApp(MyApp());
 }
 
@@ -26,13 +19,6 @@ bool get isDesktop {
     TargetPlatform.linux,
     TargetPlatform.macOS,
   ].contains(defaultTargetPlatform);
-}
-
-Future<void> setupAcrylic() async {
-  await Window.initialize();
-  await Window.makeTitlebarTransparent();
-  await Window.setEffect(effect: WindowEffect.aero, color: Color(0xFFFFFFFF));
-  await Window.setBlurViewState(MacOSBlurViewState.active);
 }
 
 class MyApp extends StatelessWidget {

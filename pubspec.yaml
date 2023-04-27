@@ -15,6 +15,7 @@ dependencies:
   equatable: ^2.0.3
   flutter:
     sdk: flutter
+  zmodem: ^0.0.4
 
 dev_dependencies:
   flutter_test:
