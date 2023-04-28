@@ -16,7 +16,7 @@ Map<ShortcutActivator, Intent> get defaultTerminalShortcuts {
 }
 
 final _defaultShortcuts = {
-  SingleActivator(LogicalKeyboardKey.keyC, control: true):
+  SingleActivator(LogicalKeyboardKey.keyC, control: true, shift: true):
       CopySelectionTextIntent.copy,
   SingleActivator(LogicalKeyboardKey.keyV, control: true):
       const PasteTextIntent(SelectionChangedCause.keyboard),
