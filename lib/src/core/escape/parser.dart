@@ -1044,31 +1044,39 @@ class EscapeParser {
     }
   }
 
+  /// Parse a OSC sequence from the queue. Returns true if a sequence was
+  /// found and handled.
   bool _escHandleOSC() {
     final consumed = _consumeOsc();
-    if (!consumed) return false;
+    if (!consumed) {
+      return false;
+    }
 
-    if (_osc.length < 2) {
+    if (_osc.isEmpty) {
       return true;
     }
 
-    final ps = _osc[0];
-    final pt = _osc[1];
+    // Common OSCs
+    if (_osc.length >= 2) {
+      final ps = _osc[0];
+      final pt = _osc[1];
 
-    switch (ps) {
-      case '0':
-        handler.setTitle(pt);
-        handler.setIconName(pt);
-        break;
-      case '1':
-        handler.setIconName(pt);
-        break;
-      case '2':
-        handler.setTitle(pt);
-        break;
-      default:
-        handler.unknownOSC(ps);
+      switch (ps) {
+        case '0':
+          handler.setTitle(pt);
+          handler.setIconName(pt);
+          return true;
+        case '1':
+          handler.setIconName(pt);
+          return true;
+        case '2':
+          handler.setTitle(pt);
+          return true;
+      }
     }
+
+    // Private extensions
+    handler.unknownOSC(_osc[0], _osc.sublist(1));
 
     return true;
   }

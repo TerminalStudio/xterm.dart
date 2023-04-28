@@ -860,10 +860,10 @@ class MockEscapeHandler extends _i1.Mock implements _i2.EscapeHandler {
         returnValueForMissingStub: null,
       );
   @override
-  void unknownOSC(String? ps) => super.noSuchMethod(
+  void unknownOSC(String? code, List<String>? args) => super.noSuchMethod(
         Invocation.method(
           #unknownOSC,
-          [ps],
+          [code],
         ),
         returnValueForMissingStub: null,
       );

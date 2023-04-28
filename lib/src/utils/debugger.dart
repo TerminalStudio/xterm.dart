@@ -589,7 +589,7 @@ class _TerminalDebuggerHandler implements EscapeHandler {
   }
 
   @override
-  void unknownOSC(String ps) {
-    onCommand('unknownOSC($ps)', error: true);
+  void unknownOSC(String code, List<String> args) {
+    onCommand('unknownOSC($code, $args)', error: true);
   }
 }

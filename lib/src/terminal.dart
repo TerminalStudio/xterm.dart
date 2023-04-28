@@ -59,6 +59,10 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
 
   TerminalMouseHandler? mouseHandler;
 
+  /// The callback that is called when the terminal receives a unrecognized
+  /// escape sequence.
+  void Function(String code, List<String> args)? onPrivateOSC;
+
   /// Flag to toggle os specific behaviors.
   final TerminalTargetPlatform platform;
 
@@ -76,6 +80,7 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
     this.platform = TerminalTargetPlatform.unknown,
     this.inputHandler = defaultInputHandler,
     this.mouseHandler = defaultMouseHandler,
+    this.onPrivateOSC,
     this.reflowEnabled = true,
     this.wordSeparators,
   });
@@ -895,7 +900,7 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
   }
 
   @override
-  void unknownOSC(String ps) {
-    // no-op
+  void unknownOSC(String ps, List<String> pt) {
+    onPrivateOSC?.call(ps, pt);
   }
 }

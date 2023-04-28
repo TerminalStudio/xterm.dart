@@ -113,6 +113,89 @@ void main() {
       );
     });
   });
+
+  group('Terminal.onPrivateOSC', () {
+    test(r'works with \a end', () {
+      String? lastCode;
+      List<String>? lastData;
+
+      final terminal = Terminal(
+        onPrivateOSC: (String code, List<String> data) {
+          lastCode = code;
+          lastData = data;
+        },
+      );
+
+      terminal.write('\x1b]6\x07');
+
+      expect(lastCode, '6');
+      expect(lastData, []);
+
+      terminal.write('\x1b]66;hello world\x07');
+
+      expect(lastCode, '66');
+      expect(lastData, ['hello world']);
+
+      terminal.write('\x1b]666;hello;world\x07');
+
+      expect(lastCode, '666');
+      expect(lastData, ['hello', 'world']);
+
+      terminal.write('\x1b]hello;world\x07');
+
+      expect(lastCode, 'hello');
+      expect(lastData, ['world']);
+    });
+
+    test(r'works with \x1b\ end', () {
+      String? lastCode;
+      List<String>? lastData;
+
+      final terminal = Terminal(
+        onPrivateOSC: (String code, List<String> data) {
+          lastCode = code;
+          lastData = data;
+        },
+      );
+
+      terminal.write('\x1b]6\x1b\\');
+
+      expect(lastCode, '6');
+      expect(lastData, []);
+
+      terminal.write('\x1b]66;hello world\x1b\\');
+
+      expect(lastCode, '66');
+      expect(lastData, ['hello world']);
+
+      terminal.write('\x1b]666;hello;world\x1b\\');
+
+      expect(lastCode, '666');
+      expect(lastData, ['hello', 'world']);
+
+      terminal.write('\x1b]hello;world\x1b\\');
+
+      expect(lastCode, 'hello');
+      expect(lastData, ['world']);
+    });
+
+    test('do not receive common osc', () {
+      String? lastCode;
+      List<String>? lastData;
+
+      final terminal = Terminal(
+        onPrivateOSC: (String code, List<String> data) {
+          lastCode = code;
+          lastData = data;
+        },
+      );
+
+      terminal.write('\x1b]0;hello world\x07');
+
+      expect(lastCode, isNull);
+      expect(lastData, isNull);
+    });
+  });
 }
 
 class _TestInputHandler implements TerminalInputHandler {
