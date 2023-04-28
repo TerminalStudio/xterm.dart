@@ -1,4 +1,8 @@
-## [3.6.0-pre] - 2023-04-7
+## [3.6.1-pre] - 2023-04-28
+* Add Termianl.onPrivateOSC callback
+* Copy shortcut on Windows default to Ctrl+Shift+V (#173)
+
+## [3.6.0-pre] - 2023-04-27
 * Basic ZMODEM support
 
 ## [3.5.0] - 2023-04-20
