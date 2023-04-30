@@ -151,6 +151,10 @@ class _MyHomePageState extends State<MyHomePage> {
               WithProgress(onProgress: (bytes) => updateProgress(file, bytes)),
             )
             .cast<Uint8List>(),
+        onSkip: () {
+          terminal.write('\r\n');
+          terminal.write('Rejected ${file.name}');
+        },
       ),
     );
   }
