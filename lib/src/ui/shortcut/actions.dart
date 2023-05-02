@@ -10,6 +10,7 @@ class TerminalActions extends StatelessWidget {
     super.key,
     required this.terminal,
     required this.controller,
+    required this.actions,
     required this.child,
   });
 
@@ -18,6 +19,8 @@ class TerminalActions extends StatelessWidget {
   final TerminalController controller;
 
   final Widget child;
+
+  final Map<Type, Action<Intent>>? actions;
 
   @override
   Widget build(BuildContext context) {
@@ -60,6 +63,7 @@ class TerminalActions extends StatelessWidget {
             return null;
           },
         ),
+        ...?actions,
       },
       child: child,
     );

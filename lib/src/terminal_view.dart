@@ -45,6 +45,7 @@ class TerminalView extends StatefulWidget {
     this.alwaysShowCursor = false,
     this.deleteDetection = false,
     this.shortcuts,
+    this.actions,
     this.readOnly = false,
     this.hardwareKeyboardOnly = false,
     this.simulateScroll = true,
@@ -125,6 +126,9 @@ class TerminalView extends StatefulWidget {
   /// Shortcuts for this terminal. This has higher priority than input handler
   /// of the terminal If not provided, [defaultTerminalShortcuts] will be used.
   final Map<ShortcutActivator, Intent>? shortcuts;
+
+  /// Optional actions for this terminal.
+  final Map<Type, Action<Intent>>? actions;
 
   /// True if no input should send to the terminal.
   final bool readOnly;
@@ -287,6 +291,7 @@ class TerminalViewState extends State<TerminalView> {
     child = TerminalActions(
       terminal: widget.terminal,
       controller: _controller,
+      actions: widget.actions,
       child: child,
     );
 
