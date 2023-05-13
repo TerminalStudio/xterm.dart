@@ -1,8 +1,10 @@
 import 'dart:math' show min;
 import 'dart:typed_data';
 
+import 'package:xterm/src/core/buffer/cell_offset.dart';
 import 'package:xterm/src/core/cell.dart';
 import 'package:xterm/src/core/cursor.dart';
+import 'package:xterm/src/utils/circular_buffer.dart';
 import 'package:xterm/src/utils/unicode_v11.dart';
 
 const _cellSize = 4;
@@ -15,7 +17,7 @@ const _cellAttributes = 2;
 
 const _cellContent = 3;
 
-class BufferLine {
+class BufferLine with IndexedItem {
   BufferLine(
     this._length, {
     this.isWrapped = false,
@@ -30,6 +32,10 @@ class BufferLine {
   var isWrapped = false;
 
   int get length => _length;
+
+  final _anchors = <CellAnchor>[];
+
+  List<CellAnchor> get anchors => _anchors;
 
   int getForeground(int index) {
     return _data[index * _cellSize + _cellForeground];
@@ -126,6 +132,8 @@ class BufferLine {
     _data[offset + _cellContent] = 0;
   }
 
+  /// Erase cells whose index satisfies [start] <= index < [end]. Erased cells
+  /// are filled with [style].
   void eraseRange(int start, int end, CursorStyle style) {
     // reset cell one to the left if start is second cell of a wide char
     if (start > 0 && getWidth(start - 1) == 2) {
@@ -143,6 +151,8 @@ class BufferLine {
     }
   }
 
+  /// Remove [count] cells starting at [start]. Cells that are empty after the
+  /// removal are filled with [style].
   void removeCells(int start, int count, [CursorStyle? style]) {
     assert(start >= 0 && start < _length);
     assert(count >= 0 && start + count <= _length);
@@ -165,8 +175,21 @@ class BufferLine {
     if (start > 0 && getWidth(start - 1) == 2) {
       eraseCell(start - 1, style);
     }
+
+    // Update anchors, remove anchors that are inside the removed range.
+    for (var i = 0; i < _anchors.length; i++) {
+      final anchor = _anchors[i];
+      if (anchor.x >= start) {
+        if (anchor.x < start + count) {
+          anchor.dispose();
+        } else {
+          anchor.reposition(anchor.x - count);
+        }
+      }
+    }
   }
 
+  /// Inserts [count] cells at [start]. New cells are initialized with [style].
   void insertCells(int start, int count, [CursorStyle? style]) {
     style ??= CursorStyle.empty;
 
@@ -191,6 +214,19 @@ class BufferLine {
     if (getWidth(_length - 1) == 2) {
       eraseCell(_length - 1, style);
     }
+
+    // Update anchors, move anchors that are after the inserted range.
+    for (var i = 0; i < _anchors.length; i++) {
+      final anchor = _anchors[i];
+      if (anchor.x >= start + count) {
+        anchor.reposition(anchor.x + count);
+
+        // Remove anchors that are now outside the buffer.
+        if (anchor.x >= _length) {
+          anchor.dispose();
+        }
+      }
+    }
   }
 
   void resize(int length) {
@@ -211,8 +247,17 @@ class BufferLine {
     }
 
     _length = length;
+
+    for (var i = 0; i < _anchors.length; i++) {
+      final anchor = _anchors[i];
+      if (anchor.x > _length) {
+        anchor.reposition(_length);
+      }
+    }
   }
 
+  /// Returns the offset of the last cell that has content from the start of
+  /// the line.
   int getTrimmedLength([int? cols]) {
     final maxCols = _data.length ~/ _cellSize;
 
@@ -239,6 +284,8 @@ class BufferLine {
     return 0;
   }
 
+  /// Copies [len] cells from [src] starting at [srcCol] to [dstCol] at this
+  /// line.
   void copyFrom(BufferLine src, int srcCol, int dstCol, int len) {
     resize(dstCol + len);
 
@@ -296,8 +343,76 @@ class BufferLine {
     return builder.toString();
   }
 
+  CellAnchor createAnchor(int offset) {
+    final anchor = CellAnchor(offset, owner: this);
+    _anchors.add(anchor);
+    return anchor;
+  }
+
+  void dispose() {
+    for (final anchor in _anchors) {
+      anchor.dispose();
+    }
+  }
+
   @override
   String toString() {
     return getText();
+  }
+}
+
+/// A handle to a cell in a [BufferLine] that can be used to track the location
+/// of the cell. Anchors are guaranteed to be stable, retaining their relative
+/// position to each other after mutations to the buffer.
+class CellAnchor {
+  CellAnchor(int offset, {BufferLine? owner})
+      : _offset = offset,
+        _owner = owner;
+
+  int _offset;
+
+  int get x {
+    return _offset;
+  }
+
+  int get y {
+    assert(attached);
+    return _owner!.index;
+  }
+
+  CellOffset get offset {
+    assert(attached);
+    return CellOffset(_offset, _owner!.index);
+  }
+
+  BufferLine? _owner;
+
+  BufferLine? get line => _owner;
+
+  bool get attached => _owner?.attached ?? false;
+
+  void reparent(BufferLine owner, int offset) {
+    _owner?._anchors.remove(this);
+    _owner = owner;
+    _owner?._anchors.add(this);
+    _offset = offset;
+  }
+
+  void reposition(int offset) {
+    _offset = offset;
+  }
+
+  void dispose() {
+    _owner?._anchors.remove(this);
+    _owner = null;
+  }
+
+  @override
+  String toString() {
+    if (attached) {
+      return 'CellAnchor($x, $y)';
+    } else {
+      return 'CellAnchor($x, detached)';
+    }
   }
 }

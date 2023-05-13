@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:meta/meta.dart';
 import 'package:xterm/src/core/buffer/cell_offset.dart';
+import 'package:xterm/src/core/buffer/line.dart';
 import 'package:xterm/src/core/buffer/range.dart';
 import 'package:xterm/src/core/buffer/range_block.dart';
 import 'package:xterm/src/core/buffer/range_line.dart';
@@ -16,44 +17,56 @@ class TerminalController with ChangeNotifier {
         _pointerInputs = pointerInputs,
         _suspendPointerInputs = suspendPointerInput;
 
-  BufferRange? _selection;
-
-  BufferRange? get selection => _selection;
-
-  SelectionMode _selectionMode;
+  CellAnchor? _selectionBase;
+  CellAnchor? _selectionExtent;
 
   SelectionMode get selectionMode => _selectionMode;
-
-  /// Set selection on the terminal to [range]. For now [range] could be either
-  /// a [BufferRangeLine] or a [BufferRangeBlock]. This is not effected by
-  /// [selectionMode].
-  PointerInputs _pointerInputs;
+  SelectionMode _selectionMode;
 
   /// The set of pointer events which will be used as mouse input for the terminal.
   PointerInputs get pointerInput => _pointerInputs;
-
-  bool _suspendPointerInputs;
+  PointerInputs _pointerInputs;
 
   /// True if sending pointer events to the terminal is suspended.
   bool get suspendedPointerInputs => _suspendPointerInputs;
+  bool _suspendPointerInputs;
 
-  void setSelection(BufferRange? range) {
-    range = range?.normalized;
+  List<TerminalHighlight> get highlights => _highlights;
+  final _highlights = <TerminalHighlight>[];
 
-    if (_selection != range) {
-      _selection = range;
-      notifyListeners();
+  BufferRange? get selection {
+    final base = _selectionBase;
+    final extent = _selectionExtent;
+
+    if (base == null || extent == null) {
+      return null;
     }
+
+    if (!base.attached || !extent.attached) {
+      return null;
+    }
+
+    return _createRange(base.offset, extent.offset);
   }
 
-  /// Set selection on the terminal to the minimum range that contains both
-  /// [begin] and [end]. The type of range is determined by [selectionMode].
-  void setSelectionRange(CellOffset begin, CellOffset end) {
-    final range = _modeRange(begin, end);
-    setSelection(range);
+  /// Set selection on the terminal from [base] to [extent]. This method takes
+  /// the ownership of [base] and [extent] and will dispose them when the
+  /// selection is cleared or changed.
+  void setSelection(CellAnchor base, CellAnchor extent, {SelectionMode? mode}) {
+    _selectionBase?.dispose();
+    _selectionBase = base;
+
+    _selectionExtent?.dispose();
+    _selectionExtent = extent;
+
+    if (mode != null) {
+      _selectionMode = mode;
+    }
+
+    notifyListeners();
   }
 
-  BufferRange _modeRange(CellOffset begin, CellOffset end) {
+  BufferRange _createRange(CellOffset begin, CellOffset end) {
     switch (selectionMode) {
       case SelectionMode.line:
         return BufferRangeLine(begin, end);
@@ -73,19 +86,15 @@ class TerminalController with ChangeNotifier {
     }
     // Set the new mode.
     _selectionMode = newSelectionMode;
-    // Check if an active selection exists.
-    final selection = _selection;
-    if (selection == null) {
-      notifyListeners();
-      return;
-    }
-    // Convert the selection into a selection corresponding to the new mode.
-    setSelection(_modeRange(selection.begin, selection.end));
+    notifyListeners();
   }
 
   /// Clears the current selection.
   void clearSelection() {
-    _selection = null;
+    _selectionBase?.dispose();
+    _selectionBase = null;
+    _selectionExtent?.dispose();
+    _selectionExtent = null;
     notifyListeners();
   }
 
@@ -110,11 +119,54 @@ class TerminalController with ChangeNotifier {
         : _pointerInputs.inputs.contains(pointerInput);
   }
 
-  void addHighlight(BufferRange? range) {
-    // TODO: implement addHighlight
+  TerminalHighlight addHighlight({
+    required CellAnchor p1,
+    required CellAnchor p2,
+    required Color color,
+  }) {
+    final highlight = TerminalHighlight._(
+      this,
+      p1: p1,
+      p2: p2,
+      color: color,
+    );
+    _highlights.add(highlight);
+    notifyListeners();
+    return highlight;
   }
 
-  void clearHighlight() {
-    // TODO: implement clearHighlight
+  void removeHighlight(TerminalHighlight highlight) {
+    _highlights.remove(highlight);
+    notifyListeners();
+  }
+}
+
+class TerminalHighlight {
+  final TerminalController owner;
+
+  final CellAnchor p1;
+
+  final CellAnchor p2;
+
+  final Color color;
+
+  TerminalHighlight._(
+    this.owner, {
+    required this.p1,
+    required this.p2,
+    required this.color,
+  });
+
+  /// Returns the range of the highlight. May be null if the anchors that
+  /// define the highlight are not attached to the terminal.
+  BufferRange? get range {
+    if (!p1.attached || !p2.attached) {
+      return null;
+    }
+    return BufferRangeLine(p1.offset, p2.offset);
+  }
+
+  void dispose() {
+    owner.removeHighlight(this);
   }
 }

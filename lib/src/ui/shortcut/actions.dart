@@ -4,6 +4,7 @@ import 'package:xterm/src/core/buffer/cell_offset.dart';
 import 'package:xterm/src/core/buffer/range_line.dart';
 import 'package:xterm/src/terminal.dart';
 import 'package:xterm/src/ui/controller.dart';
+import 'package:xterm/src/ui/selection_mode.dart';
 
 class TerminalActions extends StatelessWidget {
   const TerminalActions({
@@ -52,10 +53,15 @@ class TerminalActions extends StatelessWidget {
         SelectAllTextIntent: CallbackAction<SelectAllTextIntent>(
           onInvoke: (intent) {
             controller.setSelection(
-              BufferRangeLine(
-                CellOffset(0, terminal.buffer.height - terminal.viewHeight),
-                CellOffset(terminal.viewWidth, terminal.buffer.height - 1),
+              terminal.buffer.createAnchor(
+                0,
+                terminal.buffer.height - terminal.viewHeight,
               ),
+              terminal.buffer.createAnchor(
+                terminal.viewWidth,
+                terminal.buffer.height - 1,
+              ),
+              mode: SelectionMode.line,
             );
             return null;
           },

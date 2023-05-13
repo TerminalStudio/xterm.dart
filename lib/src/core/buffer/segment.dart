@@ -1,6 +1,7 @@
 import 'package:xterm/src/core/buffer/cell_offset.dart';
 import 'package:xterm/src/core/buffer/range.dart';
 
+/// A BufferSegment represents a range within a line.
 class BufferSegment {
   /// The range that this segment belongs to.
   final BufferRange range;

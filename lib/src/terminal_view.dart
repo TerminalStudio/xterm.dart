@@ -330,6 +330,14 @@ class TerminalViewState extends State<TerminalView> {
     _customTextEditKey.currentState?.closeKeyboard();
   }
 
+  Rect get cursorRect {
+    final offset = CellOffset(
+      widget.terminal.buffer.cursorX,
+      widget.terminal.buffer.absoluteCursorY,
+    );
+    return renderTerminal.getOffset(offset) & renderTerminal.charSize;
+  }
+
   void _onTapUp(TapUpDetails details) {
     final offset = renderTerminal.getCellOffset(details.localPosition);
     widget.onTapUp?.call(details, offset);

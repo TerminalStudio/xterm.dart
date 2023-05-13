@@ -138,6 +138,53 @@ void main() {
     });
   });
 
+  group('Buffer.insertLines()', () {
+    test('works', () {
+      final terminal = Terminal();
+
+      for (var i = 0; i < 10; i++) {
+        terminal.write('line$i\r\n');
+      }
+
+      print(terminal.buffer);
+
+      terminal.setMargins(2, 6);
+      terminal.setCursor(0, 4);
+
+      print(terminal.buffer.absoluteCursorY);
+
+      terminal.buffer.insertLines(1);
+
+      print(terminal.buffer);
+
+      expect(terminal.buffer.lines[3].toString(), 'line3');
+      expect(terminal.buffer.lines[4].toString(), ''); // inserted
+      expect(terminal.buffer.lines[5].toString(), 'line4'); // moved
+      expect(terminal.buffer.lines[6].toString(), 'line5'); // moved
+      expect(terminal.buffer.lines[7].toString(), 'line7');
+    });
+
+    test('has no effect if cursor is out of scroll region', () {
+      final terminal = Terminal();
+
+      for (var i = 0; i < 10; i++) {
+        terminal.write('line$i\r\n');
+      }
+
+      terminal.setMargins(2, 6);
+      terminal.setCursor(0, 1);
+
+      terminal.buffer.insertLines(1);
+
+      expect(terminal.buffer.lines[2].toString(), 'line2');
+      expect(terminal.buffer.lines[3].toString(), 'line3');
+      expect(terminal.buffer.lines[4].toString(), 'line4');
+      expect(terminal.buffer.lines[5].toString(), 'line5');
+      expect(terminal.buffer.lines[6].toString(), 'line6');
+      expect(terminal.buffer.lines[7].toString(), 'line7');
+    });
+  });
+
   group('Buffer.getWordBoundary supports custom word separators', () {
     test('can set word separators', () {
       final terminal = Terminal(wordSeparators: {'o'.codeUnitAt(0)});
