@@ -45,6 +45,7 @@ class TerminalView extends StatefulWidget {
     this.alwaysShowCursor = false,
     this.deleteDetection = false,
     this.shortcuts,
+    this.onKey,
     this.readOnly = false,
     this.hardwareKeyboardOnly = false,
     this.simulateScroll = true,
@@ -125,6 +126,10 @@ class TerminalView extends StatefulWidget {
   /// Shortcuts for this terminal. This has higher priority than input handler
   /// of the terminal If not provided, [defaultTerminalShortcuts] will be used.
   final Map<ShortcutActivator, Intent>? shortcuts;
+
+  /// Keyboard event handler of the terminal. This has higher priority than
+  /// [shortcuts] and input handler of the terminal.
+  final FocusOnKeyCallback? onKey;
 
   /// True if no input should send to the terminal.
   final bool readOnly;
@@ -268,7 +273,7 @@ class TerminalViewState extends State<TerminalView> {
             widget.terminal.keyInput(TerminalKey.enter);
           }
         },
-        onKey: _onKeyEvent,
+        onKey: _handleKeyEvent,
         readOnly: widget.readOnly,
         child: child,
       );
@@ -280,7 +285,7 @@ class TerminalViewState extends State<TerminalView> {
         autofocus: widget.autofocus,
         onInsert: _onInsert,
         onComposing: _onComposing,
-        onKey: _onKeyEvent,
+        onKey: _handleKeyEvent,
       );
     }
 
@@ -388,7 +393,12 @@ class TerminalViewState extends State<TerminalView> {
     setState(() => _composingText = text);
   }
 
-  KeyEventResult _onKeyEvent(FocusNode focusNode, RawKeyEvent event) {
+  KeyEventResult _handleKeyEvent(FocusNode focusNode, RawKeyEvent event) {
+    final resultOverride = widget.onKey?.call(focusNode, event);
+    if (resultOverride != null && resultOverride != KeyEventResult.ignored) {
+      return resultOverride;
+    }
+
     // ignore: invalid_use_of_protected_member
     final shortcutResult = _shortcutManager.handleKeypress(
       focusNode.context!,
