@@ -299,6 +299,7 @@ class _HomeState extends State<Home> {
   }
 }
 
+/// The state of the suggestion overlay.
 class SuggestionViewController extends ChangeNotifier {
   final scrollController = ScrollController();
 
@@ -361,6 +362,7 @@ class SuggestionViewController extends ChangeNotifier {
   }
 }
 
+/// The suggestion popup shown above the terminal when user is typing a command.
 class SuggestionView extends StatelessWidget {
   const SuggestionView(
     this.controller, {
@@ -432,6 +434,8 @@ class SuggestionView extends StatelessWidget {
   }
 }
 
+/// The area at the bottom of [SuggestionView] that shows the description of
+/// the currently selected suggestion.
 class SuggestionDescriptionView extends StatefulWidget {
   const SuggestionDescriptionView(
     this.suggestion, {
@@ -474,7 +478,7 @@ class _SuggestionDescriptionViewState extends State<SuggestionDescriptionView> {
   }
 }
 
-/// An item in the suggestion list.
+/// An item in [SuggestionView].
 class SuggestionTile extends StatelessWidget {
   const SuggestionTile({
     super.key,
