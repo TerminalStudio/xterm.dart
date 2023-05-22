@@ -77,4 +77,21 @@ void main() {
       expect(terminalView.selection, isNull);
     });
   });
+
+  group('TerminalController.highlight', () {
+    test('works', () {
+      final terminal = Terminal();
+      final controller = TerminalController();
+
+      final highlight = controller.highlight(
+        p1: terminal.buffer.createAnchor(5, 5),
+        p2: terminal.buffer.createAnchor(5, 10),
+        color: Colors.yellow,
+      );
+      assert(controller.highlights.length == 1);
+
+      highlight.dispose();
+      assert(controller.highlights.isEmpty);
+    });
+  });
 }

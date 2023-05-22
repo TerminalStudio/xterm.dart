@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:meta/meta.dart';
+import 'package:xterm/src/base/disposable.dart';
 import 'package:xterm/src/core/buffer/cell_offset.dart';
 import 'package:xterm/src/core/buffer/line.dart';
 import 'package:xterm/src/core/buffer/range.dart';
@@ -119,29 +120,34 @@ class TerminalController with ChangeNotifier {
         : _pointerInputs.inputs.contains(pointerInput);
   }
 
-  TerminalHighlight addHighlight({
+  /// Creates a new highlight on the terminal from [p1] to [p2] with the given
+  /// [color]. The highlight will be removed when the returned object is
+  /// disposed.
+  TerminalHighlight highlight({
     required CellAnchor p1,
     required CellAnchor p2,
     required Color color,
   }) {
-    final highlight = TerminalHighlight._(
+    final highlight = TerminalHighlight(
       this,
       p1: p1,
       p2: p2,
       color: color,
     );
+
     _highlights.add(highlight);
     notifyListeners();
-    return highlight;
-  }
 
-  void removeHighlight(TerminalHighlight highlight) {
-    _highlights.remove(highlight);
-    notifyListeners();
+    highlight.registerCallback(() {
+      _highlights.remove(highlight);
+      notifyListeners();
+    });
+
+    return highlight;
   }
 }
 
-class TerminalHighlight {
+class TerminalHighlight with Disposable {
   final TerminalController owner;
 
   final CellAnchor p1;
@@ -150,7 +156,7 @@ class TerminalHighlight {
 
   final Color color;
 
-  TerminalHighlight._(
+  TerminalHighlight(
     this.owner, {
     required this.p1,
     required this.p2,
@@ -164,9 +170,5 @@ class TerminalHighlight {
       return null;
     }
     return BufferRangeLine(p1.offset, p2.offset);
-  }
-
-  void dispose() {
-    owner.removeHighlight(this);
   }
 }
