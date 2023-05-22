@@ -1,7 +1,7 @@
 import 'package:xterm/src/core/input/keys.dart';
 import 'package:xterm/src/core/input/keytab/keytab.dart';
 import 'package:xterm/src/core/state.dart';
-import 'package:xterm/src/utils/platform.dart';
+import 'package:xterm/src/core/platform.dart';
 
 /// The key event received from the keyboard, along with the state of the
 /// modifier keys and state of the terminal. Typically consumed by the

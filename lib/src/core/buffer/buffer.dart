@@ -8,7 +8,7 @@ import 'package:xterm/src/core/charset.dart';
 import 'package:xterm/src/core/cursor.dart';
 import 'package:xterm/src/core/reflow.dart';
 import 'package:xterm/src/core/state.dart';
-import 'package:xterm/src/utils/circular_list.dart';
+import 'package:xterm/src/utils/circular_buffer.dart';
 import 'package:xterm/src/utils/unicode_v11.dart';
 
 class Buffer {
@@ -59,7 +59,7 @@ class Buffer {
 
   /// lines of the buffer. the length of [lines] should always be equal or
   /// greater than [viewHeight].
-  late final lines = CircularList<BufferLine>(maxLines);
+  late final lines = IndexAwareCircularBuffer<BufferLine>(maxLines);
 
   /// Total number of lines in the buffer. Always equal or greater than
   /// [viewHeight].
@@ -390,11 +390,23 @@ class Buffer {
 
     setCursorX(0);
 
-    for (var i = 0; i < count; i++) {
-      final shiftStart = absoluteCursorY;
-      final shiftCount = absoluteMarginBottom - absoluteCursorY;
-      lines.shiftElements(shiftStart, shiftCount, 1);
-      lines[absoluteCursorY] = _newEmptyLine();
+    // Number of lines from the cursor to the bottom of the scrollable region
+    // including the cursor itself.
+    final linesBelow = absoluteMarginBottom - absoluteCursorY + 1;
+
+    // Number of empty lines to insert.
+    final linesToInsert = min(count, linesBelow);
+
+    // Number of lines to move up.
+    final linesToMove = linesBelow - linesToInsert;
+
+    for (var i = 0; i < linesToMove; i++) {
+      final index = absoluteMarginBottom - i;
+      lines[index] = lines.swap(index - linesToInsert, _newEmptyLine());
+    }
+
+    for (var i = linesToMove; i < linesToInsert; i++) {
+      lines[absoluteCursorY + i] = _newEmptyLine();
     }
   }
 
@@ -423,8 +435,7 @@ class Buffer {
   }
 
   void resize(int oldWidth, int oldHeight, int newWidth, int newHeight) {
-    lines.forEach((item) => item.resize(newWidth));
-
+    // 1. Adjust the height.
     if (newHeight > oldHeight) {
       // Grow larger
       for (var i = 0; i < newHeight - oldHeight; i++) {
@@ -435,7 +446,7 @@ class Buffer {
         }
       }
     } else {
-      // Shrink smallerclear
+      // Shrink smaller
       for (var i = 0; i < oldHeight - newHeight; i++) {
         if (_cursorY > newHeight - 1) {
           _cursorY--;
@@ -449,8 +460,9 @@ class Buffer {
     _cursorX = _cursorX.clamp(0, newWidth - 1);
     _cursorY = _cursorY.clamp(0, newHeight - 1);
 
-    if (terminal.reflowEnabled) {
-      if (!isAltBuffer && newWidth != oldWidth) {
+    // 2. Adjust the width.
+    if (newWidth != oldWidth) {
+      if (terminal.reflowEnabled && !isAltBuffer) {
         final reflowResult = reflow(lines, oldWidth, newWidth);
 
         while (reflowResult.length < newHeight) {
@@ -458,8 +470,24 @@ class Buffer {
         }
 
         lines.replaceWith(reflowResult);
+      } else {
+        lines.forEach((item) => item.resize(newWidth));
       }
     }
+  }
+
+  /// Create a new [CellAnchor] at the specified [x] and [y] coordinates.
+  CellAnchor createAnchor(int x, int y) {
+    return lines[y].createAnchor(x);
+  }
+
+  /// Create a new [CellAnchor] at the specified [x] and [y] coordinates.
+  CellAnchor createAnchorFromOffset(CellOffset offset) {
+    return lines[offset.y].createAnchor(offset.x);
+  }
+
+  CellAnchor createAnchorFromCursor() {
+    return createAnchor(cursorX, absoluteCursorY);
   }
 
   /// Create a new empty [BufferLine] with the current [viewWidth] if [width]

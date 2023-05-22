@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/widgets.dart';
 
 class KeyboardVisibilty extends StatefulWidget {
@@ -36,7 +34,7 @@ class KeyboardVisibiltyState extends State<KeyboardVisibilty>
 
   @override
   void didChangeMetrics() {
-    final bottomInset = window.viewInsets.bottom;
+    final bottomInset = View.of(context).viewInsets.bottom;
 
     if (bottomInset != _lastBottomInset) {
       if (bottomInset > 0) {

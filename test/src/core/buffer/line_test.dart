@@ -103,4 +103,20 @@ void main() {
       expect(line.length, equals(20));
     });
   });
+
+  group('Buffer.createAnchor', () {
+    test('works', () {
+      final terminal = Terminal();
+      final line = terminal.buffer.lines[3];
+      final anchor = line.createAnchor(5);
+
+      terminal.insertLines(5);
+      expect(anchor.x, 5);
+      expect(anchor.y, 8);
+
+      terminal.buffer.clear();
+      expect(line.attached, false);
+      expect(anchor.attached, false);
+    });
+  });
 }

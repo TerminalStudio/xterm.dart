@@ -78,3 +78,5 @@ build/
 example/lib/debug.dart
 
 coverage/
+
+example2/

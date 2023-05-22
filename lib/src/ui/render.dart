@@ -1,13 +1,13 @@
 import 'dart:math' show min, max;
 import 'dart:ui';
 
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/widgets.dart';
 import 'package:xterm/src/core/buffer/cell_flags.dart';
 import 'package:xterm/src/core/buffer/cell_offset.dart';
 import 'package:xterm/src/core/buffer/range.dart';
+import 'package:xterm/src/core/buffer/segment.dart';
 import 'package:xterm/src/core/cell.dart';
 import 'package:xterm/src/core/buffer/line.dart';
 import 'package:xterm/src/core/mouse/button.dart';
@@ -18,6 +18,7 @@ import 'package:xterm/src/ui/controller.dart';
 import 'package:xterm/src/ui/cursor_type.dart';
 import 'package:xterm/src/ui/palette_builder.dart';
 import 'package:xterm/src/ui/paragraph_cache.dart';
+import 'package:xterm/src/ui/selection_mode.dart';
 import 'package:xterm/src/ui/terminal_size.dart';
 import 'package:xterm/src/ui/terminal_text_style.dart';
 import 'package:xterm/src/ui/terminal_theme.dart';
@@ -166,6 +167,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
 
   /// The size of a single character in [_textStyle] in pixels. [_textStyle] is
   /// expected to be monospace.
+  Size get charSize => _charSize;
   late Size _charSize;
 
   TerminalSize? _viewportSize;
@@ -280,7 +282,10 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
     final y = offset.dy - _padding.top + _scrollOffset;
     final row = y ~/ _charSize.height;
     final col = x ~/ _charSize.width;
-    return CellOffset(col, row);
+    return CellOffset(
+      col.clamp(0, _terminal.viewWidth - 1),
+      row.clamp(0, _terminal.buffer.lines.length - 1),
+    );
   }
 
   /// Selects entire words in the terminal that contains [from] and [to].
@@ -289,12 +294,21 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
     final fromBoundary = _terminal.buffer.getWordBoundary(fromOffset);
     if (fromBoundary == null) return;
     if (to == null) {
-      _controller.setSelection(fromBoundary);
+      _controller.setSelection(
+        _terminal.buffer.createAnchorFromOffset(fromBoundary.begin),
+        _terminal.buffer.createAnchorFromOffset(fromBoundary.end),
+        mode: SelectionMode.line,
+      );
     } else {
       final toOffset = getCellOffset(to);
       final toBoundary = _terminal.buffer.getWordBoundary(toOffset);
       if (toBoundary == null) return;
-      _controller.setSelection(fromBoundary.merge(toBoundary));
+      final range = fromBoundary.merge(toBoundary);
+      _controller.setSelection(
+        _terminal.buffer.createAnchorFromOffset(range.begin),
+        _terminal.buffer.createAnchorFromOffset(range.end),
+        mode: SelectionMode.line,
+      );
     }
   }
 
@@ -303,13 +317,19 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
   void selectCharacters(Offset from, [Offset? to]) {
     final fromPosition = getCellOffset(from);
     if (to == null) {
-      _controller.setSelectionRange(fromPosition, fromPosition);
+      _controller.setSelection(
+        _terminal.buffer.createAnchorFromOffset(fromPosition),
+        _terminal.buffer.createAnchorFromOffset(fromPosition),
+      );
     } else {
       var toPosition = getCellOffset(to);
       if (toPosition.x >= fromPosition.x) {
         toPosition = CellOffset(toPosition.x + 1, toPosition.y);
       }
-      _controller.setSelectionRange(fromPosition, toPosition);
+      _controller.setSelection(
+        _terminal.buffer.createAnchorFromOffset(fromPosition),
+        _terminal.buffer.createAnchorFromOffset(toPosition),
+      );
     }
   }
 
@@ -449,6 +469,13 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
       }
     }
 
+    _paintHighlights(
+      canvas,
+      _controller.highlights,
+      effectFirstLine,
+      effectLastLine,
+    );
+
     if (_controller.selection != null) {
       _paintSelection(
         canvas,
@@ -564,28 +591,62 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
         break;
       }
 
-      final start = segment.start ?? 0;
-      final end = segment.end ?? _terminal.viewWidth;
-
-      final startOffset = Offset(
-        start * _charSize.width,
-        segment.line * _charSize.height + _lineOffset,
-      );
-
-      final endOffset = Offset(
-        end * _charSize.width,
-        (segment.line + 1) * _charSize.height + _lineOffset,
-      );
-
-      final paint = Paint()
-        ..color = _theme.selection
-        ..strokeWidth = 1;
-
-      canvas.drawRect(
-        Rect.fromPoints(startOffset, endOffset),
-        paint,
-      );
+      _paintSegment(canvas, segment, _theme.selection);
     }
+  }
+
+  void _paintHighlights(
+    Canvas canvas,
+    List<TerminalHighlight> highlights,
+    int firstLine,
+    int lastLine,
+  ) {
+    for (var highlight in _controller.highlights) {
+      final range = highlight.range?.normalized;
+
+      if (range == null ||
+          range.begin.y > lastLine ||
+          range.end.y < firstLine) {
+        continue;
+      }
+
+      for (var segment in range.toSegments()) {
+        if (segment.line < firstLine) {
+          continue;
+        }
+
+        if (segment.line > lastLine) {
+          break;
+        }
+
+        _paintSegment(canvas, segment, highlight.color);
+      }
+    }
+  }
+
+  @pragma('vm:prefer-inline')
+  void _paintSegment(Canvas canvas, BufferSegment segment, Color color) {
+    final start = segment.start ?? 0;
+    final end = segment.end ?? _terminal.viewWidth;
+
+    final startOffset = Offset(
+      start * _charSize.width,
+      segment.line * _charSize.height + _lineOffset,
+    );
+
+    final endOffset = Offset(
+      end * _charSize.width,
+      (segment.line + 1) * _charSize.height + _lineOffset,
+    );
+
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1;
+
+    canvas.drawRect(
+      Rect.fromPoints(startOffset, endOffset),
+      paint,
+    );
   }
 
   /// Paints the character in the cell represented by [cellData] to [canvas] at
