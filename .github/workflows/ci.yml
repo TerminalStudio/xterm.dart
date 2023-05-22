@@ -31,7 +31,7 @@ jobs:
         run: flutter pub get
 
       - name: Verify formatting
-        run: flutter format --set-exit-if-changed .
+        run: dart format --set-exit-if-changed .
 
       # Consider passing '--fatal-infos' for slightly stricter analysis.
       - name: Analyze project source
