@@ -200,7 +200,7 @@ class _HomeState extends State<Home> {
     print('suggestions: $suggestions');
 
     if (suggestions.isNotEmpty) {
-      suggestionOverlay.update(terminalKey.currentState!.cursorRect);
+      suggestionOverlay.update(terminalKey.currentState!.globalCursorRect);
     } else {
       suggestionOverlay.hide();
     }
