@@ -344,7 +344,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
   }
 
   void _notifyEditableRect() {
-    final cursor = localToGlobal(_cursorOffset);
+    final cursor = localToGlobal(cursorOffset);
 
     final rect = Rect.fromLTRB(
       cursor.dx,
@@ -415,7 +415,8 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
     return -_scrollOffset + _padding.top;
   }
 
-  Offset get _cursorOffset {
+  /// The offset of the cursor from the top left corner of this render object.
+  Offset get cursorOffset {
     return Offset(
       _terminal.buffer.cursorX * _charSize.width,
       _terminal.buffer.absoluteCursorY * _charSize.height + _lineOffset,
@@ -458,14 +459,12 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
 
     if (_terminal.buffer.absoluteCursorY >= effectFirstLine &&
         _terminal.buffer.absoluteCursorY <= effectLastLine) {
-      final cursorOffset = offset + _cursorOffset;
-
       if (_isComposingText) {
-        _paintComposingText(canvas, cursorOffset);
+        _paintComposingText(canvas, offset + cursorOffset);
       }
 
       if (_shouldShowCursor) {
-        _paintCursor(canvas, cursorOffset);
+        _paintCursor(canvas, offset + cursorOffset);
       }
     }
 

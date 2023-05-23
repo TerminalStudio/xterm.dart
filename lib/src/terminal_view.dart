@@ -336,11 +336,12 @@ class TerminalViewState extends State<TerminalView> {
   }
 
   Rect get cursorRect {
-    final offset = CellOffset(
-      widget.terminal.buffer.cursorX,
-      widget.terminal.buffer.absoluteCursorY,
-    );
-    return renderTerminal.getOffset(offset) & renderTerminal.charSize;
+    return renderTerminal.cursorOffset & renderTerminal.charSize;
+  }
+
+  Rect get globalCursorRect {
+    return renderTerminal.localToGlobal(renderTerminal.cursorOffset) &
+        renderTerminal.charSize;
   }
 
   void _onTapUp(TapUpDetails details) {
