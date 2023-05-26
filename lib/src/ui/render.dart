@@ -2,22 +2,16 @@ import 'dart:math' show min, max;
 import 'dart:ui';
 
 import 'package:flutter/rendering.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
-import 'package:xterm/src/core/buffer/cell_flags.dart';
 import 'package:xterm/src/core/buffer/cell_offset.dart';
 import 'package:xterm/src/core/buffer/range.dart';
 import 'package:xterm/src/core/buffer/segment.dart';
-import 'package:xterm/src/core/cell.dart';
-import 'package:xterm/src/core/buffer/line.dart';
 import 'package:xterm/src/core/mouse/button.dart';
 import 'package:xterm/src/core/mouse/button_state.dart';
 import 'package:xterm/src/terminal.dart';
-import 'package:xterm/src/ui/char_metrics.dart';
 import 'package:xterm/src/ui/controller.dart';
 import 'package:xterm/src/ui/cursor_type.dart';
-import 'package:xterm/src/ui/palette_builder.dart';
-import 'package:xterm/src/ui/paragraph_cache.dart';
+import 'package:xterm/src/ui/painter.dart';
 import 'package:xterm/src/ui/selection_mode.dart';
 import 'package:xterm/src/ui/terminal_size.dart';
 import 'package:xterm/src/ui/terminal_text_style.dart';
@@ -45,17 +39,16 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
         _offset = offset,
         _padding = padding,
         _autoResize = autoResize,
-        _textStyle = textStyle,
-        _textScaleFactor = textScaleFactor,
-        _theme = theme,
         _focusNode = focusNode,
         _cursorType = cursorType,
         _alwaysShowCursor = alwaysShowCursor,
         _onEditableRect = onEditableRect,
-        _composingText = composingText {
-    _updateColorPalette();
-    _updateCharSize();
-  }
+        _composingText = composingText,
+        _painter = TerminalPainter(
+          theme: theme,
+          textStyle: textStyle,
+          textScaleFactor: textScaleFactor,
+        );
 
   Terminal _terminal;
   set terminal(Terminal terminal) {
@@ -99,28 +92,21 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
     markNeedsLayout();
   }
 
-  TerminalStyle _textStyle;
   set textStyle(TerminalStyle value) {
-    if (value == _textStyle) return;
-    _textStyle = value;
-    _updateCharSize();
-    _paragraphCache.clear();
+    if (value == _painter.textStyle) return;
+    _painter.textStyle = value;
     markNeedsLayout();
   }
 
-  double _textScaleFactor;
   set textScaleFactor(double value) {
-    if (value == _textScaleFactor) return;
-    _textScaleFactor = value;
-    _updateCharSize();
+    if (value == _painter.textScaleFactor) return;
+    _painter.textScaleFactor = value;
     markNeedsLayout();
   }
 
-  TerminalTheme _theme;
   set theme(TerminalTheme value) {
-    if (value == _theme) return;
-    _theme = value;
-    _updateColorPalette();
+    if (value == _painter.theme) return;
+    _painter.theme = value;
     markNeedsPaint();
   }
 
@@ -161,28 +147,9 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
     markNeedsPaint();
   }
 
-  /// The lookup table for converting terminal colors to Flutter colors. This is
-  /// generated from the [_theme].
-  late List<Color> _colorPalette;
-
-  /// The size of a single character in [_textStyle] in pixels. [_textStyle] is
-  /// expected to be monospace.
-  Size get charSize => _charSize;
-  late Size _charSize;
-
   TerminalSize? _viewportSize;
 
-  /// Updates [_colorPalette] based on the current [_theme]. This should be
-  /// called whenever the [_theme] changes.
-  void _updateColorPalette() {
-    _colorPalette = PaletteBuilder(_theme).build();
-  }
-
-  /// Updates [_charSize] based on the current [_textStyle]. This should be
-  /// called whenever the [_textStyle] changes or the system font changes.
-  void _updateCharSize() {
-    _charSize = calcCharSize(_textStyle, _textScaleFactor);
-  }
+  final TerminalPainter _painter;
 
   var _stickToBottom = true;
 
@@ -233,8 +200,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
 
   @override
   void systemFontsDidChange() {
-    _updateCharSize();
-    _paragraphCache.clear();
+    _painter.clearFontCache();
     super.systemFontsDidChange();
   }
 
@@ -253,25 +219,25 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
 
   /// Total height of the terminal in pixels. Includes scrollback buffer.
   double get _terminalHeight =>
-      _terminal.buffer.lines.length * _charSize.height;
+      _terminal.buffer.lines.length * _painter.cellSize.height;
 
   /// The distance from the top of the terminal to the top of the viewport.
   // double get _scrollOffset => _offset.pixels;
   double get _scrollOffset {
-    // return _offset.pixels ~/ _charSize.height * _charSize.height;
+    // return _offset.pixels ~/ _painter.cellSize.height * _painter.cellSize.height;
     return _offset.pixels;
   }
 
   /// The height of a terminal line in pixels. This includes the line spacing.
   /// Height of the entire terminal is expected to be a multiple of this value.
-  double get lineHeight => _charSize.height;
+  double get lineHeight => _painter.cellSize.height;
 
   /// Get the top-left corner of the cell at [cellOffset] in pixels.
   Offset getOffset(CellOffset cellOffset) {
     final row = cellOffset.y;
     final col = cellOffset.x;
-    final x = col * _charSize.width;
-    final y = row * _charSize.height;
+    final x = col * _painter.cellSize.width;
+    final y = row * _painter.cellSize.height;
     return Offset(x + _padding.left, y + _padding.top - _scrollOffset);
   }
 
@@ -279,8 +245,8 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
   CellOffset getCellOffset(Offset offset) {
     final x = offset.dx - _padding.left;
     final y = offset.dy - _padding.top + _scrollOffset;
-    final row = y ~/ _charSize.height;
-    final col = x ~/ _charSize.width;
+    final row = y ~/ _painter.cellSize.height;
+    final col = x ~/ _painter.cellSize.width;
     return CellOffset(
       col.clamp(0, _terminal.viewWidth - 1),
       row.clamp(0, _terminal.buffer.lines.length - 1),
@@ -349,10 +315,10 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
       cursor.dx,
       cursor.dy,
       size.width,
-      cursor.dy + _charSize.height,
+      cursor.dy + _painter.cellSize.height,
     );
 
-    final caretRect = cursor & _charSize;
+    final caretRect = cursor & _painter.cellSize;
 
     _onEditableRect?.call(rect, caretRect);
   }
@@ -360,13 +326,13 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
   /// Update the viewport size in cells based on the current widget size in
   /// pixels.
   void _updateViewportSize() {
-    if (size <= _charSize) {
+    if (size <= _painter.cellSize) {
       return;
     }
 
     final viewportSize = TerminalSize(
-      size.width ~/ _charSize.width,
-      _viewportHeight ~/ _charSize.height,
+      size.width ~/ _painter.cellSize.width,
+      _viewportHeight ~/ _painter.cellSize.height,
     );
 
     if (_viewportSize != viewportSize) {
@@ -381,8 +347,8 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
       _terminal.resize(
         _viewportSize!.width,
         _viewportSize!.height,
-        _charSize.width.round(),
-        _charSize.height.round(),
+        _painter.cellSize.width.round(),
+        _painter.cellSize.height.round(),
       );
     }
   }
@@ -417,15 +383,14 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
   /// The offset of the cursor from the top left corner of this render object.
   Offset get cursorOffset {
     return Offset(
-      _terminal.buffer.cursorX * _charSize.width,
-      _terminal.buffer.absoluteCursorY * _charSize.height + _lineOffset,
+      _terminal.buffer.cursorX * _painter.cellSize.width,
+      _terminal.buffer.absoluteCursorY * _painter.cellSize.height + _lineOffset,
     );
   }
 
-  /// The cached for cells in the terminal. Should be cleared when the same
-  /// cell no longer produces the same visual output. For example, when
-  /// [_textStyle] is changed, or when the system font changes.
-  final _paragraphCache = ParagraphCache(10240);
+  Size get cellSize {
+    return _painter.cellSize;
+  }
 
   @override
   void paint(PaintingContext context, Offset offset) {
@@ -437,7 +402,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
     final canvas = context.canvas;
 
     final lines = _terminal.buffer.lines;
-    final charHeight = _charSize.height;
+    final charHeight = _painter.cellSize.height;
 
     final firstLineOffset = _scrollOffset - _padding.top;
     final lastLineOffset = _scrollOffset + size.height + _padding.bottom;
@@ -449,10 +414,10 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
     final effectLastLine = lastLine.clamp(0, lines.length - 1);
 
     for (var i = effectFirstLine; i <= effectLastLine; i++) {
-      _paintLine(
+      _painter.paintLine(
         canvas,
-        lines[i],
         offset.translate(0, (i * charHeight + _lineOffset).truncateToDouble()),
+        lines[i],
       );
     }
 
@@ -463,7 +428,12 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
       }
 
       if (_shouldShowCursor) {
-        _paintCursor(canvas, offset + cursorOffset);
+        _painter.paintCursor(
+          canvas,
+          offset + cursorOffset,
+          cursorType: _cursorType,
+          hasFocus: _focusNode.hasFocus,
+        );
       }
     }
 
@@ -484,90 +454,35 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
     }
   }
 
-  /// Paints the cursor based on the current cursor type.
-  void _paintCursor(Canvas canvas, Offset offset) {
-    final paint = Paint()
-      ..color = _theme.cursor
-      ..strokeWidth = 1;
-
-    if (!_focusNode.hasFocus) {
-      paint.style = PaintingStyle.stroke;
-      canvas.drawRect(offset & _charSize, paint);
-      return;
-    }
-
-    switch (_cursorType) {
-      case TerminalCursorType.block:
-        paint.style = PaintingStyle.fill;
-        canvas.drawRect(offset & _charSize, paint);
-        return;
-      case TerminalCursorType.underline:
-        return canvas.drawLine(
-          Offset(offset.dx, _charSize.height - 1),
-          Offset(offset.dx + _charSize.width, _charSize.height - 1),
-          paint,
-        );
-      case TerminalCursorType.verticalBar:
-        return canvas.drawLine(
-          Offset(offset.dx, 0),
-          Offset(offset.dx, _charSize.height),
-          paint,
-        );
-    }
-  }
-
   /// Paints the text that is currently being composed in IME to [canvas] at
   /// [offset]. [offset] is usually the cursor position.
   void _paintComposingText(Canvas canvas, Offset offset) {
     final composingText = _composingText;
-
     if (composingText == null) {
       return;
     }
 
-    final style = _textStyle.toTextStyle(
-      color: _resolveForegroundColor(_terminal.cursor.foreground),
-      backgroundColor: _theme.background,
+    final style = _painter.textStyle.toTextStyle(
+      color: _painter.resolveForegroundColor(_terminal.cursor.foreground),
+      backgroundColor: _painter.theme.background,
       underline: true,
     );
 
     final builder = ParagraphBuilder(style.getParagraphStyle());
     builder.addPlaceholder(
       offset.dx,
-      _charSize.height,
+      _painter.cellSize.height,
       PlaceholderAlignment.middle,
     );
-    builder.pushStyle(style.getTextStyle(textScaleFactor: _textScaleFactor));
+    builder.pushStyle(
+      style.getTextStyle(textScaleFactor: _painter.textScaleFactor),
+    );
     builder.addText(composingText);
 
     final paragraph = builder.build();
     paragraph.layout(ParagraphConstraints(width: size.width));
 
     canvas.drawParagraph(paragraph, Offset(0, offset.dy));
-  }
-
-  /// Paints [line] to [canvas] at [offset]. The x offset of [offset] is usually
-  /// 0, and the y offset is the top of the line.
-  void _paintLine(Canvas canvas, BufferLine line, Offset offset) {
-    final cellData = CellData.empty();
-    final cellWidth = _charSize.width;
-
-    final visibleCells = size.width ~/ cellWidth + 1;
-    final effectCells = min(visibleCells, line.length);
-
-    for (var i = 0; i < effectCells; i++) {
-      line.getCellData(i, cellData);
-
-      final charWidth = cellData.content >> CellContent.widthShift;
-      final cellOffset = offset.translate(i * cellWidth, 0);
-
-      _paintCellBackground(canvas, cellOffset, cellData);
-      _paintCellForeground(canvas, cellOffset, cellData);
-
-      if (charWidth == 2) {
-        i++;
-      }
-    }
   }
 
   void _paintSelection(
@@ -589,7 +504,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
         break;
       }
 
-      _paintSegment(canvas, segment, _theme.selection);
+      _paintSegment(canvas, segment, _painter.theme.selection);
     }
   }
 
@@ -628,132 +543,10 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
     final end = segment.end ?? _terminal.viewWidth;
 
     final startOffset = Offset(
-      start * _charSize.width,
-      segment.line * _charSize.height + _lineOffset,
+      start * _painter.cellSize.width,
+      segment.line * _painter.cellSize.height + _lineOffset,
     );
 
-    final endOffset = Offset(
-      end * _charSize.width,
-      (segment.line + 1) * _charSize.height + _lineOffset,
-    );
-
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1;
-
-    canvas.drawRect(
-      Rect.fromPoints(startOffset, endOffset),
-      paint,
-    );
-  }
-
-  /// Paints the character in the cell represented by [cellData] to [canvas] at
-  /// [offset].
-  @pragma('vm:prefer-inline')
-  void _paintCellForeground(Canvas canvas, Offset offset, CellData cellData) {
-    final charCode = cellData.content & CellContent.codepointMask;
-    if (charCode == 0) return;
-
-    final cacheKey = cellData.getHash() ^ _textScaleFactor.hashCode;
-    var paragraph = _paragraphCache.getLayoutFromCache(cacheKey);
-
-    if (paragraph == null) {
-      final cellFlags = cellData.flags;
-
-      var color = cellFlags & CellFlags.inverse == 0
-          ? _resolveForegroundColor(cellData.foreground)
-          : _resolveBackgroundColor(cellData.background);
-
-      if (cellData.flags & CellFlags.faint != 0) {
-        color = color.withOpacity(0.5);
-      }
-
-      final style = _textStyle.toTextStyle(
-        color: color,
-        bold: cellFlags & CellFlags.bold != 0,
-        italic: cellFlags & CellFlags.italic != 0,
-        underline: cellFlags & CellFlags.underline != 0,
-      );
-
-      // Flutter does not draw an underline below a space which is not between
-      // other regular characters. As only single characters are drawn, this
-      // will never produce an underline below a space in the terminal. As a
-      // workaround the regular space CodePoint 0x20 is replaced with
-      // the CodePoint 0xA0. This is a non breaking space and a underline can be
-      // drawn below it.
-      var char = String.fromCharCode(charCode);
-      if (cellFlags & CellFlags.underline != 0 && charCode == 0x20) {
-        char = String.fromCharCode(0xA0);
-      }
-
-      paragraph = _paragraphCache.performAndCacheLayout(
-        char,
-        style,
-        _textScaleFactor,
-        cacheKey,
-      );
-    }
-
-    canvas.drawParagraph(paragraph, offset);
-  }
-
-  /// Paints the background of a cell represented by [cellData] to [canvas] at
-  /// [offset].
-  @pragma('vm:prefer-inline')
-  void _paintCellBackground(Canvas canvas, Offset offset, CellData cellData) {
-    late Color color;
-    final colorType = cellData.background & CellColor.typeMask;
-
-    if (cellData.flags & CellFlags.inverse != 0) {
-      color = _resolveForegroundColor(cellData.foreground);
-    } else if (colorType == CellColor.normal) {
-      return;
-    } else {
-      color = _resolveBackgroundColor(cellData.background);
-    }
-
-    final paint = Paint()..color = color;
-    final doubleWidth = cellData.content >> CellContent.widthShift == 2;
-    final widthScale = doubleWidth ? 2 : 1;
-    final size = Size(_charSize.width * widthScale + 1, _charSize.height);
-    canvas.drawRect(offset & size, paint);
-  }
-
-  /// Get the effective foreground color for a cell from information encoded in
-  /// [cellColor].
-  @pragma('vm:prefer-inline')
-  Color _resolveForegroundColor(int cellColor) {
-    final colorType = cellColor & CellColor.typeMask;
-    final colorValue = cellColor & CellColor.valueMask;
-
-    switch (colorType) {
-      case CellColor.normal:
-        return _theme.foreground;
-      case CellColor.named:
-      case CellColor.palette:
-        return _colorPalette[colorValue];
-      case CellColor.rgb:
-      default:
-        return Color(colorValue | 0xFF000000);
-    }
-  }
-
-  /// Get the effective background color for a cell from information encoded in
-  /// [cellColor].
-  @pragma('vm:prefer-inline')
-  Color _resolveBackgroundColor(int cellColor) {
-    final colorType = cellColor & CellColor.typeMask;
-    final colorValue = cellColor & CellColor.valueMask;
-
-    switch (colorType) {
-      case CellColor.normal:
-        return _theme.background;
-      case CellColor.named:
-      case CellColor.palette:
-        return _colorPalette[colorValue];
-      case CellColor.rgb:
-      default:
-        return Color(colorValue | 0xFF000000);
-    }
+    _painter.paintHighlight(canvas, startOffset, end - start, color);
   }
 }
