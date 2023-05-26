@@ -189,6 +189,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
   void _onScroll() {
     _stickToBottom = _scrollOffset >= _maxScrollExtent;
     markNeedsLayout();
+    _notifyEditableRect();
   }
 
   void _onFocusChange() {
@@ -197,6 +198,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
 
   void _onTerminalChange() {
     markNeedsLayout();
+    _notifyEditableRect();
   }
 
   void _onControllerUpdate() {
@@ -247,9 +249,6 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
     if (_stickToBottom) {
       _offset.correctBy(_maxScrollExtent - _scrollOffset);
     }
-
-    SchedulerBinding.instance
-        .addPostFrameCallback((_) => _notifyEditableRect());
   }
 
   /// Total height of the terminal in pixels. Includes scrollback buffer.
