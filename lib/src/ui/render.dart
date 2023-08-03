@@ -1,4 +1,4 @@
-import 'dart:math' show min, max;
+import 'dart:math' show max;
 import 'dart:ui';
 
 import 'package:flutter/rendering.dart';
