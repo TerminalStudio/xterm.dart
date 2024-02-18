@@ -233,8 +233,7 @@ class TerminalViewState extends State<TerminalView> {
           padding: MediaQuery.of(context).padding,
           autoResize: widget.autoResize,
           textStyle: widget.textStyle,
-          textScaler:
-              widget.textScaler ?? MediaQuery.textScalerOf(context),
+          textScaler: widget.textScaler ?? MediaQuery.textScalerOf(context),
           theme: widget.theme,
           focusNode: _focusNode,
           cursorType: widget.cursorType,

@@ -40,12 +40,12 @@ class CustomKeyboardListener extends StatelessWidget {
         if (data != "") {
           onComposing(null);
           onInsert(data);
-        // } else if (data.charactersIgnoringModifiers != "") {
-        //   // If characters is an empty string but charactersIgnoringModifiers is
-        //   // not an empty string, this indicates that the current characters is
-        //   // being composed. The current composing state is
-        //   // charactersIgnoringModifiers.
-        //   onComposing(data.charactersIgnoringModifiers);
+          // } else if (data.charactersIgnoringModifiers != "") {
+          //   // If characters is an empty string but charactersIgnoringModifiers is
+          //   // not an empty string, this indicates that the current characters is
+          //   // being composed. The current composing state is
+          //   // charactersIgnoringModifiers.
+          //   onComposing(data.charactersIgnoringModifiers);
         }
       }
     }
