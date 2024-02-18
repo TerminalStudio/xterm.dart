@@ -17,17 +17,17 @@ class ParagraphCache {
     return _cache[key];
   }
 
-  /// Applies [style] and [textScaleFactor] to [text] and lays it out to create
+  /// Applies [style] and [textScaler] to [text] and lays it out to create
   /// a [Paragraph]. The [Paragraph] is cached and can be retrieved with the
   /// same [key] by calling [getLayoutFromCache].
   Paragraph performAndCacheLayout(
     String text,
     TextStyle style,
-    double textScaleFactor,
+    TextScaler textScaler,
     int key,
   ) {
     final builder = ParagraphBuilder(style.getParagraphStyle());
-    builder.pushStyle(style.getTextStyle(textScaleFactor: textScaleFactor));
+    builder.pushStyle(style.getTextStyle(textScaler: textScaler));
     builder.addText(text);
 
     final paragraph = builder.build();

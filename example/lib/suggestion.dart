@@ -266,7 +266,7 @@ class _HomeState extends State<Home> {
           autofocus: true,
           backgroundOpacity: 0.7,
           onKey: (node, event) {
-            if (event is! RawKeyDownEvent) {
+            if (event is! KeyDownEvent) {
               return KeyEventResult.ignored;
             }
 

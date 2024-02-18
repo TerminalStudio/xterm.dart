@@ -93,7 +93,7 @@ class ZModemMux {
   /// buffered if a ZModem session is active.
   void terminalWrite(String input) {
     if (_session == null) {
-      stdin.add(utf8.encode(input) as Uint8List);
+      stdin.add(utf8.encode(input));
     }
   }
 

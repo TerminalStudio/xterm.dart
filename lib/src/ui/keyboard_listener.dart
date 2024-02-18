@@ -12,7 +12,7 @@ class CustomKeyboardListener extends StatelessWidget {
 
   final void Function(String?) onComposing;
 
-  final KeyEventResult Function(FocusNode, RawKeyEvent) onKey;
+  final KeyEventResult Function(FocusNode, KeyEvent) onKey;
 
   const CustomKeyboardListener({
     Key? key,
@@ -24,7 +24,7 @@ class CustomKeyboardListener extends StatelessWidget {
     required this.onKey,
   }) : super(key: key);
 
-  KeyEventResult _onKey(FocusNode focusNode, RawKeyEvent keyEvent) {
+  KeyEventResult _onKey(FocusNode focusNode, KeyEvent keyEvent) {
     // First try to handle the key event directly.
     final handled = onKey(focusNode, keyEvent);
     if (handled == KeyEventResult.ignored) {
@@ -33,20 +33,19 @@ class CustomKeyboardListener extends StatelessWidget {
       if (keyEvent.character != null && keyEvent.character != "") {
         onInsert(keyEvent.character!);
         return KeyEventResult.handled;
-      } else if (keyEvent.data is RawKeyEventDataIos &&
-          keyEvent is RawKeyDownEvent) {
+      } else if (keyEvent is KeyDownEvent) {
         // On iOS keyEvent.character is always null. But data.characters
         // contains the the character(s) corresponding to the input.
-        final data = keyEvent.data as RawKeyEventDataIos;
-        if (data.characters != "") {
+        final data = keyEvent.logicalKey.keyLabel;
+        if (data != "") {
           onComposing(null);
-          onInsert(data.characters);
-        } else if (data.charactersIgnoringModifiers != "") {
-          // If characters is an empty string but charactersIgnoringModifiers is
-          // not an empty string, this indicates that the current characters is
-          // being composed. The current composing state is
-          // charactersIgnoringModifiers.
-          onComposing(data.charactersIgnoringModifiers);
+          onInsert(data);
+        // } else if (data.charactersIgnoringModifiers != "") {
+        //   // If characters is an empty string but charactersIgnoringModifiers is
+        //   // not an empty string, this indicates that the current characters is
+        //   // being composed. The current composing state is
+        //   // charactersIgnoringModifiers.
+        //   onComposing(data.charactersIgnoringModifiers);
         }
       }
     }
@@ -58,7 +57,7 @@ class CustomKeyboardListener extends StatelessWidget {
     return Focus(
       focusNode: focusNode,
       autofocus: autofocus,
-      onKey: _onKey,
+      onKeyEvent: _onKey,
       child: child,
     );
   }

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:example/src/virtual_keyboard.dart';
@@ -77,7 +76,7 @@ class _MyHomePageState extends State<MyHomePage> {
     };
 
     terminal.onOutput = (data) {
-      session.write(utf8.encode(data) as Uint8List);
+      session.write(utf8.encode(data));
     };
 
     session.stdout
