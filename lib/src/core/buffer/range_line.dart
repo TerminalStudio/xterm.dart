@@ -5,7 +5,7 @@ import 'package:xterm/src/core/buffer/segment.dart';
 class BufferRangeLine extends BufferRange {
   BufferRangeLine(super.begin, super.end);
 
-  BufferRangeLine.collapsed(CellOffset begin) : super.collapsed(begin);
+  BufferRangeLine.collapsed(super.begin) : super.collapsed();
 
   @override
   BufferRangeLine get normalized {

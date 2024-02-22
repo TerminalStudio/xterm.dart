@@ -34,7 +34,7 @@ class MyApp extends StatelessWidget {
 }
 
 class Home extends StatefulWidget {
-  Home({Key? key}) : super(key: key);
+  Home({super.key});
 
   @override
   // ignore: library_private_types_in_public_api

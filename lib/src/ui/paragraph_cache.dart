@@ -23,11 +23,11 @@ class ParagraphCache {
   Paragraph performAndCacheLayout(
     String text,
     TextStyle style,
-    double textScaleFactor,
+    TextScaler textScaler,
     int key,
   ) {
     final builder = ParagraphBuilder(style.getParagraphStyle());
-    builder.pushStyle(style.getTextStyle(textScaleFactor: textScaleFactor));
+    builder.pushStyle(style.getTextStyle(textScaler: textScaler));
     builder.addText(text);
 
     final paragraph = builder.build();

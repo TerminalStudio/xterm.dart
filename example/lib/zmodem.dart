@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key? key}) : super(key: key);
+  MyHomePage({super.key});
 
   @override
   // ignore: library_private_types_in_public_api
