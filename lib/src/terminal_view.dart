@@ -406,7 +406,7 @@ class TerminalViewState extends State<TerminalView> {
       return shortcutResult;
     }
 
-    if (event is! KeyDownEvent) {
+    if (event is KeyUpEvent) {
       return KeyEventResult.ignored;
     }
 
