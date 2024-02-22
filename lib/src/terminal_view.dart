@@ -45,7 +45,7 @@ class TerminalView extends StatefulWidget {
     this.alwaysShowCursor = false,
     this.deleteDetection = false,
     this.shortcuts,
-    this.onKey,
+    this.onKeyEvent,
     this.readOnly = false,
     this.hardwareKeyboardOnly = false,
     this.simulateScroll = true,
@@ -126,7 +126,7 @@ class TerminalView extends StatefulWidget {
 
   /// Keyboard event handler of the terminal. This has higher priority than
   /// [shortcuts] and input handler of the terminal.
-  final FocusOnKeyEventCallback? onKey;
+  final FocusOnKeyEventCallback? onKeyEvent;
 
   /// True if no input should send to the terminal.
   final bool readOnly;
@@ -391,7 +391,7 @@ class TerminalViewState extends State<TerminalView> {
   }
 
   KeyEventResult _handleKeyEvent(FocusNode focusNode, KeyEvent event) {
-    final resultOverride = widget.onKey?.call(focusNode, event);
+    final resultOverride = widget.onKeyEvent?.call(focusNode, event);
     if (resultOverride != null && resultOverride != KeyEventResult.ignored) {
       return resultOverride;
     }

@@ -265,7 +265,7 @@ class _HomeState extends State<Home> {
           controller: terminalController,
           autofocus: true,
           backgroundOpacity: 0.7,
-          onKey: (node, event) {
+          onKeyEvent: (node, event) {
             if (event is! KeyDownEvent) {
               return KeyEventResult.ignored;
             }
