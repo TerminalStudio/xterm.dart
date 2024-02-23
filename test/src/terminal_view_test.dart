@@ -306,7 +306,7 @@ void main() {
     });
   });
 
-  group('TerminalView.textScaleFactor', () {
+  group('TerminalView.textScaler', () {
     testWidgets('works', (tester) async {
       final terminal = Terminal();
 
@@ -345,7 +345,7 @@ void main() {
       );
     });
 
-    testWidgets('can obtain textScaleFactor from parent', (tester) async {
+    testWidgets('can obtain textScaler from parent', (tester) async {
       final terminal = Terminal();
 
       await tester.pumpWidget(
