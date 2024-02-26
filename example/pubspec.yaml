@@ -39,7 +39,7 @@ dependencies:
 
   after_layout: ^1.1.0
 
-  file_picker: ^5.0.1
+  file_picker: ^6.1.1
 
   path: ^1.8.2
 
@@ -47,9 +47,9 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  lints: ^2.0.0
+  lints: ^3.0.0
 
-  dart_code_metrics: ^4.16.0
+  dart_code_metrics: ^5.7.6
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

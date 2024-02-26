@@ -306,21 +306,21 @@ void main() {
     });
   });
 
-  group('TerminalView.textScaleFactor', () {
+  group('TerminalView.textScaler', () {
     testWidgets('works', (tester) async {
       final terminal = Terminal();
 
-      final textScaleFactor = ValueNotifier(1.0);
+      final textScaler = ValueNotifier(TextScaler.linear(1.0));
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: ValueListenableBuilder<double>(
-              valueListenable: textScaleFactor,
-              builder: (context, textScaleFactor, child) {
+            body: ValueListenableBuilder<TextScaler>(
+              valueListenable: textScaler,
+              builder: (context, textScaler, child) {
                 return TerminalView(
                   terminal,
-                  textScaleFactor: textScaleFactor,
+                  textScaler: textScaler,
                 );
               },
             ),
@@ -336,7 +336,7 @@ void main() {
         matchesGoldenFile('_goldens/text_scale_factor@1x.png'),
       );
 
-      textScaleFactor.value = 2.0;
+      textScaler.value = TextScaler.linear(2.0);
       await tester.pump();
 
       await expectLater(
@@ -345,14 +345,14 @@ void main() {
       );
     });
 
-    testWidgets('can obtain textScaleFactor from parent', (tester) async {
+    testWidgets('can obtain textScaler from parent', (tester) async {
       final terminal = Terminal();
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: MediaQuery(
-              data: const MediaQueryData(textScaleFactor: 2.0),
+              data: const MediaQueryData(textScaler: TextScaler.linear(2.0)),
               child: TerminalView(
                 terminal,
               ),

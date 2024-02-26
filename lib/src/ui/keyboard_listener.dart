@@ -1,4 +1,3 @@
-import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 class CustomKeyboardListener extends StatelessWidget {
@@ -12,42 +11,27 @@ class CustomKeyboardListener extends StatelessWidget {
 
   final void Function(String?) onComposing;
 
-  final KeyEventResult Function(FocusNode, RawKeyEvent) onKey;
+  final KeyEventResult Function(FocusNode, KeyEvent) onKeyEvent;
 
   const CustomKeyboardListener({
-    Key? key,
+    super.key,
     required this.child,
     required this.focusNode,
     this.autofocus = false,
     required this.onInsert,
     required this.onComposing,
-    required this.onKey,
-  }) : super(key: key);
+    required this.onKeyEvent,
+  });
 
-  KeyEventResult _onKey(FocusNode focusNode, RawKeyEvent keyEvent) {
+  KeyEventResult _onKeyEvent(FocusNode focusNode, KeyEvent keyEvent) {
     // First try to handle the key event directly.
-    final handled = onKey(focusNode, keyEvent);
+    final handled = onKeyEvent(focusNode, keyEvent);
     if (handled == KeyEventResult.ignored) {
       // If it was not handled, but the key corresponds to a character,
       // insert the character.
       if (keyEvent.character != null && keyEvent.character != "") {
         onInsert(keyEvent.character!);
         return KeyEventResult.handled;
-      } else if (keyEvent.data is RawKeyEventDataIos &&
-          keyEvent is RawKeyDownEvent) {
-        // On iOS keyEvent.character is always null. But data.characters
-        // contains the the character(s) corresponding to the input.
-        final data = keyEvent.data as RawKeyEventDataIos;
-        if (data.characters != "") {
-          onComposing(null);
-          onInsert(data.characters);
-        } else if (data.charactersIgnoringModifiers != "") {
-          // If characters is an empty string but charactersIgnoringModifiers is
-          // not an empty string, this indicates that the current characters is
-          // being composed. The current composing state is
-          // charactersIgnoringModifiers.
-          onComposing(data.charactersIgnoringModifiers);
-        }
       }
     }
     return handled;
@@ -58,7 +42,7 @@ class CustomKeyboardListener extends StatelessWidget {
     return Focus(
       focusNode: focusNode,
       autofocus: autofocus,
-      onKey: _onKey,
+      onKeyEvent: _onKeyEvent,
       child: child,
     );
   }

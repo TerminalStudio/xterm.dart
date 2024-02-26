@@ -7,7 +7,7 @@ import 'package:xterm/src/core/buffer/segment.dart';
 class BufferRangeBlock extends BufferRange {
   BufferRangeBlock(super.begin, super.end);
 
-  BufferRangeBlock.collapsed(CellOffset begin) : super.collapsed(begin);
+  BufferRangeBlock.collapsed(super.begin) : super.collapsed();
 
   @override
   bool get isNormalized {

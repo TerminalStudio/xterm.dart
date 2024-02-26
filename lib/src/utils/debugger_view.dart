@@ -4,10 +4,10 @@ import 'package:xterm/src/utils/debugger.dart';
 class TerminalDebuggerView extends StatefulWidget {
   const TerminalDebuggerView(
     this.debugger, {
-    Key? key,
+    super.key,
     this.scrollController,
     this.onSeek,
-  }) : super(key: key);
+  });
 
   final TerminalDebugger debugger;
 
@@ -78,10 +78,9 @@ class _CommandItem extends StatelessWidget {
   const _CommandItem(
     this.index,
     this.command, {
-    Key? key,
     this.onTap,
     this.selected = false,
-  }) : super(key: key);
+  });
 
   final int index;
 

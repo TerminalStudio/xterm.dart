@@ -2,11 +2,11 @@ import 'package:flutter/widgets.dart';
 
 class KeyboardVisibilty extends StatefulWidget {
   const KeyboardVisibilty({
-    Key? key,
+    super.key,
     required this.child,
     this.onKeyboardShow,
     this.onKeyboardHide,
-  }) : super(key: key);
+  });
 
   final Widget child;
 
