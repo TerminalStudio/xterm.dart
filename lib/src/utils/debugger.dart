@@ -164,8 +164,8 @@ class _TerminalDebuggerHandler implements EscapeHandler {
   }
 
   @override
-  void designateCharset(int charset) {
-    onCommand('designateCharset($charset)');
+  void designateCharset(int charset, int name) {
+    onCommand('designateCharset($charset, $name)');
   }
 
   @override

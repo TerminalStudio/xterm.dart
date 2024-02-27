@@ -143,10 +143,10 @@ class MockEscapeHandler extends _i1.Mock implements _i2.EscapeHandler {
         returnValueForMissingStub: null,
       );
   @override
-  void designateCharset(int? charset) => super.noSuchMethod(
+  void designateCharset(int? charset, int? name) => super.noSuchMethod(
         Invocation.method(
           #designateCharset,
-          [charset],
+          [charset, name],
         ),
         returnValueForMissingStub: null,
       );

@@ -161,15 +161,15 @@ class EscapeParser {
 
   bool _escHandleDesignateCharset0() {
     if (_queue.isEmpty) return false;
-    _queue.consume();
-    handler.designateCharset(0);
+    int name = _queue.consume();
+    handler.designateCharset(0, name);
     return true;
   }
 
   bool _escHandleDesignateCharset1() {
     if (_queue.isEmpty) return false;
-    _queue.consume();
-    handler.designateCharset(1);
+    int name = _queue.consume();
+    handler.designateCharset(1, name);
     return true;
   }
 
