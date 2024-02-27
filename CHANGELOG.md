@@ -1,3 +1,7 @@
+## [4.0.0] - 2024-02-27
+* Update for Flutter 3.19 [#190]. Thanks [@domesticmouse].
+* Fix designate charset logic [#186]. Thanks [@djnalluri].
+
 ## [3.6.1-pre] - 2023-04-28
 * Add Termianl.onPrivateOSC callback
 * Copy shortcut on Windows default to Ctrl+Shift+V (#173)
@@ -218,6 +222,8 @@
 [@tauu]: https://github.com/tauu
 [@itzhoujun]: https://github.com/itzhoujun
 [@nuc134r]: https://github.com/nuc134r
+[@djnalluri]: https://github.com/djnalluri
+[@domesticmouse]: https://github.com/domesticmouse
 
 
 [#40]: https://github.com/TerminalStudio/xterm.dart/pull/40
@@ -266,3 +272,6 @@
 [#161]: https://github.com/TerminalStudio/xterm.dart/pull/161
 [#169]: https://github.com/TerminalStudio/xterm.dart/pull/169
 
+[#186]: https://github.com/TerminalStudio/xterm.dart/pull/186
+[#190]: https://github.com/TerminalStudio/xterm.dart/pull/190
+ 

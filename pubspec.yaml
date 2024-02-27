@@ -1,11 +1,11 @@
 name: xterm
 description: xterm.dart is a fast and fully-featured terminal emulator for Flutter applications, with support for mobile and desktop platforms.
-version: 3.6.1-pre
+version: 4.0.0
 homepage: https://github.com/TerminalStudio/xterm.dart
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
-  flutter: ">=3.10.0"
+  flutter: ">=3.19.0"
 
 dependencies:
   convert: ^3.0.0
