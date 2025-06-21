@@ -72,7 +72,7 @@ class BufferRangeShift extends BufferRange {
   bool contains(CellOffset offset) {
     final minY = begin.y < end.y ? begin.y : end.y;
     final maxY = begin.y > end.y ? begin.y : end.y;
-    
+
     if (offset.y < minY || offset.y > maxY) {
       return false;
     }
@@ -141,4 +141,4 @@ class BufferRangeShift extends BufferRange {
       return BufferRangeShift(newEnd, begin);
     }
   }
-} 
+}
