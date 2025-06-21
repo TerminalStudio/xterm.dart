@@ -6,6 +6,7 @@ import 'package:xterm/src/core/buffer/line.dart';
 import 'package:xterm/src/core/buffer/range.dart';
 import 'package:xterm/src/core/buffer/range_block.dart';
 import 'package:xterm/src/core/buffer/range_line.dart';
+import 'package:xterm/src/core/buffer/range_shift.dart';
 import 'package:xterm/src/ui/pointer_input.dart';
 import 'package:xterm/src/ui/selection_mode.dart';
 
@@ -73,6 +74,8 @@ class TerminalController with ChangeNotifier {
         return BufferRangeLine(begin, end);
       case SelectionMode.block:
         return BufferRangeBlock(begin, end);
+      case SelectionMode.shift:
+        return BufferRangeShift(begin, end);
     }
   }
 
