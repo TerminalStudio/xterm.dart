@@ -21,6 +21,9 @@ class TerminalGestureHandler extends StatefulWidget {
     this.onSecondaryTapUp,
     this.onTertiaryTapDown,
     this.onTertiaryTapUp,
+    this.onDragStart,
+    this.onDragUpdate,
+    this.onDragEnd,
     this.readOnly = false,
   });
 
@@ -44,6 +47,12 @@ class TerminalGestureHandler extends StatefulWidget {
 
   final GestureTapUpCallback? onTertiaryTapUp;
 
+  final GestureDragStartCallback? onDragStart;
+
+  final GestureDragUpdateCallback? onDragUpdate;
+
+  final GestureDragEndCallback? onDragEnd;
+
   final bool readOnly;
 
   @override
@@ -54,8 +63,6 @@ class _TerminalGestureHandlerState extends State<TerminalGestureHandler> {
   TerminalViewState get terminalView => widget.terminalView;
 
   RenderTerminal get renderTerminal => terminalView.renderTerminal;
-
-  DragStartDetails? _lastDragStartDetails;
 
   LongPressStartDetails? _lastLongPressStartDetails;
 
@@ -75,6 +82,7 @@ class _TerminalGestureHandlerState extends State<TerminalGestureHandler> {
       // onLongPressUp: onLongPressUp,
       onDragStart: onDragStart,
       onDragUpdate: onDragUpdate,
+      onDragEnd: onDragEnd,
       onDoubleTapDown: onDoubleTapDown,
     );
   }
@@ -174,18 +182,93 @@ class _TerminalGestureHandlerState extends State<TerminalGestureHandler> {
 
   // void onLongPressUp() {}
 
-  void onDragStart(DragStartDetails details) {
-    _lastDragStartDetails = details;
+  void _onDragStart(
+    GestureDragStartCallback? callback,
+    DragStartDetails details,
+    TerminalMouseButton button, {
+    bool forceCallback = false,
+  }) {
+    // Check if the terminal should and can handle the drag start event.
+    var handled = false;
+    if (_shouldSendTapEvent) {
+      handled = renderTerminal.mouseEvent(
+        button,
+        TerminalMouseButtonState.down,
+        details.localPosition,
+      );
+    }
+    // If the event was not handled by the terminal, use the supplied callback.
+    if (!handled || forceCallback) {
+      callback?.call(details);
+    }
+  }
 
-    details.kind == PointerDeviceKind.mouse
-        ? renderTerminal.selectCharacters(details.localPosition)
-        : renderTerminal.selectWord(details.localPosition);
+  void onDragStart(DragStartDetails details) {
+    _onDragStart(
+      widget.onDragStart,
+      details,
+      TerminalMouseButton.left,
+      forceCallback: true,
+    );
+  }
+
+  void _onDragUpdate(
+    GestureDragUpdateCallback? callback,
+    DragUpdateDetails details,
+    TerminalMouseButton button, {
+    bool forceCallback = false,
+  }) {
+    // Check if the terminal should and can handle the drag update event.
+    var handled = false;
+    if (_shouldSendTapEvent) {
+      handled = renderTerminal.mouseEvent(
+        button,
+        TerminalMouseButtonState.down,
+        details.localPosition,
+      );
+    }
+    // If the event was not handled by the terminal, use the supplied callback.
+    if (!handled || forceCallback) {
+      callback?.call(details);
+    }
   }
 
   void onDragUpdate(DragUpdateDetails details) {
-    renderTerminal.selectCharacters(
-      _lastDragStartDetails!.localPosition,
-      details.localPosition,
+    _onDragUpdate(
+      widget.onDragUpdate,
+      details,
+      TerminalMouseButton.left,
+      forceCallback: true,
+    );
+  }
+
+  void _onDragEnd(
+    GestureDragEndCallback? callback,
+    DragEndDetails details,
+    TerminalMouseButton button, {
+    bool forceCallback = false,
+  }) {
+    // Check if the terminal should and can handle the drag end event.
+    var handled = false;
+    if (_shouldSendTapEvent) {
+      handled = renderTerminal.mouseEvent(
+        button,
+        TerminalMouseButtonState.up,
+        details.localPosition,
+      );
+    }
+    // If the event was not handled by the terminal, use the supplied callback.
+    if (!handled || forceCallback) {
+      callback?.call(details);
+    }
+  }
+
+  void onDragEnd(DragEndDetails details) {
+    _onDragEnd(
+      widget.onDragEnd,
+      details,
+      TerminalMouseButton.left,
+      forceCallback: true,
     );
   }
 }

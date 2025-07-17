@@ -1,8 +1,11 @@
+import 'dart:ui';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:xterm/src/core/buffer/cell_offset.dart';
+
 import 'package:xterm/src/core/input/keys.dart';
 import 'package:xterm/src/terminal.dart';
 import 'package:xterm/src/ui/controller.dart';
@@ -37,6 +40,9 @@ class TerminalView extends StatefulWidget {
     this.onTapUp,
     this.onSecondaryTapDown,
     this.onSecondaryTapUp,
+    this.onDragStart,
+    this.onDragUpdate,
+    this.onDragEnd,
     this.mouseCursor = SystemMouseCursors.text,
     this.keyboardType = TextInputType.emailAddress,
     this.keyboardAppearance = Brightness.dark,
@@ -93,6 +99,15 @@ class TerminalView extends StatefulWidget {
 
   /// Function called when the user stops holding down a secondary button.
   final void Function(TapUpDetails, CellOffset)? onSecondaryTapUp;
+
+  /// Function called when the user starts dragging on the terminal.
+  final void Function(DragStartDetails, CellOffset)? onDragStart;
+
+  /// Function called when the user drags on the terminal.
+  final void Function(DragUpdateDetails, CellOffset)? onDragUpdate;
+
+  /// Function called when the user stops dragging on the terminal.
+  final void Function(DragEndDetails, CellOffset)? onDragEnd;
 
   /// The mouse cursor for mouse pointers that are hovering over the terminal.
   /// [SystemMouseCursors.text] by default.
@@ -162,7 +177,10 @@ class TerminalViewState extends State<TerminalView> {
 
   late ScrollController _scrollController;
 
-  RenderTerminal get renderTerminal => _viewportKey.currentContext!.findRenderObject() as RenderTerminal;
+  RenderTerminal get renderTerminal =>
+      _viewportKey.currentContext!.findRenderObject() as RenderTerminal;
+
+  DragStartDetails? _lastDragStartDetails;
 
   @override
   void initState() {
@@ -263,8 +281,8 @@ class TerminalViewState extends State<TerminalView> {
         onComposing: _onComposing,
         onAction: (action) {
           _scrollToBottom();
-          // Android sends TextInputAction.newline when the user presses the virtual keyboard's enter key.
-          if (action == TextInputAction.done || action == TextInputAction.newline) {
+          if (action == TextInputAction.done ||
+              action == TextInputAction.newline) {
             widget.terminal.keyInput(TerminalKey.enter);
           }
         },
@@ -300,8 +318,13 @@ class TerminalViewState extends State<TerminalView> {
       terminalController: _controller,
       onTapUp: _onTapUp,
       onTapDown: _onTapDown,
-      onSecondaryTapDown: widget.onSecondaryTapDown != null ? _onSecondaryTapDown : null,
-      onSecondaryTapUp: widget.onSecondaryTapUp != null ? _onSecondaryTapUp : null,
+      onSecondaryTapDown:
+          widget.onSecondaryTapDown != null ? _onSecondaryTapDown : null,
+      onSecondaryTapUp:
+          widget.onSecondaryTapUp != null ? _onSecondaryTapUp : null,
+      onDragStart: widget.onDragStart == null ? _onDragStart : null,
+      onDragUpdate: widget.onDragUpdate == null ? _onDragUpdate : null,
+      onDragEnd: widget.onDragEnd == null ? _onDragEnd : null,
       readOnly: widget.readOnly,
       child: child,
     );
@@ -333,7 +356,8 @@ class TerminalViewState extends State<TerminalView> {
   }
 
   Rect get globalCursorRect {
-    return renderTerminal.localToGlobal(renderTerminal.cursorOffset) & renderTerminal.cellSize;
+    return renderTerminal.localToGlobal(renderTerminal.cursorOffset) &
+        renderTerminal.cellSize;
   }
 
   void _onTapUp(TapUpDetails details) {
@@ -361,6 +385,29 @@ class TerminalViewState extends State<TerminalView> {
   void _onSecondaryTapUp(TapUpDetails details) {
     final offset = renderTerminal.getCellOffset(details.localPosition);
     widget.onSecondaryTapUp?.call(details, offset);
+  }
+
+  void _onDragStart(DragStartDetails details) {
+    _lastDragStartDetails = details;
+
+    details.kind == PointerDeviceKind.mouse
+        ? renderTerminal.selectCharacters(details.localPosition)
+        : renderTerminal.selectWord(details.localPosition);
+  }
+
+  void _onDragUpdate(DragUpdateDetails details) {
+    renderTerminal.selectCharacters(
+      _lastDragStartDetails!.localPosition,
+      details.localPosition,
+    );
+  }
+
+  void _onDragEnd(DragEndDetails details) {
+    _lastDragStartDetails = null;
+
+    if (_controller.selection != null) {
+      _controller.clearSelection();
+    }
   }
 
   bool get hasInputConnection {
