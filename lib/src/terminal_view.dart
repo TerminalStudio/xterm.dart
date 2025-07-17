@@ -281,6 +281,7 @@ class TerminalViewState extends State<TerminalView> {
         onComposing: _onComposing,
         onAction: (action) {
           _scrollToBottom();
+          // Android sends TextInputAction.newline when the user presses the virtual keyboard's enter key.
           if (action == TextInputAction.done ||
               action == TextInputAction.newline) {
             widget.terminal.keyInput(TerminalKey.enter);
@@ -403,11 +404,7 @@ class TerminalViewState extends State<TerminalView> {
   }
 
   void _onDragEnd(DragEndDetails details) {
-    _lastDragStartDetails = null;
-
-    if (_controller.selection != null) {
-      _controller.clearSelection();
-    }
+    // nothing to do here
   }
 
   bool get hasInputConnection {
