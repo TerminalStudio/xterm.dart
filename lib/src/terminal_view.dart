@@ -43,6 +43,7 @@ class TerminalView extends StatefulWidget {
     this.onDragStart,
     this.onDragUpdate,
     this.onDragEnd,
+    this.onDoubleTapDown,
     this.mouseCursor = SystemMouseCursors.text,
     this.keyboardType = TextInputType.emailAddress,
     this.keyboardAppearance = Brightness.dark,
@@ -108,6 +109,9 @@ class TerminalView extends StatefulWidget {
 
   /// Function called when the user stops dragging on the terminal.
   final void Function(DragEndDetails, CellOffset)? onDragEnd;
+
+  /// Function called when the user double taps down on the terminal.
+  final void Function(TapDownDetails, CellOffset)? onDoubleTapDown;
 
   /// The mouse cursor for mouse pointers that are hovering over the terminal.
   /// [SystemMouseCursors.text] by default.
@@ -323,9 +327,10 @@ class TerminalViewState extends State<TerminalView> {
           widget.onSecondaryTapDown != null ? _onSecondaryTapDown : null,
       onSecondaryTapUp:
           widget.onSecondaryTapUp != null ? _onSecondaryTapUp : null,
-      onDragStart: widget.onDragStart == null ? _onDragStart : null,
-      onDragUpdate: widget.onDragUpdate == null ? _onDragUpdate : null,
-      onDragEnd: widget.onDragEnd == null ? _onDragEnd : null,
+      onDragStart: _onDragStart,
+      onDragUpdate: _onDragUpdate,
+      onDragEnd: _onDragEnd,
+      onDoubleTapDown: _onDoubleTapDown,
       readOnly: widget.readOnly,
       child: child,
     );
@@ -389,6 +394,12 @@ class TerminalViewState extends State<TerminalView> {
   }
 
   void _onDragStart(DragStartDetails details) {
+    if (widget.onDragStart != null) {
+      widget.onDragStart!(
+          details, renderTerminal.getCellOffset(details.localPosition));
+      return;
+    }
+
     _lastDragStartDetails = details;
 
     details.kind == PointerDeviceKind.mouse
@@ -397,6 +408,12 @@ class TerminalViewState extends State<TerminalView> {
   }
 
   void _onDragUpdate(DragUpdateDetails details) {
+    if (widget.onDragUpdate != null) {
+      widget.onDragUpdate!(
+          details, renderTerminal.getCellOffset(details.localPosition));
+      return;
+    }
+
     renderTerminal.selectCharacters(
       _lastDragStartDetails!.localPosition,
       details.localPosition,
@@ -404,7 +421,20 @@ class TerminalViewState extends State<TerminalView> {
   }
 
   void _onDragEnd(DragEndDetails details) {
-    // nothing to do here
+    if (widget.onDragEnd != null) {
+      widget.onDragEnd!(
+          details, renderTerminal.getCellOffset(details.localPosition));
+    }
+  }
+
+  void _onDoubleTapDown(TapDownDetails details) {
+    if (widget.onDoubleTapDown != null) {
+      widget.onDoubleTapDown!(
+          details, renderTerminal.getCellOffset(details.localPosition));
+      return;
+    }
+
+    renderTerminal.selectWord(details.localPosition);
   }
 
   bool get hasInputConnection {

@@ -24,6 +24,7 @@ class TerminalGestureHandler extends StatefulWidget {
     this.onDragStart,
     this.onDragUpdate,
     this.onDragEnd,
+    this.onDoubleTapDown,
     this.readOnly = false,
   });
 
@@ -52,6 +53,8 @@ class TerminalGestureHandler extends StatefulWidget {
   final GestureDragUpdateCallback? onDragUpdate;
 
   final GestureDragEndCallback? onDragEnd;
+
+  final GestureTapDownCallback? onDoubleTapDown;
 
   final bool readOnly;
 
@@ -165,7 +168,7 @@ class _TerminalGestureHandlerState extends State<TerminalGestureHandler> {
   }
 
   void onDoubleTapDown(TapDownDetails details) {
-    renderTerminal.selectWord(details.localPosition);
+    widget.onDoubleTapDown?.call(details);
   }
 
   void onLongPressStart(LongPressStartDetails details) {
