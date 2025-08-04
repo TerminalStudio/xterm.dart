@@ -15,11 +15,17 @@ class CustomTextEdit extends StatefulWidget {
     this.autofocus = false,
     this.readOnly = false,
     // this.initEditingState = TextEditingValue.empty,
+    this.viewId,
     this.inputType = TextInputType.text,
     this.inputAction = TextInputAction.newline,
     this.keyboardAppearance = Brightness.light,
     this.deleteDetection = false,
-  });
+  }) {
+    viewId = viewId ?? PlatformDispatcher.instance.implicitView?.viewId;
+    if (viewId == null) {
+      throw Exception('Cannot open input connection without a valid viewId.');
+    }
+  }
 
   final Widget child;
 
@@ -46,6 +52,8 @@ class CustomTextEdit extends StatefulWidget {
   final Brightness keyboardAppearance;
 
   final bool deleteDetection;
+
+  late int? viewId;
 
   @override
   CustomTextEditState createState() => CustomTextEditState();
@@ -160,6 +168,7 @@ class CustomTextEditState extends State<CustomTextEdit> with TextInputClient {
       _connection!.show();
     } else {
       final config = TextInputConfiguration(
+        viewId: widget.viewId,
         inputType: widget.inputType,
         inputAction: widget.inputAction,
         keyboardAppearance: widget.keyboardAppearance,
