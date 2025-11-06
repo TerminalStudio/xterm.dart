@@ -141,6 +141,8 @@ class TerminalView extends StatefulWidget {
   /// emulators. True by default.
   final bool simulateScroll;
 
+
+
   @override
   State<TerminalView> createState() => TerminalViewState();
 }

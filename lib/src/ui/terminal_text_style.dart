@@ -29,6 +29,7 @@ class TerminalStyle {
     this.height = _kDefaultHeight,
     this.fontFamily = _kDefaultFontFamily,
     this.fontFamilyFallback = _kDefaultFontFamilyFallback,
+    this.ligatures = false,
   });
 
   factory TerminalStyle.fromTextStyle(TextStyle textStyle) {
@@ -51,6 +52,8 @@ class TerminalStyle {
 
   final List<String> fontFamilyFallback;
 
+  final bool ligatures;
+
   TextStyle toTextStyle({
     Color? color,
     Color? backgroundColor,
@@ -68,6 +71,7 @@ class TerminalStyle {
       fontWeight: bold ? FontWeight.bold : FontWeight.normal,
       fontStyle: italic ? FontStyle.italic : FontStyle.normal,
       decoration: underline ? TextDecoration.underline : TextDecoration.none,
+      fontFeatures: ligatures ? [const FontFeature.enable('liga')] : null,
     );
   }
 
@@ -76,12 +80,14 @@ class TerminalStyle {
     double? height,
     String? fontFamily,
     List<String>? fontFamilyFallback,
+    bool? ligatures,
   }) {
     return TerminalStyle(
       fontSize: fontSize ?? this.fontSize,
       height: height ?? this.height,
       fontFamily: fontFamily ?? this.fontFamily,
       fontFamilyFallback: fontFamilyFallback ?? this.fontFamilyFallback,
+      ligatures: ligatures ?? this.ligatures,
     );
   }
 }

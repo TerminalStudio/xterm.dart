@@ -147,16 +147,40 @@ class TerminalPainter {
     final cellData = CellData.empty();
     final cellWidth = _cellSize.width;
 
-    for (var i = 0; i < line.length; i++) {
-      line.getCellData(i, cellData);
+    if (_textStyle.ligatures) {
+      // When ligatures are enabled, group cells with the same style to allow ligature formation
+      int i = 0;
+      while (i < line.length) {
+        line.getCellData(i, cellData);
+        final start = i;
+        final style = _getCellTextStyle(cellData);
 
-      final charWidth = cellData.content >> CellContent.widthShift;
-      final cellOffset = offset.translate(i * cellWidth, 0);
-
-      paintCell(canvas, cellOffset, cellData);
-
-      if (charWidth == 2) {
+        // Find the end of the segment with the same style
         i++;
+        while (i < line.length) {
+          line.getCellData(i, cellData);
+          if (!_textStylesEqual(style, _getCellTextStyle(cellData))) {
+            break;
+          }
+          i++;
+        }
+
+        // Paint the segment
+        _paintCellSegment(canvas, offset, line, start, i, style);
+      }
+    } else {
+      // Original behavior: paint each cell individually
+      for (var i = 0; i < line.length; i++) {
+        line.getCellData(i, cellData);
+
+        final charWidth = cellData.content >> CellContent.widthShift;
+        final cellOffset = offset.translate(i * cellWidth, 0);
+
+        paintCell(canvas, cellOffset, cellData);
+
+        if (charWidth == 2) {
+          i++;
+        }
       }
     }
   }
@@ -167,6 +191,97 @@ class TerminalPainter {
     paintCellForeground(canvas, offset, cellData);
   }
 
+  TextStyle _getCellTextStyle(CellData cellData) {
+    final cellFlags = cellData.flags;
+
+    var color = cellFlags & CellFlags.inverse == 0
+        ? resolveForegroundColor(cellData.foreground)
+        : resolveBackgroundColor(cellData.background);
+
+    if (cellData.flags & CellFlags.faint != 0) {
+      color = color.withValues(alpha: 0.5);
+    }
+
+    return _textStyle.toTextStyle(
+      color: color,
+      bold: cellFlags & CellFlags.bold != 0,
+      italic: cellFlags & CellFlags.italic != 0,
+      underline: cellFlags & CellFlags.underline != 0,
+    );
+  }
+
+  bool _textStylesEqual(TextStyle a, TextStyle b) {
+    // Compare font features more carefully since they're lists
+    final fontFeaturesEqual =
+        (a.fontFeatures == null && b.fontFeatures == null) ||
+            (a.fontFeatures != null &&
+                b.fontFeatures != null &&
+                a.fontFeatures!.length == b.fontFeatures!.length &&
+                a.fontFeatures!
+                    .every((feature) => b.fontFeatures!.contains(feature)));
+
+    return a.color == b.color &&
+        a.fontWeight == b.fontWeight &&
+        a.fontStyle == b.fontStyle &&
+        a.decoration == b.decoration &&
+        a.fontFamily == b.fontFamily &&
+        a.fontFamilyFallback == b.fontFamilyFallback &&
+        a.fontSize == b.fontSize &&
+        a.height == b.height &&
+        fontFeaturesEqual;
+  }
+
+  void _paintCellSegment(Canvas canvas, Offset lineOffset, BufferLine line,
+      int start, int end, TextStyle style) {
+    final cellData = CellData.empty();
+    final cellWidth = _cellSize.width;
+    final buffer = StringBuffer();
+
+    for (int i = start; i < end; i++) {
+      line.getCellData(i, cellData);
+      final charCode = cellData.content & CellContent.codepointMask;
+      final cellFlags = cellData.flags;
+      final charWidth = cellData.content >> CellContent.widthShift;
+
+      if (charCode != 0) {
+        var char = String.fromCharCode(charCode);
+        if (cellFlags & CellFlags.underline != 0 && charCode == 0x20) {
+          char = String.fromCharCode(0xA0);
+        }
+        buffer.write(char);
+      } else {
+        buffer.write(' '); // For empty cells
+      }
+
+      // Paint background for each cell
+      final cellOffset = lineOffset.translate(i * cellWidth, 0);
+      paintCellBackground(canvas, cellOffset, cellData);
+
+      if (charWidth == 2) {
+        i++; // Skip the next cell for wide characters
+      }
+    }
+
+    final text = buffer.toString();
+    if (text.isNotEmpty) {
+      final segmentOffset = lineOffset.translate(start * cellWidth, 0);
+      final cacheKey = text.hashCode ^ style.hashCode ^ _textScaler.hashCode;
+      var paragraph = _paragraphCache.getLayoutFromCache(cacheKey);
+
+      if (paragraph == null) {
+        paragraph = _paragraphCache.performAndCacheLayout(
+          text,
+          style,
+          _textScaler,
+          double.infinity,
+          cacheKey,
+        );
+      }
+
+      canvas.drawParagraph(paragraph, segmentOffset);
+    }
+  }
+
   /// Paints the character in the cell represented by [cellData] to [canvas] at
   /// [offset].
   @pragma('vm:prefer-inline')
@@ -174,26 +289,13 @@ class TerminalPainter {
     final charCode = cellData.content & CellContent.codepointMask;
     if (charCode == 0) return;
 
-    final cacheKey = cellData.getHash() ^ _textScaler.hashCode;
+    final cacheKey =
+        cellData.getHash() ^ _textScaler.hashCode ^ _cellSize.width.hashCode;
     var paragraph = _paragraphCache.getLayoutFromCache(cacheKey);
 
     if (paragraph == null) {
       final cellFlags = cellData.flags;
-
-      var color = cellFlags & CellFlags.inverse == 0
-          ? resolveForegroundColor(cellData.foreground)
-          : resolveBackgroundColor(cellData.background);
-
-      if (cellData.flags & CellFlags.faint != 0) {
-        color = color.withOpacity(0.5);
-      }
-
-      final style = _textStyle.toTextStyle(
-        color: color,
-        bold: cellFlags & CellFlags.bold != 0,
-        italic: cellFlags & CellFlags.italic != 0,
-        underline: cellFlags & CellFlags.underline != 0,
-      );
+      final style = _getCellTextStyle(cellData);
 
       // Flutter does not draw an underline below a space which is not between
       // other regular characters. As only single characters are drawn, this
@@ -210,6 +312,7 @@ class TerminalPainter {
         char,
         style,
         _textScaler,
+        _cellSize.width,
         cacheKey,
       );
     }

@@ -24,6 +24,7 @@ class ParagraphCache {
     String text,
     TextStyle style,
     TextScaler textScaler,
+    double width,
     int key,
   ) {
     final builder = ParagraphBuilder(style.getParagraphStyle());
@@ -31,7 +32,7 @@ class ParagraphCache {
     builder.addText(text);
 
     final paragraph = builder.build();
-    paragraph.layout(ParagraphConstraints(width: double.infinity));
+    paragraph.layout(ParagraphConstraints(width: width));
 
     _cache[key] = paragraph;
     return paragraph;
