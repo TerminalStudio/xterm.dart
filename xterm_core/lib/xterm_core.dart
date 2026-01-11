@@ -20,3 +20,6 @@ export 'src/core/mouse/mode.dart';
 export 'src/core/platform.dart';
 export 'src/core/state.dart';
 export 'src/terminal.dart';
+export 'src/utils/debugger.dart';
+export 'src/utils/lookup_table.dart';
+export 'src/base/disposable.dart';

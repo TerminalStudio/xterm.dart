@@ -1,7 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
-import 'package:xterm_core/src/core/mouse/button.dart';
-import 'package:xterm_core/src/core/mouse/button_state.dart';
+import 'package:xterm_core/xterm_core.dart';
 import 'package:xterm/src/terminal_view.dart';
 import 'package:xterm/src/ui/controller.dart';
 import 'package:xterm/src/ui/gesture/gesture_detector.dart';

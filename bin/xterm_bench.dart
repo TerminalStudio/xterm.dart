@@ -1,4 +1,4 @@
-import 'package:xterm_core/src/terminal.dart';
+import 'package:xterm_core/xterm_core.dart';
 
 void main(List<String> args) async {
   final lines = 1000;
