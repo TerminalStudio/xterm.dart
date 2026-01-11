@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:meta/meta.dart';
-import 'package:xterm/src/base/disposable.dart';
-import 'package:xterm/src/core/buffer/cell_offset.dart';
-import 'package:xterm/src/core/buffer/line.dart';
-import 'package:xterm/src/core/buffer/range.dart';
-import 'package:xterm/src/core/buffer/range_block.dart';
-import 'package:xterm/src/core/buffer/range_line.dart';
+import 'package:xterm_core/src/base/disposable.dart';
+import 'package:xterm_core/src/core/buffer/cell_offset.dart';
+import 'package:xterm_core/src/core/buffer/line.dart';
+import 'package:xterm_core/src/core/buffer/range.dart';
+import 'package:xterm_core/src/core/buffer/range_block.dart';
+import 'package:xterm_core/src/core/buffer/range_line.dart';
 import 'package:xterm/src/ui/pointer_input.dart';
 import 'package:xterm/src/ui/selection_mode.dart';
 
