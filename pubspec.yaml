@@ -15,7 +15,9 @@ dependencies:
   quiver: ^3.0.0
   equatable: ^2.0.3
   xterm_core:
-    path: xterm_core
+  # NOTE: Temporary location until hand over to original maintainer and 
+  # set up a pub.dev package.
+    git: https://github.com/isegal/xterm_core.dart
   flutter:
     sdk: flutter
   zmodem: ^0.0.6

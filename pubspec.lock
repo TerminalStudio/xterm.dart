@@ -619,9 +619,11 @@ packages:
   xterm_core:
     dependency: "direct main"
     description:
-      path: xterm_core
-      relative: true
-    source: path
+      path: "."
+      ref: HEAD
+      resolved-ref: a9f4d54c36890d349e673a46b8e638239914d0d0
+      url: "https://github.com/isegal/xterm_core.dart"
+    source: git
     version: "4.0.0"
   yaml:
     dependency: transitive
