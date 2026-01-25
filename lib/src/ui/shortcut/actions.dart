@@ -1,6 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:xterm/src/terminal.dart';
+import 'package:xterm_core/xterm_core.dart';
 import 'package:xterm/src/ui/controller.dart';
 import 'package:xterm/src/ui/selection_mode.dart';
 
