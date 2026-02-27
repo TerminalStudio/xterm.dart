@@ -48,6 +48,7 @@ class TerminalView extends StatefulWidget {
     this.readOnly = false,
     this.hardwareKeyboardOnly = false,
     this.simulateScroll = true,
+    this.scrollOnInput = true,
   });
 
   /// The underlying terminal that this widget renders.
@@ -140,6 +141,11 @@ class TerminalView extends StatefulWidget {
   /// keys to the application. This is standard behavior for most terminal
   /// emulators. True by default.
   final bool simulateScroll;
+
+  /// If true, the terminal will automatically scroll to the bottom when the
+  /// user provides input. Set to false to handle scroll positioning externally.
+  /// True by default.
+  final bool scrollOnInput;
 
   @override
   State<TerminalView> createState() => TerminalViewState();
@@ -257,12 +263,12 @@ class TerminalViewState extends State<TerminalView> {
         deleteDetection: widget.deleteDetection,
         onInsert: _onInsert,
         onDelete: () {
-          _scrollToBottom();
+          if (widget.scrollOnInput) _scrollToBottom();
           widget.terminal.keyInput(TerminalKey.backspace);
         },
         onComposing: _onComposing,
         onAction: (action) {
-          _scrollToBottom();
+          if (widget.scrollOnInput) _scrollToBottom();
           // Android sends TextInputAction.newline when the user presses the virtual keyboard's enter key.
           if (action == TextInputAction.done || action == TextInputAction.newline) {
             widget.terminal.keyInput(TerminalKey.enter);
@@ -379,7 +385,7 @@ class TerminalViewState extends State<TerminalView> {
       widget.terminal.textInput(text);
     }
 
-    _scrollToBottom();
+    if (widget.scrollOnInput) _scrollToBottom();
   }
 
   void _onComposing(String? text) {
@@ -419,7 +425,7 @@ class TerminalViewState extends State<TerminalView> {
       shift: HardwareKeyboard.instance.isShiftPressed,
     );
 
-    if (handled) {
+    if (handled && widget.scrollOnInput) {
       _scrollToBottom();
     }
 
@@ -427,7 +433,7 @@ class TerminalViewState extends State<TerminalView> {
   }
 
   void _onKeyboardShow() {
-    if (_focusNode.hasFocus) {
+    if (_focusNode.hasFocus && widget.scrollOnInput) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _scrollToBottom();
       });
