@@ -48,6 +48,7 @@ class TerminalView extends StatefulWidget {
     this.readOnly = false,
     this.hardwareKeyboardOnly = false,
     this.simulateScroll = true,
+    this.scrollPhysics,
   });
 
   /// The underlying terminal that this widget renders.
@@ -141,6 +142,10 @@ class TerminalView extends StatefulWidget {
   /// emulators. True by default.
   final bool simulateScroll;
 
+  /// Custom scroll physics for the terminal's scrollable. If not provided,
+  /// default scroll physics will be used.
+  final ScrollPhysics? scrollPhysics;
+
   @override
   State<TerminalView> createState() => TerminalViewState();
 }
@@ -219,6 +224,7 @@ class TerminalViewState extends State<TerminalView> {
     Widget child = Scrollable(
       key: _scrollableKey,
       controller: _scrollController,
+      physics: widget.scrollPhysics,
       viewportBuilder: (context, offset) {
         return _TerminalView(
           key: _viewportKey,
