@@ -34,6 +34,7 @@ class KeyboardVisibiltyState extends State<KeyboardVisibilty>
 
   @override
   void didChangeMetrics() {
+    if (!mounted) return;
     final bottomInset = View.of(context).viewInsets.bottom;
 
     if (bottomInset != _lastBottomInset) {
