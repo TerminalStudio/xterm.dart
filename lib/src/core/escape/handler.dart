@@ -11,6 +11,12 @@ abstract class EscapeHandler {
 
   void tab();
 
+  /// CHT — Cursor Horizontal forward Tab (`CSI Pn I`).
+  void cursorForwardTab(int amount);
+
+  /// CBT — Cursor Backward Tab (`CSI Pn Z`).
+  void cursorBackwardTab(int amount);
+
   void lineFeed();
 
   void carriageReturn();

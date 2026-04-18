@@ -164,8 +164,26 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
   }
 
   void _onTerminalChange() {
-    markNeedsLayout();
-    _notifyEditableRect();
+    // PERF: originally `markNeedsLayout()` — which runs a full Flutter layout
+    // pass (walks the RenderObject tree, re-measures every child). For pure
+    // content writes the viewport geometry is unchanged; only the buffer
+    // grew. Layout was the hot path in TUI-heavy scenarios (Claude Code
+    // spinners, counters, vim/nano cursor storms), producing 5-10x slower
+    // rendering than xterm.js on web. We now update scroll bounds directly
+    // and trigger only a repaint. Geometry changes (widget resize, font
+    // size change, viewport resize) still go through the normal
+    // `performLayout` path via `markNeedsLayout` calls elsewhere.
+    if (hasSize && _viewportSize != null) {
+      _offset.applyContentDimensions(0, _maxScrollExtent);
+      if (_stickToBottom) {
+        final delta = _maxScrollExtent - _scrollOffset;
+        if (delta.abs() > 0.001) {
+          _offset.correctBy(delta);
+        }
+      }
+    }
+    markNeedsPaint();
+    if (hasSize) _notifyEditableRect();
   }
 
   void _onControllerUpdate() {

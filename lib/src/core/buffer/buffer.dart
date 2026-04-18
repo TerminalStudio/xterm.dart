@@ -190,7 +190,11 @@ class Buffer {
   /// cursor.
   void eraseLineToCursor() {
     currentLine.isWrapped = false;
-    currentLine.eraseRange(0, _cursorX, terminal.cursor);
+    // eraseRange end is exclusive, so include cursor col with +1.
+    // Bug fix: previously erased [0, _cursorX) leaving the cursor cell intact,
+    // which breaks Claude Code's "Do you want to…" menu rendering (~36 `CSI 1 K`
+    // calls per frame, each leaving one residual cell of garbage).
+    currentLine.eraseRange(0, _cursorX + 1, terminal.cursor);
   }
 
   /// Erases the line at the current cursor position.

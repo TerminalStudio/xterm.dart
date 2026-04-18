@@ -1,3 +1,34 @@
+## Unreleased (prismatic-cz fork, branch `fix/nano-cursor`)
+
+* **Fix: implement CBT (`CSI Pn Z`, Cursor Backward Tab) and CHT
+  (`CSI Pn I`, Cursor Horizontal Tab).** Both sequences were absent
+  from the CSI handler table; parser fell through to `unknownCSI` and
+  the cursor stayed in place. nano uses CBT extensively to redraw
+  syntax-highlighted portions of the current line efficiently — when
+  the emulator ignored it, nano's internal cursor model drifted from
+  the actual buffer position by the tab-stop skip size, and subsequent
+  writes corrupted cells to the right of the cursor. Visible symptom:
+  pressing arrow-right on long syntax-highlighted lines made the
+  content of the line morph into garbled text one character at a time.
+  Fixes much of the user-visible bug in [#58], [#94] in combination
+  with the CPR fix below.
+
+  Adds `TabStops.findBackward(start)` helper. Adds
+  `EscapeHandler.cursorBackwardTab` and `.cursorForwardTab`.
+  Regression harness: `test/src/regression/replay_test.dart` replays
+  a captured nano session.
+
+* **Fix: off-by-one in CPR (Cursor Position Report) reply.**
+  `EscapeEmitter.cursorPosition()` was emitting raw 0-indexed buffer
+  coordinates, but the VT100 CPR reply format (`CSI row ; col R`) is
+  1-indexed. Every DSR (`CSI 6n`) query therefore returned a position
+  off by one in both axes. ncurses applications like nano and vim that
+  sync their internal cursor model from CPR ended up editing at the
+  wrong visible position. Manifests only on raw SSH (tmux answers CPR
+  from its own state, masking the bug). Fixes [#58], [#94].
+
+  Regression test: `test/src/regression/nano_vim_cursor_test.dart`.
+
 ## [4.0.0] - 2024-02-27
 * Update for Flutter 3.19 [#190]. Thanks [@domesticmouse].
 * Fix designate charset logic [#186]. Thanks [@djnalluri].

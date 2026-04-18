@@ -107,6 +107,16 @@ class _TerminalDebuggerHandler implements EscapeHandler {
   }
 
   @override
+  void cursorForwardTab(int amount) {
+    onCommand('cursorForwardTab($amount)');
+  }
+
+  @override
+  void cursorBackwardTab(int amount) {
+    onCommand('cursorBackwardTab($amount)');
+  }
+
+  @override
   void lineFeed() {
     onCommand('lineFeed');
   }

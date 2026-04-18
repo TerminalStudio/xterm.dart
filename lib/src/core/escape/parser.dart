@@ -296,7 +296,9 @@ class EscapeParser {
     'S'.codeUnitAt(0): _csiHandleScrollUp,
     'T'.codeUnitAt(0): _csiHandleScrollDown,
     'X'.codeUnitAt(0): _csiHandleEraseCharacters,
+    'Z'.codeUnitAt(0): _csiHandleCursorBackwardTab,
     '@'.codeUnitAt(0): _csiHandleInsertBlankCharacters,
+    'I'.codeUnitAt(0): _csiHandleCursorForwardTab,
   });
 
   /// `ESC [ Ps a` Cursor Horizontal Position Relative (HPR)
@@ -909,6 +911,32 @@ class EscapeParser {
     }
 
     handler.scrollDown(amount);
+  }
+
+  /// `ESC [ Ps Z` Cursor Backward Tab (CBT)
+  ///
+  /// Move cursor backward [Ps] tab stops (default 1).
+  /// https://terminalguide.namepad.de/seq/csi_sz/
+  void _csiHandleCursorBackwardTab() {
+    var amount = 1;
+    if (_csi.params.isNotEmpty) {
+      amount = _csi.params[0];
+      if (amount == 0) amount = 1;
+    }
+    handler.cursorBackwardTab(amount);
+  }
+
+  /// `ESC [ Ps I` Cursor Horizontal Tab (CHT)
+  ///
+  /// Move cursor forward [Ps] tab stops (default 1).
+  /// https://terminalguide.namepad.de/seq/csi_si/
+  void _csiHandleCursorForwardTab() {
+    var amount = 1;
+    if (_csi.params.isNotEmpty) {
+      amount = _csi.params[0];
+      if (amount == 0) amount = 1;
+    }
+    handler.cursorForwardTab(amount);
   }
 
   /// `ESC [ Ps X` Erase Character (ECH)

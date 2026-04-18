@@ -414,6 +414,35 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
   }
 
   @override
+  void cursorForwardTab(int amount) {
+    for (var i = 0; i < amount; i++) {
+      tab();
+    }
+  }
+
+  @override
+  void cursorBackwardTab(int amount) {
+    // CBT: move cursor backward [amount] tab stops. Search backwards from
+    // cursorX-1 for each step. Clamp to column 0 if fewer stops remain.
+    // Without this, ncurses apps (nano) that emit CBT to redraw status lines
+    // leave the cursor at the original column; subsequent writes overwrite
+    // unrelated cells and the line corrupts (T67, fixes #58, #94).
+    var count = amount;
+    if (count <= 0) count = 1;
+    var x = _buffer.cursorX;
+    while (count > 0 && x > 0) {
+      final prev = _tabStops.findBackward(x - 1);
+      if (prev == null) {
+        x = 0;
+        break;
+      }
+      x = prev;
+      count--;
+    }
+    _buffer.setCursorX(x);
+  }
+
+  @override
   void lineFeed() {
     _buffer.lineFeed();
   }
