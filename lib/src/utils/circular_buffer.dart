@@ -217,15 +217,43 @@ class IndexAwareCircularBuffer<T extends IndexedItem> {
     }
   }
 
-  /// Removes [count] elements starting at [index], shifting all elements after
-  /// [index] to the left.
+  /// Removes [count] elements from the start of the list, shifting all
+  /// remaining elements to the left.
   ///
-  /// This method is cheap since it does not actually modify the list, but
-  /// instead just adjusts the start index and length.
+  /// `_absoluteStartIndex` is advanced by `count` so surviving entries'
+  /// [IndexedItem.index] (computed as
+  /// `_absoluteIndex - _absoluteStartIndex`) stays consistent with their
+  /// new logical position. This matches the invariant that
+  /// capacity-overflow eviction in [push] / [insert] already maintains.
+  /// Without it, after a trim every surviving entry reports `index`
+  /// values offset by `count`, breaking consumers that read back
+  /// `selection.begin.offset.y` for rendering and copy after
+  /// [Buffer.clearScrollback].
+  ///
+  /// This method **does not detach the trimmed entries**. Doing so would
+  /// null-deref any external [CellAnchor] still holding a direct
+  /// reference to a trimmed line: [CellAnchor.y] and [CellAnchor.offset]
+  /// guard their `_owner!.index` access only with `assert(attached)`,
+  /// which is stripped in release mode, so a `_detach()`'d trimmed line
+  /// observed through a stale anchor reaches `_absoluteIndex! - …` and
+  /// throws `_TypeError`. An earlier revision of this patch added that
+  /// `_dropChild` loop and immediately produced `_TypeError` dialogs on
+  /// every shell prompt redraw following any `\e[3J` in release builds.
+  ///
+  /// Orphan anchors on trimmed entries therefore retain
+  /// `attached == true` and their [CellAnchor.y] returns
+  /// increasingly-negative values as the buffer continues to advance.
+  /// Renderers that compute `index * cellHeight` will place these
+  /// anchors off-screen — visually equivalent to a cleared selection.
+  /// Callers that need to explicitly clear outstanding selections before
+  /// trimming should do so at their own layer (e.g.
+  /// [TerminalController.clearSelection] from
+  /// [Buffer.clearScrollback]'s caller surface in the host application).
   void trimStart(int count) {
     if (count > _length) count = _length;
     _startIndex += count;
     _startIndex %= _array.length;
+    _absoluteStartIndex += count;
     _length -= count;
   }
 
