@@ -197,6 +197,15 @@ class CustomTextEditState extends State<CustomTextEdit> with TextInputClient {
 
   late var _currentEditingState = _initEditingState.copyWith();
 
+  // Mirror of the platform's last-reported text in non-deleteDetection mode.
+  // We diff against this instead of [_initEditingState] because some embedders
+  // (notably macOS, when an apostrophe arrives via the composing path) silently
+  // drop the setEditingState() reset we'd otherwise issue after every event.
+  // When that happens, the next keystroke arrives as a cumulative
+  // TextEditingValue, and diffing against a stale init would re-emit
+  // already-emitted characters (e.g. typing "I" + "'" + "d" produced "I''d").
+  late var _seenText = _initEditingState.text;
+
   @override
   TextEditingValue? get currentTextEditingValue {
     return _currentEditingState;
@@ -221,21 +230,38 @@ class CustomTextEditState extends State<CustomTextEdit> with TextInputClient {
 
     widget.onComposing(null);
 
-    if (_currentEditingState.text.length < _initEditingState.text.length) {
-      widget.onDelete();
-    } else {
-      final textDelta = _currentEditingState.text.substring(
-        _initEditingState.text.length,
-      );
-
-      widget.onInsert(textDelta);
+    if (widget.deleteDetection) {
+      // Placeholder-based delete detection (Android soft-keyboard path).
+      // Preserve original semantics: diff against the static placeholder,
+      // emit delete when the field shrinks below it, and reset the platform
+      // state after every event to refill the placeholder so the IME keeps
+      // generating backspace events.
+      if (_currentEditingState.text.length < _initEditingState.text.length) {
+        widget.onDelete();
+      } else {
+        widget.onInsert(
+          _currentEditingState.text.substring(_initEditingState.text.length),
+        );
+      }
+      if (_currentEditingState.text != _initEditingState.text) {
+        _connection!.setEditingState(_initEditingState);
+      }
+      _seenText = _initEditingState.text;
+      return;
     }
 
-    // Reset editing state if composing is done
-    if (_currentEditingState.composing.isCollapsed &&
-        _currentEditingState.text != _initEditingState.text) {
-      _connection!.setEditingState(_initEditingState);
+    // Non-placeholder path. Diff against the platform's last-reported text
+    // rather than the static init state, so the math stays correct even when
+    // setEditingState() didn't take effect on the previous event. We also
+    // skip the post-event reset for the same reason: trying to force the
+    // platform back to init is what created the divergence in the first
+    // place; just letting the platform's text accumulate keeps it
+    // consistent with our mirror.
+    final newText = _currentEditingState.text;
+    if (newText.length > _seenText.length) {
+      widget.onInsert(newText.substring(_seenText.length));
     }
+    _seenText = newText;
   }
 
   @override
