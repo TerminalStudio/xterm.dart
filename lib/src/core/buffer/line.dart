@@ -335,11 +335,19 @@ class BufferLine with IndexedItem {
       to = _length;
     }
 
+    to = min(to, getTrimmedLength(to));
+
     final builder = StringBuffer();
     for (var i = from; i < to; i++) {
       final codePoint = getCodePoint(i);
       final width = getWidth(i);
-      if (codePoint != 0 && i + width <= to) {
+
+      if (codePoint == 0) {
+        if (i > from && getWidth(i - 1) == 2) {
+          continue;
+        }
+        builder.writeCharCode(0x20);
+      } else if (i + width <= to) {
         builder.writeCharCode(codePoint);
       }
     }

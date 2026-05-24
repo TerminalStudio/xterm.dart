@@ -16,6 +16,36 @@ void main() {
       expect(terminal.buffer.lines[0].getText(), equals(text));
     });
 
+    test('preserves empty cells between selected text columns', () {
+      final terminal = Terminal();
+      terminal.resize(30, 5);
+
+      terminal.write('Claude\x1b[1;20HCode');
+
+      expect(
+        terminal.buffer.lines[0].getText(0, 23),
+        equals('${'Claude'.padRight(19)}Code'),
+      );
+    });
+
+    test('does not append trailing spaces for implicit ranges', () {
+      final terminal = Terminal();
+      terminal.resize(30, 5);
+
+      terminal.write('Hello');
+
+      expect(terminal.buffer.lines[0].getText(), equals('Hello'));
+    });
+
+    test('does not insert spaces after wide characters', () {
+      final terminal = Terminal();
+      terminal.resize(10, 5);
+
+      terminal.write('😀A');
+
+      expect(terminal.buffer.lines[0].getText(0, 3), equals('😀A'));
+    });
+
     test('can specify a range', () {
       final terminal = Terminal();
       terminal.write('Hello World');
