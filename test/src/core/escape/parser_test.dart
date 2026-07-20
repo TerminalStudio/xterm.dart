@@ -32,5 +32,15 @@ void main() {
       parser.write('\x1b[4m');
       verify(parser.handler.setCursorUnderline());
     });
+
+    test('still parses SGR with a leading empty parameter (default + bold)',
+        () {
+      // A leading `;` is legal SGR for an omitted/default first parameter —
+      // `_csi.prefix` also captures `;` (same byte range as the real private
+      // markers `< = > ?`), so this must not be misread as a private marker.
+      final parser = EscapeParser(MockEscapeHandler());
+      parser.write('\x1b[;1m');
+      verify(parser.handler.setCursorBold());
+    });
   });
 }
