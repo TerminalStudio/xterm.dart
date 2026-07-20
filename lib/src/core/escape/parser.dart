@@ -408,6 +408,16 @@ class EscapeParser {
   ///
   /// https://terminalguide.namepad.de/seq/csi_sm/
   void _csiHandleSgr() {
+    // A private-marker prefix (`?`, `>`, `<`, `=`) changes the meaning of the
+    // sequence entirely — e.g. `CSI > 4 ; 2 m` is xterm's modifyOtherKeys
+    // control, unrelated to text style. Without this check, its params (4, 2)
+    // were being read as plain SGR codes (underline, faint), corrupting the
+    // cursor style for everything drawn afterward. A prefixed sequence ending
+    // in 'm' is not standard SGR; treat it like any other unrecognized CSI.
+    if (_csi.prefix != null) {
+      return handler.unknownCSI(_csi.finalByte);
+    }
+
     final params = _csi.params;
 
     if (params.isEmpty) {

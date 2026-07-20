@@ -13,5 +13,24 @@ void main() {
       parser.write('\x1b[8;24;80t');
       verify(parser.handler.resize(80, 24));
     });
+
+    test(
+      'does not treat a private-marker-prefixed sequence ending in m as SGR',
+      () {
+        // `CSI > 4 ; 2 m` is xterm's modifyOtherKeys control, not SGR — its
+        // params must not be read as "set underline; set faint".
+        final parser = EscapeParser(MockEscapeHandler());
+        parser.write('\x1b[>4;2m');
+        verifyNever(parser.handler.setCursorUnderline());
+        verifyNever(parser.handler.setCursorFaint());
+        verify(parser.handler.unknownCSI('m'.codeUnitAt(0)));
+      },
+    );
+
+    test('still parses plain SGR underline with no prefix', () {
+      final parser = EscapeParser(MockEscapeHandler());
+      parser.write('\x1b[4m');
+      verify(parser.handler.setCursorUnderline());
+    });
   });
 }
