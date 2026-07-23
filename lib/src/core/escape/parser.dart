@@ -408,6 +408,13 @@ class EscapeParser {
   ///
   /// https://terminalguide.namepad.de/seq/csi_sm/
   void _csiHandleSgr() {
+    // SGR is `CSI Ps m` and never carries a private prefix. Sequences that share the final byte `m`
+    // but have a prefix are not SGR — e.g. XTMODKEYS `CSI > Ps ; Ps m` (modifyOtherKeys), which many
+    // terminals/apps emit. Dispatching on the final byte alone runs those through the SGR handler,
+    // which then reads their parameters as SGR codes (so `CSI > 4 ; 2 m` turns on underline for every
+    // subsequent cell). Ignore prefixed sequences here.
+    if (_csi.prefix != null) return;
+
     final params = _csi.params;
 
     if (params.isEmpty) {
