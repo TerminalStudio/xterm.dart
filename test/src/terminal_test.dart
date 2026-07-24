@@ -2,6 +2,34 @@ import 'package:test/test.dart';
 import 'package:xterm/core.dart';
 
 void main() {
+  test('Codex-style inline history insertion keeps the buffer valid', () {
+    final terminal = Terminal(maxLines: 5000);
+    terminal.resize(110, 25);
+    for (var row = 1; row <= 25; row++) {
+      terminal.write('old-$row\r\n');
+    }
+
+    terminal.write('\x1b[19;25r\x1b[19;1H\x1bM\x1bM\x1b[r');
+    terminal.write('\x1b[1;20r\x1b[18;1H');
+    terminal.write('\r\n\r\n› hello from inline history\r\n\r\n');
+    terminal.write('\x1b[r');
+    terminal.write('\x1b[1;20r\x1b[2S\x1b[r');
+    terminal.write('\x1b[19;1H\x1b[J');
+
+    expect(terminal.buffer.getText(), contains('hello from inline history'));
+  });
+
+  test('line deletion keeps the buffer valid', () {
+    final terminal = Terminal(maxLines: 100);
+    terminal.resize(20, 5);
+    terminal.write('one\r\ntwo\r\nthree\r\nfour\r\nfive');
+
+    terminal.write('\x1b[2;1H\x1b[2M');
+    terminal.write('\x1b[5;1H\r\nsix');
+
+    expect(terminal.buffer.getText(), contains('six'));
+  });
+
   group('Terminal.inputHandler', () {
     test('can be set to null', () {
       final terminal = Terminal(inputHandler: null);
