@@ -329,12 +329,14 @@ class EscapeParser {
   /// https://terminalguide.namepad.de/seq/csi_sc/
   void _csiHandleSendDeviceAttributes() {
     switch (_csi.prefix) {
+      case null:
+        return handler.sendPrimaryDeviceAttributes();
       case Ascii.greaterThan:
         return handler.sendSecondaryDeviceAttributes();
       case Ascii.equal:
         return handler.sendTertiaryDeviceAttributes();
       default:
-        handler.sendPrimaryDeviceAttributes();
+        handler.unknownCSI(_csi.finalByte);
     }
   }
 
