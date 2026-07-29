@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' show max;
 
 import 'package:xterm/src/base/observable.dart';
@@ -224,9 +225,19 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
   /// Writes the data from the underlying program to the terminal. Calling this
   /// updates the states of the terminal and emits events such as [onBell] or
   /// [onTitleChange] when the escape sequences in [data] request it.
+  /// True while an application holds a synchronized update (DEC private mode 2026): repaints are
+  /// suspended so its partially-drawn frames never reach the screen, then flushed once on end.
+  bool _synchronizedUpdate = false;
+
+  /// Safety valve for [_synchronizedUpdate]: if the matching `?2026l` never arrives (e.g. it was lost
+  /// across a reconnect), force-end the update so the display can't stay frozen.
+  Timer? _synchronizedUpdateTimeout;
+
   void write(String data) {
     _parser.write(data);
-    notifyListeners();
+    // Codex (and other ratatui apps) brackets every atomic redraw in `?2026h` … `?2026l`; painting the
+    // intermediate states between them is what's seen as flicker. Hold the repaint until the update ends.
+    if (!_synchronizedUpdate) notifyListeners();
   }
 
   /// Sends a key event to the underlying program.
@@ -752,7 +763,22 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
 
   @override
   void setUnknownDecMode(int mode, bool enabled) {
-    // no-op
+    // DEC 2026 — synchronized output. Suspend repaints between begin (`?2026h`) and end (`?2026l`), then
+    // flush a single repaint on end so the completed frame appears atomically instead of mid-draw.
+    if (mode == 2026) {
+      _synchronizedUpdate = enabled;
+      _synchronizedUpdateTimeout?.cancel();
+      if (enabled) {
+        _synchronizedUpdateTimeout = Timer(const Duration(milliseconds: 150), () {
+          if (_synchronizedUpdate) {
+            _synchronizedUpdate = false;
+            notifyListeners();
+          }
+        });
+      } else {
+        notifyListeners();
+      }
+    }
   }
 
   /* Select Graphic Rendition (SGR) */
