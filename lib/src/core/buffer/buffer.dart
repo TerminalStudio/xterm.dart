@@ -235,7 +235,12 @@ class Buffer {
   void index() {
     if (isInVerticalMargin) {
       if (_cursorY == _marginBottom) {
-        if (marginTop == 0 && !isAltBuffer) {
+        // Growing the scrollback (insert a line just below the last visible row, so the top line is
+        // preserved as history) is only correct for a *full-height* scroll — a region whose bottom is
+        // the last row of the screen. codex/ratatui set *partial* scroll regions (e.g. `ESC[1;9r`,
+        // `ESC[10;35r`) to redraw part of its inline UI; scrolling one of those must shift lines *within*
+        // the region (`scrollUp`), not shove everything below it down — doing so scrambled the display.
+        if (marginTop == 0 && _marginBottom == viewHeight - 1 && !isAltBuffer) {
           lines.insert(absoluteMarginBottom + 1, _newEmptyLine());
         } else {
           scrollUp(1);
