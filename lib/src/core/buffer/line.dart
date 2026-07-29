@@ -145,6 +145,22 @@ class BufferLine with IndexedItem {
       eraseCell(end - 1, style);
     }
 
+    // Background-colour erase (bce): a line is only painted up to `_length`, so clamping the erase to
+    // `_length` would silently drop cells an app expects filled with the current background — e.g. codex
+    // sets a diff row's background then emits `ESC[K` to colour the rest of the row, leaving the row
+    // patchy instead of full-width. When the pen carries an explicit background, grow the line to the
+    // erase boundary so those cells exist and render. (Default-background erases stay trimmed, preserving
+    // the previous behaviour and keeping trailing cells out of selection/copy.)
+    if (style.background != 0 && end > _length) {
+      final gapStart = _length;
+      resize(end);
+      // A cursor parked past the written text leaves a gap before `start`; keep it default rather than
+      // whatever stale data the grown buffer held.
+      for (var i = gapStart; i < start && i < end; i++) {
+        resetCell(i);
+      }
+    }
+
     end = min(end, _length);
     for (var i = start; i < end; i++) {
       eraseCell(i, style);
