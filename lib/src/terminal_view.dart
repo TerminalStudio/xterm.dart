@@ -35,6 +35,7 @@ class TerminalView extends StatefulWidget {
     this.focusNode,
     this.autofocus = false,
     this.onTapUp,
+    this.onDoubleTapDown,
     this.onSecondaryTapDown,
     this.onSecondaryTapUp,
     this.mouseCursor = SystemMouseCursors.text,
@@ -86,6 +87,16 @@ class TerminalView extends StatefulWidget {
 
   /// Callback for when the user taps on the terminal.
   final void Function(TapUpDetails, CellOffset)? onTapUp;
+
+  /// Function called when the user double-taps the terminal.
+  ///
+  /// Providing this REPLACES the built-in double-tap behaviour, which selects
+  /// the word under the pointer. Leave it null to keep that default.
+  ///
+  /// Supplying it lets an embedder define its own double-tap meaning — select
+  /// the whole line, select a URL, open a file — without the built-in word
+  /// selection running first and being visibly overwritten a frame later.
+  final void Function(TapDownDetails, CellOffset)? onDoubleTapDown;
 
   /// Function called when the user taps on the terminal with a secondary
   /// button.
@@ -300,6 +311,7 @@ class TerminalViewState extends State<TerminalView> {
       terminalController: _controller,
       onTapUp: _onTapUp,
       onTapDown: _onTapDown,
+      onDoubleTapDown: widget.onDoubleTapDown != null ? _onDoubleTapDown : null,
       onSecondaryTapDown: widget.onSecondaryTapDown != null ? _onSecondaryTapDown : null,
       onSecondaryTapUp: widget.onSecondaryTapUp != null ? _onSecondaryTapUp : null,
       readOnly: widget.readOnly,
@@ -351,6 +363,11 @@ class TerminalViewState extends State<TerminalView> {
         _focusNode.requestFocus();
       }
     }
+  }
+
+  void _onDoubleTapDown(TapDownDetails details) {
+    final offset = renderTerminal.getCellOffset(details.localPosition);
+    widget.onDoubleTapDown?.call(details, offset);
   }
 
   void _onSecondaryTapDown(TapDownDetails details) {

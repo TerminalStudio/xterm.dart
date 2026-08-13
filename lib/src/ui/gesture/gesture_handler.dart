@@ -17,6 +17,7 @@ class TerminalGestureHandler extends StatefulWidget {
     this.onTapUp,
     this.onSingleTapUp,
     this.onTapDown,
+    this.onDoubleTapDown,
     this.onSecondaryTapDown,
     this.onSecondaryTapUp,
     this.onTertiaryTapDown,
@@ -35,6 +36,9 @@ class TerminalGestureHandler extends StatefulWidget {
   final GestureTapUpCallback? onSingleTapUp;
 
   final GestureTapDownCallback? onTapDown;
+
+  /// Replaces the built-in double-tap word selection when non-null.
+  final GestureTapDownCallback? onDoubleTapDown;
 
   final GestureTapDownCallback? onSecondaryTapDown;
 
@@ -157,6 +161,18 @@ class _TerminalGestureHandlerState extends State<TerminalGestureHandler> {
   }
 
   void onDoubleTapDown(TapDownDetails details) {
+    // An embedder-supplied handler REPLACES the word selection rather than
+    // running after it. Selecting the word first and letting the embedder
+    // correct it a frame later is visible to the user as a flicker, and it
+    // makes the embedder's selection depend on scheduling order.
+    final handler = widget.onDoubleTapDown;
+
+    if (handler != null) {
+      handler(details);
+
+      return;
+    }
+
     renderTerminal.selectWord(details.localPosition);
   }
 
