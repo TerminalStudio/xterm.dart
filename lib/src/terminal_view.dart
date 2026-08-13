@@ -341,7 +341,7 @@ class TerminalViewState extends State<TerminalView> {
     widget.onTapUp?.call(details, offset);
   }
 
-  void _onTapDown(_) {
+  void _onTapDown(TapDownDetails _) {
     if (_controller.selection != null) {
       _controller.clearSelection();
     } else {

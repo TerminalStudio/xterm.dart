@@ -367,5 +367,36 @@ void main() {
       expect(item2.attached, false);
       expect(item3.index, 0);
     });
+
+    test('moving an item up a slot keeps it attached', () {
+      // Buffer.scrollUp shifts every line up with `lines[i] = lines[i + n]`,
+      // which leaves a stale duplicate reference in the vacated slot. Adopting
+      // into that slot must not detach the item that was just re-homed, or the
+      // whole visible screen ends up detached — which silently kills text
+      // selection, because a selection anchor on a detached line resolves to
+      // nothing.
+      final list = IndexAwareCircularBuffer<IndexedValue<int>>(4);
+
+      final item0 = IndexedValue(0);
+      final item1 = IndexedValue(1);
+      final item2 = IndexedValue(2);
+
+      list.push(item0);
+      list.push(item1);
+      list.push(item2);
+
+      // Shift everything up one slot, the way a scroll does.
+      list[0] = list[1];
+      list[1] = list[2];
+
+      expect(item1.attached, true, reason: 're-homed at index 0');
+      expect(item1.index, 0);
+
+      expect(item2.attached, true, reason: 're-homed at index 1');
+      expect(item2.index, 1);
+
+      // The item that was genuinely overwritten is the one that detaches.
+      expect(item0.attached, false);
+    });
   });
 }

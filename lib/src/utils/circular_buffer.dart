@@ -35,10 +35,29 @@ class IndexAwareCircularBuffer<T extends IndexedItem> {
   }
 
   /// Adds the specified [child] to the list at the specified [index].
+  ///
+  /// The previous occupant is detached ONLY when this slot is still its home.
+  ///
+  /// A caller may shift items up with `list[i] = list[i + n]`, which leaves a
+  /// stale duplicate reference behind in the vacated slot; adopting into that
+  /// slot next would otherwise detach the item just re-homed at `i`. [_attach]
+  /// rewrites `_absoluteIndex`, so a re-homed item now maps to a DIFFERENT slot
+  /// and is left alone — while an item that is genuinely being overwritten
+  /// (an eviction when the list is full) still maps here, and is detached.
   @pragma('vm:prefer-inline')
   void _adoptChild(int index, T child) {
     final cyclicIndex = _getCyclicIndex(index);
-    _array[cyclicIndex]?._detach();
+    final previous = _array[cyclicIndex];
+
+    if (previous != null && !identical(previous, child)) {
+      final previousIndex = previous._absoluteIndex;
+
+      if (previousIndex != null &&
+          _getCyclicIndex(previousIndex - _absoluteStartIndex) == cyclicIndex) {
+        previous._detach();
+      }
+    }
+
     _array[cyclicIndex] = child.._attach(this, index);
   }
 
@@ -107,7 +126,7 @@ class IndexAwareCircularBuffer<T extends IndexedItem> {
 
   /// Sets the element at the specified [index] in the list. Throws if the
   /// index is out of bounds.
-  operator []=(int index, T value) {
+  void operator []=(int index, T value) {
     RangeError.checkValueInInterval(index, 0, length - 1, 'index');
     _adoptChild(index, value);
   }
