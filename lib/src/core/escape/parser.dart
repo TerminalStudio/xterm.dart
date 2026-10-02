@@ -408,6 +408,9 @@ class EscapeParser {
   ///
   /// https://terminalguide.namepad.de/seq/csi_sm/
   void _csiHandleSgr() {
+    // `CSI > Ps m` (XTMODKEYS) and `CSI ? Ps m` are not SGR.
+    if (_csi.prefix != null) return;
+
     final params = _csi.params;
 
     if (params.isEmpty) {
