@@ -228,6 +228,12 @@ class EscapeParser {
 
     var param = 0;
     var hasParam = false;
+    // ':' separates sub-parameters (ITU T.416), e.g.
+    // `4:0` (underline off) or `38:2::r:g:b`. The ':' used to be dropped, which
+    // merged the digits (`4:0` became `40`). Collect each ';' group here.
+    var group = <int>[];
+    var hasColon = false;
+    final groups = <List<int>>[];
     while (true) {
       // The sequence isn't completed, just ignore it.
       if (_queue.isEmpty) {
@@ -236,7 +242,23 @@ class EscapeParser {
 
       final char = _queue.consume();
 
+      if (char == Ascii.colon) {
+        hasColon = true;
+        group.add(param);
+        param = 0;
+        hasParam = true;
+        continue;
+      }
+
       if (char == Ascii.semicolon) {
+        if (hasColon) {
+          group.add(param);
+          groups.add(group);
+          group = <int>[];
+          param = 0;
+          hasParam = false;
+          continue;
+        }
         if (hasParam) {
           _csi.params.add(param);
         }
@@ -257,13 +279,49 @@ class EscapeParser {
       }
 
       if (char >= Ascii.atSign && char <= Ascii.tilde) {
-        if (hasParam) {
+        if (hasColon) {
+          // Earlier ';' groups were kept apart; flatten them again.
+          if (hasParam) {
+            group.add(param);
+          }
+          groups.add(group);
+          for (final g in groups) {
+            _csi.params.addAll(_flattenSubParams(g, char));
+          }
+        } else if (hasParam) {
           _csi.params.add(param);
         }
 
         _csi.finalByte = char;
         return true;
       }
+    }
+  }
+
+  /// Turns one `;` group of colon-separated sub-parameters into the
+  /// equivalent semicolon-style parameters the handlers understand.
+  List<int> _flattenSubParams(List<int> g, int finalByte) {
+    if (g.length == 1) return g;
+    if (finalByte != 0x6d /* m */) return [g.first];
+
+    switch (g.first) {
+      case 4: // 4:0 none, 4:1..5 underline styles
+        return [g.length > 1 && g[1] == 0 ? 24 : 4];
+      case 38:
+      case 48:
+        if (g.length > 2 && g[1] == 2) {
+          // 38:2:r:g:b or 38:2:<colorspace>:r:g:b
+          final rgb = g.sublist(g.length - 3);
+          return [g.first, 2, ...rgb];
+        }
+        if (g.length > 2 && g[1] == 5) {
+          return [g.first, 5, g[2]];
+        }
+        return const [];
+      case 58: // underline colour: unsupported, swallow it
+        return const [];
+      default:
+        return [g.first];
     }
   }
 
