@@ -222,6 +222,140 @@ void main() {
     expect(pasted, ['ls']);
     expect(harness.output, isEmpty);
   }, variant: ios);
+  group('a paste the platform signals', () {
+    tearDown(() => CustomTextEditState.pasteSignalled = false);
+
+    void insert(WidgetTester tester, String text, {TextRange? composing}) {
+      tester.testTextInput.updateEditingValue(
+        TextEditingValue(
+          text: text,
+          selection: TextSelection.collapsed(offset: text.length),
+          composing: composing ?? TextRange.empty,
+        ),
+      );
+    }
+
+    Future<_Harness> bracketed(WidgetTester tester) async {
+      final harness = await _pump(tester);
+      harness.terminal.write('\x1b[?2004h');
+      return harness;
+    }
+
+    testWidgets('is the insert that ends with it, bracketed', (tester) async {
+      final harness = await bracketed(tester);
+
+      CustomTextEditState.expectPaste('ls\nrm');
+      insert(tester, 'ls\nrm');
+      await tester.pump();
+      expect(harness.output.join(), '\x1b[200~ls\nrm\x1b[201~');
+
+      harness.output.clear();
+      insert(tester, 'x');
+      await tester.pump();
+      expect(harness.output.join(), 'x');
+    });
+
+    testWidgets('a composition it commits goes first, as typing', (
+      tester,
+    ) async {
+      final harness = await bracketed(tester);
+
+      insert(tester, 'ni', composing: const TextRange(start: 0, end: 2));
+      await tester.pump();
+      CustomTextEditState.expectPaste('pasted');
+      insert(tester, 'nipasted');
+      await tester.pump();
+
+      expect(harness.output.join(), 'ni\x1b[200~pasted\x1b[201~');
+    });
+
+    testWidgets('an update before it does not take it', (tester) async {
+      // The composition committed on its own, then the insert.
+      final harness = await bracketed(tester);
+
+      insert(tester, 'ni', composing: const TextRange(start: 0, end: 2));
+      await tester.pump();
+      CustomTextEditState.expectPaste('ls\nrm');
+      insert(tester, 'ni');
+      await tester.pump();
+      insert(tester, 'ls\nrm');
+      await tester.pump();
+
+      expect(harness.output.join(), 'ni\x1b[200~ls\nrm\x1b[201~');
+    });
+
+    testWidgets('lapses when it never arrives', (tester) async {
+      final harness = await bracketed(tester);
+
+      CustomTextEditState.expectPaste('x');
+      await tester.pump(const Duration(seconds: 2));
+      insert(tester, 'x');
+      await tester.pump();
+      expect(harness.output.join(), 'x');
+    });
+
+    testWidgets('once heard, the menu is no longer guessed from', (
+      tester,
+    ) async {
+      final harness = await bracketed(tester);
+      CustomTextEditState.expectPaste('unused');
+      await tester.pump(const Duration(seconds: 2));
+
+      await harness.longPressAt(30, 2);
+      insert(tester, 'x');
+      await tester.pump();
+      expect(harness.output.join(), 'x');
+    }, variant: ios);
+  });
+
+  testWidgets('select all puts the menu over the new selection', (
+    tester,
+  ) async {
+    final harness = await _pump(tester);
+
+    await harness.longPressAt(30, 2);
+    final first = calls.lastWhere(
+      (call) => call.method == 'ContextMenu.showSystemContextMenu',
+    );
+    final selectAll = shownItems().firstWhere(
+      (item) =>
+          item['title'] ==
+          const DefaultMaterialLocalizations().selectAllButtonLabel,
+    );
+    calls.clear();
+    await _systemAction(tester, selectAll['id']! as String);
+    await _systemHide(tester);
+    await tester.pump();
+
+    final again = calls.lastWhere(
+      (call) => call.method == 'ContextMenu.showSystemContextMenu',
+    );
+    expect(
+      (again.arguments as Map)['targetRect'],
+      isNot((first.arguments as Map)['targetRect']),
+    );
+  }, variant: ios);
+
+  testWidgets('a refused copy is reported', (tester) async {
+    Object? failed;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+          if (call.method == 'Clipboard.setData') {
+            throw PlatformException(code: 'busy');
+          }
+          if (call.method == 'Clipboard.hasStrings') {
+            return <String, bool>{'value': true};
+          }
+          return null;
+        });
+    final harness = await _pump(tester, onCopyFailed: (e, _) => failed = e);
+
+    await harness.doubleTapAt(7);
+    harness.key.currentState!.copySelection();
+    await tester.pump();
+
+    expect(failed, isA<PlatformException>());
+  });
 }
 
 Future<void> _platformMessage(WidgetTester tester, MethodCall call) async {
@@ -246,6 +380,7 @@ Future<_Harness> _pump(
   WidgetTester tester, {
   CustomTextEditToolbarBuilder? toolbarBuilder,
   void Function(String text)? onPasteText,
+  void Function(Object error, StackTrace stack)? onCopyFailed,
 }) async {
   final terminal = Terminal(maxLines: 32);
   final output = <String>[];
@@ -266,6 +401,7 @@ Future<_Harness> _pump(
             toolbarBuilder: toolbarBuilder,
             onPaste: onPasteText == null ? null : () {},
             onPasteText: onPasteText,
+            onCopyFailed: onCopyFailed,
           ),
         ),
       ),

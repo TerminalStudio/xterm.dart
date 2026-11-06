@@ -63,6 +63,7 @@ class TerminalView extends StatefulWidget {
     this.onSelectAll,
     this.onPaste,
     this.onPasteText,
+    this.onCopyFailed,
   });
 
   /// The underlying terminal that this widget renders.
@@ -188,9 +189,12 @@ class TerminalView extends StatefulWidget {
 
   /// What the iOS system menu's paste brought in, which iOS gives without
   /// asking the user (a read through [onPaste] asks every time). Defaults to
-  /// pasting into the terminal when [onPaste] is not given either; given
-  /// [onPaste] alone, that menu pastes through it.
+  /// pasting into the terminal, bracketed when the program asked for that.
   final void Function(String text)? onPasteText;
+
+  /// A copy the clipboard refused: the selection stays, and nothing else says
+  /// so unless this does.
+  final void Function(Object error, StackTrace stack)? onCopyFailed;
 
   @override
   State<TerminalView> createState() => TerminalViewState();
@@ -508,9 +512,9 @@ class TerminalViewState extends State<TerminalView>
         onPasteText: widget.readOnly
             ? null
             : widget.onPasteText ??
-                  (widget.onPaste == null
-                      ? (text) => pasteText(widget.terminal, _controller, text)
-                      : null),
+                  (text) => pasteText(widget.terminal, _controller, text),
+        selectionRect: _selectionRect,
+        onCopyFailed: widget.onCopyFailed,
         child: child,
       );
     } else if (!widget.readOnly) {
@@ -576,6 +580,35 @@ class TerminalViewState extends State<TerminalView>
     _focusNode.unfocus();
     _customTextEditKey.currentState?.closeKeyboard();
   }
+
+  /// The selection's bounds on screen, cut to what is visible: a whole
+  /// buffer selected is anchored to the rows in view.
+  Rect? _selectionRect() {
+    final selection = _controller.selection;
+    if (selection == null || selection.isCollapsed) return null;
+    final render = renderTerminal;
+    if (!render.hasSize) return null;
+    final range = selection.normalized;
+    final cell = render.cellSize;
+    final begin = render.getOffset(range.begin);
+    final end = render.getOffset(range.end);
+    // Over more than one row it spans them: a row is selected to its end.
+    final oneRow = range.begin.y == range.end.y;
+    final local = Rect.fromLTRB(
+      oneRow ? begin.dx : 0,
+      begin.dy,
+      oneRow ? end.dx : render.size.width,
+      end.dy + cell.height,
+    ).intersect(Offset.zero & render.size);
+    if (local.width <= 0 || local.height <= 0) return null;
+    return MatrixUtils.transformRect(render.getTransformTo(null), local);
+  }
+
+  /// Copies the selection, as the menu's Copy does: `onCopied` once the
+  /// clipboard has it, `onCopyFailed` when it refused.
+  void copySelection() => _customTextEditKey.currentState?.copySelection(
+    SelectionChangedCause.keyboard,
+  );
 
   void showSelectionToolbar(Rect globalSelectionRect) {
     _customTextEditKey.currentState?.showToolbar(

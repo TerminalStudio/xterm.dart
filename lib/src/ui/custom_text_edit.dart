@@ -76,6 +76,13 @@ class CustomTextEdit extends StatefulWidget {
   /// [onPaste], and iOS asks the user before every read.
   final void Function(String text)? onPasteText;
 
+  /// Where the selection is now, in global coordinates, for a menu put back
+  /// after select all: over what is selected, not where it was asked for.
+  final Rect? Function()? selectionRect;
+
+  /// A copy the clipboard refused. Nothing changes on screen otherwise.
+  final void Function(Object error, StackTrace stack)? onCopyFailed;
+
   CustomTextEdit({
     super.key,
     required this.child,
@@ -103,6 +110,8 @@ class CustomTextEdit extends StatefulWidget {
     this.onSelectAll,
     this.onPaste,
     this.onPasteText,
+    this.selectionRect,
+    this.onCopyFailed,
   });
 
   @override
@@ -111,6 +120,53 @@ class CustomTextEdit extends StatefulWidget {
 
 class CustomTextEditState extends State<CustomTextEdit>
     with TextInputClient, TextSelectionDelegate {
+  /// The terminal holding the input connection, the one a platform paste
+  /// lands in.
+  static CustomTextEditState? _attached;
+
+  /// Whether the platform has told [expectPaste] of a paste. From then on it
+  /// is trusted to tell of every one, and an insert while the system menu
+  /// offers paste is no longer guessed to be its paste.
+  static bool pasteSignalled = false;
+
+  /// The platform is about to insert [text], the clipboard, as typed text into
+  /// the attached terminal (iOS: the app's `sendAction` hook).
+  static void expectPaste(String text) {
+    pasteSignalled = true;
+    _attached?._expectPaste(text);
+  }
+
+  String? _expectedPaste;
+  Timer? _pasteExpiry;
+
+  void _expectPaste(String text) {
+    _expectedPaste = text;
+    _pasteExpiry?.cancel();
+    // The insert follows on the same turn of the platform; one that never
+    // comes must not leave the text waiting to be matched.
+    _pasteExpiry = Timer(const Duration(seconds: 1), _clearPaste);
+  }
+
+  void _clearPaste() {
+    _pasteExpiry?.cancel();
+    _pasteExpiry = null;
+    _expectedPaste = null;
+  }
+
+  /// Sends what [typed] holds of an expected paste as that paste, and what
+  /// came before it (a composition the paste committed) as typing. False when
+  /// it does not end with the paste: some other update, which leaves the paste
+  /// still expected.
+  bool _takePaste(String typed) {
+    final paste = _expectedPaste;
+    if (paste == null || paste.isEmpty || !typed.endsWith(paste)) return false;
+    _clearPaste();
+    final before = typed.substring(0, typed.length - paste.length);
+    if (before.isNotEmpty) widget.onInsert(before);
+    (widget.onPasteText ?? widget.onInsert)(paste);
+    return true;
+  }
+
   TextInputConnection? _connection;
   final ContextMenuController _menuController = ContextMenuController();
 
@@ -430,6 +486,7 @@ class CustomTextEditState extends State<CustomTextEdit>
       _connection = null;
       return;
     }
+    _attached = this;
     _connection!.show();
     _connection!.setEditingState(_currentEditingState);
   }
@@ -441,6 +498,12 @@ class CustomTextEditState extends State<CustomTextEdit>
       _connection!.close();
       _connection = null;
     }
+    _detach();
+  }
+
+  void _detach() {
+    if (_attached == this) _attached = null;
+    _clearPaste();
   }
 
   TextEditingValue _getInitialEditingValue() {
@@ -488,6 +551,17 @@ class CustomTextEditState extends State<CustomTextEdit>
     if (widget.onComposingChanged != null &&
         oldValue.composing != value.composing) {
       widget.onComposingChanged!(value.composing);
+    }
+
+    // Before the composing branch: a paste over marked text ends it.
+    if (_expectedPaste != null &&
+        _currentEditingState.composing.isCollapsed &&
+        _takePaste(_typed(_currentEditingState.text))) {
+      if (!oldValue.composing.isCollapsed) widget.onComposing(null);
+      _currentEditingState = _initEditingState.copyWith();
+      _connection?.setEditingState(_currentEditingState);
+      _showCaretOnScreen();
+      return;
     }
 
     if (!_currentEditingState.composing.isCollapsed) {
@@ -596,7 +670,10 @@ class CustomTextEditState extends State<CustomTextEdit>
       return false;
     }
     final onPasteText = widget.onPasteText;
-    if (_systemMenuShown && _systemMenuOffersPaste && onPasteText != null) {
+    if (!pasteSignalled &&
+        _systemMenuShown &&
+        _systemMenuOffersPaste &&
+        onPasteText != null) {
       _systemMenuOffersPaste = false;
       onPasteText(textDelta);
       return true;
@@ -638,6 +715,7 @@ class CustomTextEditState extends State<CustomTextEdit>
     if (_connection != null) {
       _connection = null;
     }
+    _detach();
     _resetSystemMenu();
   }
 
@@ -871,7 +949,9 @@ class CustomTextEditState extends State<CustomTextEdit>
     if (reshow == null) return;
     SchedulerBinding.instance.addPostFrameCallback((_) {
       if (mounted && widget.focusNode.hasFocus) {
-        showToolbar(globalSelectionRect: reshow);
+        showToolbar(
+          globalSelectionRect: widget.selectionRect?.call() ?? reshow,
+        );
       }
     });
   }
@@ -1035,7 +1115,9 @@ class CustomTextEditState extends State<CustomTextEdit>
       (_) {
         if (mounted) widget.onCopied?.call();
       },
-      onError: (Object _) {},
+      onError: (Object e, StackTrace s) {
+        if (mounted) widget.onCopyFailed?.call(e, s);
+      },
     );
 
     if (cause == SelectionChangedCause.toolbar) {
@@ -1065,9 +1147,17 @@ class CustomTextEditState extends State<CustomTextEdit>
   void selectAll(SelectionChangedCause cause) {
     if (widget.onSelectAll != null) {
       widget.onSelectAll!();
-      // A keyboard select-all has no menu up to rebuild, and asking one that
-      // is not shown asserts.
-      if (_menuController.isShown) _menuController.markNeedsBuild();
+      // A keyboard select-all has no menu up to move, and asking one that is
+      // not shown asserts. Moved rather than rebuilt: it was over the old
+      // selection.
+      if (_menuController.isShown) {
+        final rect = widget.selectionRect?.call();
+        if (rect != null) {
+          showToolbar(globalSelectionRect: rect);
+        } else {
+          _menuController.markNeedsBuild();
+        }
+      }
       setState(() {});
     } else if (!widget.readOnly && _currentEditingState.text.isNotEmpty) {
       textEditingValue = _currentEditingState.copyWith(
