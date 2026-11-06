@@ -75,7 +75,13 @@ Future<void> pasteClipboard(
     return;
   }
   final text = data?.text;
-  if (text == null || text.isEmpty) return;
+  if (text == null) return;
+  pasteText(terminal, controller, text);
+}
+
+/// Pastes [text] into [terminal], as a paste, so that bracketed paste wraps it.
+void pasteText(Terminal terminal, TerminalController controller, String text) {
+  if (text.isEmpty) return;
   terminal.paste(text);
   controller.clearSelection();
 }

@@ -62,6 +62,7 @@ class TerminalView extends StatefulWidget {
     this.onCopied,
     this.onSelectAll,
     this.onPaste,
+    this.onPasteText,
   });
 
   /// The underlying terminal that this widget renders.
@@ -184,6 +185,12 @@ class TerminalView extends StatefulWidget {
 
   /// Callback to paste text from clipboard to terminal.
   final void Function()? onPaste;
+
+  /// What the iOS system menu's paste brought in, which iOS gives without
+  /// asking the user (a read through [onPaste] asks every time). Defaults to
+  /// pasting into the terminal when [onPaste] is not given either; given
+  /// [onPaste] alone, that menu pastes through it.
+  final void Function(String text)? onPasteText;
 
   @override
   State<TerminalView> createState() => TerminalViewState();
@@ -498,6 +505,12 @@ class TerminalViewState extends State<TerminalView>
             (widget.readOnly
                 ? null
                 : () => pasteClipboard(widget.terminal, _controller)),
+        onPasteText: widget.readOnly
+            ? null
+            : widget.onPasteText ??
+                  (widget.onPaste == null
+                      ? (text) => pasteText(widget.terminal, _controller, text)
+                      : null),
         child: child,
       );
     } else if (!widget.readOnly) {
