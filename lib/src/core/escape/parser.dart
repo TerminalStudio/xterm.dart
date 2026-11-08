@@ -451,6 +451,8 @@ class EscapeParser {
           handler.unsetCursorBold();
           continue;
         case 22:
+          // Normal intensity: neither bold nor faint.
+          handler.unsetCursorBold();
           handler.unsetCursorFaint();
           continue;
         case 23:
