@@ -181,7 +181,10 @@ class TerminalPainter {
       final cellFlags = cellData.flags;
 
       var color = cellFlags & CellFlags.inverse == 0
-          ? resolveForegroundColor(cellData.foreground)
+          ? resolveForegroundColor(
+              cellData.foreground,
+              bold: cellFlags & CellFlags.bold != 0,
+            )
           : resolveBackgroundColor(cellData.background);
 
       if (cellData.flags & CellFlags.faint != 0) {
@@ -241,8 +244,11 @@ class TerminalPainter {
 
   /// Get the effective foreground color for a cell from information encoded in
   /// [cellColor].
+  ///
+  /// If [bold] is true and [TerminalTheme.boldIsBright] is set, one of the 8
+  /// normal ANSI colors resolves to its bright variant.
   @pragma('vm:prefer-inline')
-  Color resolveForegroundColor(int cellColor) {
+  Color resolveForegroundColor(int cellColor, {bool bold = false}) {
     final colorType = cellColor & CellColor.typeMask;
     final colorValue = cellColor & CellColor.valueMask;
 
@@ -251,6 +257,9 @@ class TerminalPainter {
         return _theme.foreground;
       case CellColor.named:
       case CellColor.palette:
+        if (bold && _theme.boldIsBright && colorValue < 8) {
+          return _colorPalette[colorValue + 8];
+        }
         return _colorPalette[colorValue];
       case CellColor.rgb:
       default:
