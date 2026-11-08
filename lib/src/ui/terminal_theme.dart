@@ -25,6 +25,7 @@ class TerminalTheme {
     required this.searchHitBackground,
     required this.searchHitBackgroundCurrent,
     required this.searchHitForeground,
+    this.boldIsBright = false,
   });
 
   final Color cursor;
@@ -54,4 +55,12 @@ class TerminalTheme {
   final Color searchHitBackground;
   final Color searchHitBackgroundCurrent;
   final Color searchHitForeground;
+
+  /// Draw bold text that uses one of the 8 normal ANSI colors (0-7, whether
+  /// set as 30-37 or as 256-color index 0-7) in the bright variant of that
+  /// color (8-15), like the "intense text" option of many terminals.
+  ///
+  /// Does not apply to the default foreground color, to colors 8-255, to RGB
+  /// colors, or to inverse-video cells. Defaults to false.
+  final bool boldIsBright;
 }
