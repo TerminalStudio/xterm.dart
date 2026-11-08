@@ -420,6 +420,67 @@ void main() {
       expect(topLine(), before);
     });
 
+    testWidgets('a view scrolled up stays on its text through a reset and replay', (
+      tester,
+    ) async {
+      final terminal = Terminal(maxLines: 1000);
+      final scroll = ScrollController();
+      await tester.pumpWidget(
+        MaterialApp(home: TerminalView(terminal, scrollController: scroll)),
+      );
+      // Output kept more lines than the replay brings back.
+      terminal.write([for (var i = 0; i < 300; i++) 'line$i'].join('\r\n'));
+      await tester.pump();
+      final replay = [for (var i = 150; i < 300; i++) 'line$i'].join('\r\n');
+
+      final render = _render(tester);
+      final lineHeight = render.lineHeight;
+      scroll.jumpTo(scroll.position.maxScrollExtent - lineHeight * 40);
+      await tester.pump();
+      String topLine() => terminal
+          .buffer
+          .lines[render.getCellOffset(Offset(1, lineHeight / 2)).y]
+          .getText()
+          .trim();
+      final before = topLine();
+
+      terminal.write('\x1bc$replay');
+      await tester.pump();
+
+      expect(topLine(), before);
+    });
+
+    testWidgets('a view scrolled up keeps its place when the replay comes after a layout', (
+      tester,
+    ) async {
+      final terminal = Terminal(maxLines: 1000);
+      final scroll = ScrollController();
+      await tester.pumpWidget(
+        MaterialApp(home: TerminalView(terminal, scrollController: scroll)),
+      );
+      terminal.write([for (var i = 0; i < 300; i++) 'line$i'].join('\r\n'));
+      await tester.pump();
+
+      final render = _render(tester);
+      final lineHeight = render.lineHeight;
+      scroll.jumpTo(scroll.position.maxScrollExtent - lineHeight * 40);
+      await tester.pump();
+      String topLine() => terminal
+          .buffer
+          .lines[render.getCellOffset(Offset(1, lineHeight / 2)).y]
+          .getText()
+          .trim();
+      final before = topLine();
+
+      // The reset is laid out before the replay arrives.
+      terminal.write('\x1bc');
+      await tester.pump();
+      terminal.write([for (var i = 150; i < 300; i++) 'line$i'].join('\r\n'));
+      await tester.pump();
+
+      expect(topLine(), before);
+    });
+
     testWidgets('a new terminal does not keep the old one\'s selection', (
       tester,
     ) async {

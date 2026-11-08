@@ -557,13 +557,26 @@ void main() {
       );
       terminal.write('\x1b[!p#');
 
-      expect(terminal.buffer.lines[0].toString(), '#bc');
+      // The cursor stays where origin mode put it, at the margin's second
+      // row: only the saved cursor goes home.
+      expect(terminal.buffer.lines[0].toString(), 'abc');
+      expect(terminal.buffer.lines[3].toString(), ' #');
       expect(terminal.insertMode, isFalse);
       expect(terminal.originMode, isFalse);
       expect(terminal.mouseMode, MouseMode.none);
       expect(terminal.cursor.foreground, 0);
       expect(terminal.buffer.marginTop, 0);
       expect(terminal.buffer.marginBottom, terminal.viewHeight - 1);
+      expect(terminal.buffer.cursorX, 2);
+      expect(terminal.buffer.cursorY, 3);
+    });
+
+    test('RIS still sends the cursor home', () {
+      final terminal = Terminal();
+
+      terminal.write('abc\x1b[3;4H\x1bc#');
+
+      expect(terminal.buffer.lines[0].toString(), '#');
       expect(terminal.buffer.cursorX, 1);
       expect(terminal.buffer.cursorY, 0);
     });

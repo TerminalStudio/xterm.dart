@@ -611,10 +611,9 @@ class Buffer {
   }
 
   /// Soft-resets state associated with this buffer without clearing content.
+  /// DECSTR leaves the cursor where it is; only the saved one goes home.
   void softReset() {
     resetVerticalMargins();
-    _cursorX = 0;
-    _cursorY = 0;
     _savedCursorX = 0;
     _savedCursorY = 0;
     _savedCursorStyle.reset();
@@ -627,6 +626,8 @@ class Buffer {
   void reset() {
     clear();
     softReset();
+    _cursorX = 0;
+    _cursorY = 0;
   }
 
   void insertBlankChars(int count) {
