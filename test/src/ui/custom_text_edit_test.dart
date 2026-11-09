@@ -11,6 +11,7 @@ void main() {
   _pasteFailures();
   _imeReplacesPlaceholder();
   _imeEdits();
+  _imeDeltas();
   _toolbarBuilderContract();
 
   testWidgets('IME delete command emits a single backspace', (tester) async {
@@ -582,5 +583,221 @@ void _toolbarBuilderContract() {
     expect(state.isToolbarShown, isTrue);
     state.hideToolbar();
     await tester.pump();
+  });
+}
+
+/// An edit fed deltas the way a platform with the delta model sends them.
+class _Deltas {
+  final inserted = <String>[];
+  final composing = <String?>[];
+  var deletes = 0;
+  late CustomTextEditState state;
+
+  void send(TextEditingDelta delta) =>
+      state.updateEditingValueWithDeltas([delta]);
+}
+
+Future<_Deltas> _pumpDeltas(
+  WidgetTester tester, {
+  required bool deleteDetection,
+}) async {
+  final edit = _Deltas();
+  final focusNode = FocusNode();
+  addTearDown(focusNode.dispose);
+  await tester.pumpWidget(
+    MaterialApp(
+      home: Material(
+        child: CustomTextEdit(
+          focusNode: focusNode,
+          deleteDetection: deleteDetection,
+          onInsert: edit.inserted.add,
+          onDelete: () => edit.deletes++,
+          onComposing: edit.composing.add,
+          onAction: (_) {},
+          onKeyEvent: (_, _) => KeyEventResult.ignored,
+          child: const SizedBox.shrink(),
+        ),
+      ),
+    ),
+  );
+  focusNode.requestFocus();
+  await tester.pump();
+  edit.state = tester.state<CustomTextEditState>(find.byType(CustomTextEdit));
+  return edit;
+}
+
+TextEditingDelta _typed(String oldText, String key) =>
+    TextEditingDeltaInsertion(
+      oldText: oldText,
+      textInserted: key,
+      insertionOffset: oldText.length,
+      selection: TextSelection.collapsed(offset: oldText.length + key.length),
+      composing: TextRange.empty,
+    );
+
+void _imeDeltas() {
+  // The platform reports keys typed before it applied the reset that followed
+  // the last commit, on the text it still had.
+  testWidgets('a key typed before the reset is applied is sent once', (
+    tester,
+  ) async {
+    final edit = await _pumpDeltas(tester, deleteDetection: true);
+
+    edit.send(_typed('  ', 'h'));
+    edit.send(_typed('  h', 'o'));
+    edit.send(_typed('  ho', 'x'));
+    // The reset applied.
+    edit.send(_typed('  ', 'y'));
+
+    expect(edit.inserted, ['h', 'o', 'x', 'y']);
+    expect(edit.deletes, 0);
+  });
+
+  testWidgets('a backspace on the text before the reset deletes once', (
+    tester,
+  ) async {
+    final edit = await _pumpDeltas(tester, deleteDetection: true);
+
+    edit.send(_typed('  ', 'h'));
+    edit.send(_typed('  h', 'i'));
+    edit.send(
+      const TextEditingDeltaDeletion(
+        oldText: '  hi',
+        deletedRange: TextRange(start: 3, end: 4),
+        selection: TextSelection.collapsed(offset: 3),
+        composing: TextRange.empty,
+      ),
+    );
+    edit.send(_typed('  h', 'o'));
+
+    expect(edit.inserted, ['h', 'i', 'o']);
+    expect(edit.deletes, 1);
+  });
+
+  testWidgets('a composition started before the reset commits once', (
+    tester,
+  ) async {
+    final edit = await _pumpDeltas(tester, deleteDetection: false);
+
+    edit.send(_typed('', 'a'));
+    edit.send(
+      const TextEditingDeltaInsertion(
+        oldText: 'a',
+        textInserted: 'k',
+        insertionOffset: 1,
+        selection: TextSelection.collapsed(offset: 2),
+        composing: TextRange(start: 1, end: 2),
+      ),
+    );
+    expect(edit.composing.last, 'k');
+    edit.send(
+      const TextEditingDeltaReplacement(
+        oldText: 'ak',
+        replacementText: 'か',
+        replacedRange: TextRange(start: 1, end: 2),
+        selection: TextSelection.collapsed(offset: 2),
+        composing: TextRange.empty,
+      ),
+    );
+
+    expect(edit.inserted, ['a', 'か']);
+    expect(edit.composing.last, isNull);
+  });
+
+  // A reset in the middle of a composition dropped it unsent; committed on
+  // the platform's old text, none of that text had reached the terminal.
+  testWidgets('a composition the reset dropped is not taken as sent', (
+    tester,
+  ) async {
+    final edit = await _pumpDeltas(tester, deleteDetection: false);
+
+    edit.send(
+      const TextEditingDeltaInsertion(
+        oldText: '',
+        textInserted: 'n',
+        insertionOffset: 0,
+        selection: TextSelection.collapsed(offset: 1),
+        composing: TextRange(start: 0, end: 1),
+      ),
+    );
+    edit.state.performPrivateCommand('deleteSurroundingText', {
+      'beforeLength': 1,
+    });
+    expect(edit.deletes, 1);
+    edit.send(
+      const TextEditingDeltaReplacement(
+        oldText: 'n',
+        replacementText: '日',
+        replacedRange: TextRange(start: 0, end: 1),
+        selection: TextSelection.collapsed(offset: 1),
+        composing: TextRange.empty,
+      ),
+    );
+
+    expect(edit.inserted, ['日']);
+    expect(edit.deletes, 1);
+  });
+
+  testWidgets('a delete on the text before the reset resets it again', (
+    tester,
+  ) async {
+    final edit = await _pumpDeltas(tester, deleteDetection: true);
+
+    edit.send(_typed('  ', 'h'));
+    edit.send(_typed('  h', 'i'));
+    final before = tester.testTextInput.log.length;
+    edit.send(
+      const TextEditingDeltaDeletion(
+        oldText: '  hi',
+        deletedRange: TextRange(start: 3, end: 4),
+        selection: TextSelection.collapsed(offset: 3),
+        composing: TextRange.empty,
+      ),
+    );
+
+    expect(edit.deletes, 1);
+    final sent = [
+      for (final call in tester.testTextInput.log.skip(before))
+        if (call.method == 'TextInput.setEditingState')
+          (call.arguments as Map)['text'],
+    ];
+    expect(sent, ['  ']);
+  });
+
+  testWidgets('a composition through deltas sends only its commit', (
+    tester,
+  ) async {
+    final edit = await _pumpDeltas(tester, deleteDetection: false);
+
+    edit.send(
+      const TextEditingDeltaInsertion(
+        oldText: '',
+        textInserted: 'n',
+        insertionOffset: 0,
+        selection: TextSelection.collapsed(offset: 1),
+        composing: TextRange(start: 0, end: 1),
+      ),
+    );
+    edit.send(
+      const TextEditingDeltaInsertion(
+        oldText: 'n',
+        textInserted: 'i',
+        insertionOffset: 1,
+        selection: TextSelection.collapsed(offset: 2),
+        composing: TextRange(start: 0, end: 2),
+      ),
+    );
+    edit.send(
+      const TextEditingDeltaReplacement(
+        oldText: 'ni',
+        replacementText: '日',
+        replacedRange: TextRange(start: 0, end: 2),
+        selection: TextSelection.collapsed(offset: 1),
+        composing: TextRange.empty,
+      ),
+    );
+
+    expect(edit.inserted, ['日']);
+    expect(edit.composing, ['n', 'ni', null]);
   });
 }

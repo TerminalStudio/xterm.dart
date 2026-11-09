@@ -119,7 +119,7 @@ class CustomTextEdit extends StatefulWidget {
 }
 
 class CustomTextEditState extends State<CustomTextEdit>
-    with TextInputClient, TextSelectionDelegate {
+    with TextInputClient, DeltaTextInputClient, TextSelectionDelegate {
   /// The terminal holding the input connection, the one a platform paste
   /// lands in.
   static CustomTextEditState? _attached;
@@ -477,6 +477,7 @@ class CustomTextEditState extends State<CustomTextEdit>
       autocorrect: false,
       enableSuggestions: widget.enableSuggestions,
       enableIMEPersonalizedLearning: false,
+      enableDeltaModel: true,
       textCapitalization: TextCapitalization.none,
       readOnly: widget.readOnly,
     );
@@ -504,6 +505,8 @@ class CustomTextEditState extends State<CustomTextEdit>
   void _detach() {
     if (_attached == this) _attached = null;
     _clearPaste();
+    _staleText = null;
+    _reported = null;
   }
 
   TextEditingValue _getInitialEditingValue() {
@@ -531,6 +534,92 @@ class CustomTextEditState extends State<CustomTextEdit>
   @override
   AutofillScope? get currentAutofillScope {
     return null; // Autofill not typically used in terminals
+  }
+
+  /// The platform's text while it has not yet applied a reset to the
+  /// placeholder, and how much of its start has reached the terminal.
+  String? _staleText;
+  int _staleSent = 0;
+
+  /// What the platform last said it had.
+  TextEditingValue? _reported;
+
+  /// Each change as the platform made it, on the text it had then.
+  ///
+  /// After a commit the text is reset to the placeholder, and the platform can
+  /// report keys typed before it applied that reset, on the text it still had.
+  /// Read as whole values, what was sent of that text was sent again (`echo`
+  /// typed as `echho`).
+  @override
+  void updateEditingValueWithDeltas(List<TextEditingDelta> deltas) {
+    for (final delta in deltas) {
+      final value = delta.apply(TextEditingValue(text: delta.oldText));
+      final reported = _reported;
+      _reported = value;
+      final current = _currentEditingState.text;
+      final init = _initEditingState.text;
+      if (delta.oldText == current) {
+        _staleText = null;
+        updateEditingValue(value);
+        continue;
+      }
+      if (delta.oldText != _staleText) {
+        if (current != init || reported?.text != delta.oldText) {
+          _staleText = null;
+          updateEditingValue(value);
+          continue;
+        }
+        // On the text from before the reset: sent, but for a composition the
+        // reset dropped.
+        _staleText = delta.oldText;
+        final composing = reported!.composing;
+        _staleSent = composing.isValid && !composing.isCollapsed
+            ? composing.start
+            : delta.oldText.length;
+      }
+      updateEditingValue(_fromStale(value));
+      _staleText = value.text;
+      if (_currentEditingState.text != init) continue;
+      // Committed and reset again: the rest has been sent too.
+      _staleSent = value.text.length;
+      // A delete alone leaves nothing to commit, and so nothing that would
+      // reset the platform, which then deletes the placeholder away.
+      if (value.text != init) _connection?.setEditingState(_currentEditingState);
+    }
+  }
+
+  /// [value], on the platform's stale text, as the same edit on the
+  /// placeholder. What it took back of the sent part is deleted.
+  TextEditingValue _fromStale(TextEditingValue value) {
+    final stale = _staleText!;
+    final text = value.text;
+    var common = 0;
+    while (common < _staleSent &&
+        common < text.length &&
+        stale.codeUnitAt(common) == text.codeUnitAt(common)) {
+      common++;
+    }
+    for (var i = common; i < _staleSent; i++) {
+      widget.onDelete();
+    }
+    _staleSent = common;
+    final init = _initEditingState.text;
+    final end = init.length + text.length - common;
+    int moved(int offset) => offset < 0
+        ? offset
+        : (offset - common + init.length).clamp(init.length, end);
+    final selection = value.selection;
+    final composing = value.composing;
+    return TextEditingValue(
+      text: init + text.substring(common),
+      selection: selection.copyWith(
+        baseOffset: moved(selection.baseOffset),
+        extentOffset: moved(selection.extentOffset),
+      ),
+      composing: composing.isValid
+          ? TextRange(start: moved(composing.start), end: moved(composing.end))
+          : composing,
+    );
   }
 
   @override
