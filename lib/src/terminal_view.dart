@@ -396,16 +396,15 @@ class TerminalViewState extends State<TerminalView>
     super.dispose();
   }
 
-  bool get _shouldSuppressScroll {
-    if (widget.terminal.isUsingAltBuffer) return true;
-    final mode = widget.terminal.mouseMode;
-    return mode != MouseMode.none && mode.reportScroll;
-  }
+  bool get _shouldSuppressScroll => terminalWantsScroll(widget.terminal);
 
   @override
   Widget build(BuildContext context) {
     Widget child = ScrollConfiguration(
-      behavior: widget.scrollBehavior ?? const _TerminalScrollBehavior(),
+      // The one scrollbar is [hideScrollBar]'s: a desktop behavior adds its
+      // own, which was drawn over it.
+      behavior: (widget.scrollBehavior ?? const _TerminalScrollBehavior())
+          .copyWith(scrollbars: false),
       child: Scrollable(
         key: _scrollableKey,
         controller: _scrollController,
@@ -422,30 +421,36 @@ class TerminalViewState extends State<TerminalView>
                   return ValueListenableBuilder(
                     valueListenable: _composingText,
                     builder: (_, composingText, _) {
-                      return _TerminalView(
-                        key: _viewportKey,
+                      return TerminalScrollbackHandler(
                         terminal: widget.terminal,
-                        controller: _controller,
-                        offset: offset,
-                        padding: MediaQuery.of(context).padding,
-                        autoResize: widget.autoResize,
-                        textStyle: widget.textStyle.copyWith(
-                          fontSize: textSize,
+                        controller: _scrollController,
+                        getLineHeight: () => renderTerminal.lineHeight,
+                        enabled: !_shouldSuppressScroll,
+                        child: _TerminalView(
+                          key: _viewportKey,
+                          terminal: widget.terminal,
+                          controller: _controller,
+                          offset: offset,
+                          padding: MediaQuery.of(context).padding,
+                          autoResize: widget.autoResize,
+                          textStyle: widget.textStyle.copyWith(
+                            fontSize: textSize,
+                          ),
+                          textScaler:
+                              widget.textScaler ??
+                              MediaQuery.textScalerOf(context),
+                          devicePixelRatio: MediaQuery.devicePixelRatioOf(
+                            context,
+                          ),
+                          theme: widget.theme,
+                          focusNode: _focusNode,
+                          cursorType: widget.cursorType,
+                          cursorBlinkEnabled: _cursorBlinkEnabled,
+                          cursorBlinkVisible: cursorBlinkVisible,
+                          alwaysShowCursor: widget.alwaysShowCursor,
+                          onEditableRect: _onEditableRect,
+                          composingText: composingText,
                         ),
-                        textScaler:
-                            widget.textScaler ??
-                            MediaQuery.textScalerOf(context),
-                        devicePixelRatio: MediaQuery.devicePixelRatioOf(
-                          context,
-                        ),
-                        theme: widget.theme,
-                        focusNode: _focusNode,
-                        cursorType: widget.cursorType,
-                        cursorBlinkEnabled: _cursorBlinkEnabled,
-                        cursorBlinkVisible: cursorBlinkVisible,
-                        alwaysShowCursor: widget.alwaysShowCursor,
-                        onEditableRect: _onEditableRect,
-                        composingText: composingText,
                       );
                     },
                   );
@@ -466,6 +471,7 @@ class TerminalViewState extends State<TerminalView>
       simulateScroll: widget.simulateScroll,
       getCellOffset: (offset) => renderTerminal.getScreenCellOffset(offset),
       getLineHeight: () => renderTerminal.lineHeight,
+      readOnly: widget.readOnly,
       child: child,
     );
 
